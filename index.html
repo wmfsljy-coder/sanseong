@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta name="app-version" content="20261122-18f2cc0659">
+<meta name="app-version" content="20261122-f02668b4af">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>산성</title>
@@ -5558,7 +5558,7 @@ const Cam = {
       c.fillStyle = "#FFD27A"; c.beginPath(); c.moveTo(x + Math.cos(a)*34, y + Math.sin(a)*34); c.lineTo(x + Math.cos(a+.45)*24, y + Math.sin(a+.45)*24); c.lineTo(x + Math.cos(a-.45)*24, y + Math.sin(a-.45)*24); c.closePath(); c.fill();
       c.fillStyle = "#fff"; c.font = "700 20px 'Gowun Dodum', sans-serif"; c.fillText(String(g.n), x, y + 1);
       const gt = R.gates && R.gates.find(q => q.dir === side); // 사면 성곽: 그쪽 문의 체력을 화살표 옆에
-      if (gt){ const lbl = gt.name.split(" ")[0] + " " + (gt.broken ? "부서짐" : gt.hp + "/" + gt.max), ly = side === "s" ? y - 40 : y + 40;
+      if (gt && !R.m.fort){ const lbl = gt.name.split(" ")[0] + " " + (gt.broken ? "부서짐" : gt.hp + "/" + gt.max), ly = side === "s" ? y - 40 : y + 40;
         c.font = "700 15px 'Gowun Dodum', sans-serif"; const tw2 = c.measureText(lbl).width + 14, lx = Math.max(tw2/2 + 4, Math.min(W - tw2/2 - 4, x));
         c.fillStyle = "rgba(20,16,12,.82)"; rr(c, lx - tw2/2, ly - 12, tw2, 24, 8); c.fill(); c.fillStyle = gt.broken ? "#FF8A7A" : "#FFE3A6"; c.fillText(lbl, lx, ly + 1); }
       this.arrows.push({x, y, r:30, wx:g.wx/g.n, wy:g.wy/g.n}); }

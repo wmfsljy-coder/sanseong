@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta name="app-version" content="20261122-2b47ebfbbc">
+<meta name="app-version" content="20261122-2071595d30">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>산성</title>
@@ -598,6 +598,7 @@ const ET = { // jade: 잡을 때 쌓이는 옥, hit: 장수 곁을 지날 때 �
 };
 // 새 적(10장 설계 묶음 1): 지네 요괴(기기), 포차 도깨비(망루를 부숨). 그림이 없으면 코드로 그린다(이름표 e_centipede, e_siege)
 ET.centipede = {name:"지네 요괴",   hp:70,  spd:.8, armor:2, gold:7,  lives:1, r:.28, jade:.4, hit:12, skin:"#8A3A26", tip:"낮게 기어 와요. 투석·총통 같은 범위 공격이 반만 들어가고, 병사 발목을 잡고 지나가기도 해요. 궁수대와 병사로 막으세요."};
+ET.thief     = {name:"약탈 도깨비", hp:60, spd:1.5, armor:0, gold:8, lives:1, r:.26, jade:.3, hit:4, skin:"#8A6A3A", move:"run", tip:"보따리를 진 약탈꾼이에요. 성 밖 건물이나 문에 닿으면 엽전·옥·쇠를 빼앗아 달아나요. 달아나기 전에 잡으면 되찾아요."}; // 요청 24
 ET.siege     = {name:"포차 도깨비", hp:120, spd:.6, armor:3, gold:12, lives:1, r:.34, jade:.6, hit:14, skin:"#4F86C6", siege:{range:1.7, rate:2.4, dmg:7}, tip:"수레 포차로 망루를 부숴요. 멈춰 서서 쏠 때 잡으세요."};
 // 움직임 형태: 걷기·뛰기·날기·기기·땅굴. 그리기와 맞는 대응이 다르다
 const MOVES = {
@@ -1288,7 +1289,7 @@ function fortFlyPi(pi){ const P = R.paths[pi]; if (!P || !P.segs.length) return 
   const g = R.m.gates[gi], Q = pathOf([[a[0] - .5, a[1] - .5], [g.x, g.y]], false, true); Q.gate = gi; Q.fort = true; Q.side = P.side; R.paths.push(Q); return R.fcache[kk] = R.paths.length - 1; }
 // 건물 공격: 앞길을 막은 건물은 누구나 부수고, 곁(0.9칸)을 지나는 성 밖 건물·장수는 성향 따라 멈춰 친다
 const fortOutside = t => { const b = (R.base || R.grid)[t.y][t.x]; return b !== 8 && b !== 9; };
-function fortAggr(e){ const E = ET[e.type]; if (e.fly || moveOf(e) === "run") return 0; if (E.chief || e.type === "shield" || e.type === "boss" || (E.lives || 1) > 1 || (E.r || 0) >= .42) return .9; return .35; }
+function fortAggr(e){ const E = ET[e.type]; if (e.fly || e.thief || moveOf(e) === "run") return 0; if (E.chief || e.type === "shield" || e.type === "boss" || (E.lives || 1) > 1 || (E.r || 0) >= .42) return .9; return .35; }
 function fortSmash(e, dt){
   const E = ET[e.type]; let t = e.btg;
   if (t && (t.ruin || R.towers.indexOf(t) < 0 || dist(t.x + .5, t.y + .5, e.x, e.y) > 1.5)) t = e.btg = null;
@@ -1844,6 +1845,7 @@ function drawEnemy(c, e, T){
   }
   if (e.boss && !e.clone){ drawBossBody(c, e, T); drawBossHead(c, e, T); return; } // v10 대장 몸짓·머리 위 큰 막대
   if (e.dash || e.clone || e.inv > 0){ c.save(); c.globalAlpha = e.inv > 0 ? .45 + .25*Math.sin(e.phase*3) : e.clone ? .62 : .55; try { drawEnemy0(c, e, T); } finally { c.restore(); } drawLv(c, e, T); return; }
+  if (e.thief){ drawEnemy0(c, e, T); drawThiefBag(c, e, T); drawLv(c, e, T); return; } // 요청 24
   const mv = moveOf(e), px = e.x*T, py = e.y*T;
   if (e.type === "centipede" && !ART.img.e_centipede){ drawCentipede(c, e, T); drawLv(c, e, T); return; }
   if (e.type === "siege" && !ART.img.e_siege) drawSiegeCart(c, e, T);
@@ -3960,7 +3962,7 @@ function fortMove(o, gx, gy, spd, dt){ const d = dist(o.x, o.y, gx, gy); if (d >
 function fortFoe(o, ax, ay, r, air, inside, keep, noKid){ // 깃발(ax,ay) r칸 안에서 나에게 가장 가까운 적. 지금 표적은 r+1 안이면 유지. noKid: 진을 치러 갈 때 진에서 갓 나온 적은 상대 안 함
   const ok = e => e && !e.dead && !(e.under > 0) && (air || !e.fly) && !!e.inside === !!inside && !(noKid && e.campKid);
   if (ok(keep) && dist(ax, ay, keep.x, keep.y) < r + 1 && R.enemies.indexOf(keep) >= 0) return keep; // 목록 확인은 지금 표적을 유지할 때만(검수 v10 1차 6)
-  let be = null, bd = Infinity; const r2 = r*r; for (const e of R.enemies){ const qx = e.x - ax, qy = e.y - ay; if (qx*qx + qy*qy > r2 || !ok(e)) continue; const d = dist(o.x, o.y, e.x, e.y); if (d < bd){ bd = d; be = e; } } return be;
+  let be = null, bd = Infinity; const r2 = r*r; for (const e of R.enemies){ const qx = e.x - ax, qy = e.y - ay; if (qx*qx + qy*qy > r2 || !ok(e)) continue; const d = dist(o.x, o.y, e.x, e.y)*(e.thief ? (e.loot ? .4 : .6) : 1); if (d < bd){ bd = d; be = e; } } return be; /* 약탈꾼은 더 먼저 쫓는다(요청 24) */
 }
 // 문 드나들기 상태: in(성 안) → exit(문 지나는 중) → out(밖에서 싸움) → ret(문 밖으로 돌아옴) → enter → in
 // 반환: {x,y} 갈 곳, foe(싸울 적), camp(진 곁), inner(성 안·문 이동이라 직선), rest(성 안 회복)
@@ -4990,7 +4992,7 @@ function campDown(){
   R.queue = [];
   const bossAlive = R.enemies.some(o => o.campBoss && !o.dead);
   if (!R.enemies.some(o => !o.dead && o.type === "jeoseung")) R.deadPool = []; // 저승사자가 살아 있으면 이미 등록된 부활 후보는 남긴다(v9B 3차)
-  R.enemies.forEach(o => { if (!o.dead && !o.campBoss && !(bossAlive && o.clone)){ o.dead = true; o.noReward = true; burst(o.x, o.y, 8, "#6A5A7A", 1.2, .5, .07, "smoke"); } }); // 남은 적은 흩어져 사라진다(보상 없음). 진에서 나온 대장(과 그 분신)은 남는다 → 대장까지 처치하면 물결이 끝나 승리(v9B 2차)
+  R.enemies.forEach(o => { if (!o.dead && !o.campBoss && !o.thief && !(bossAlive && o.clone)){ o.dead = true; o.noReward = true; burst(o.x, o.y, 8, "#6A5A7A", 1.2, .5, .07, "smoke"); } }); // 남은 적은 흩어져 사라진다(보상 없음). 진에서 나온 대장(과 그 분신)은 남는다 → 대장까지 처치하면 물결이 끝나 승리(v9B 2차)
   if (bossAlive) showBanner(c.name + "이 무너졌다", ET[c.boss].name + "을(를) 마저 물리치면 이겨요!"); else R.bossE = null;
   R.slowT = .6; R.downT = 1.8; R.downName = c.name; R.shake = 14; Sound.play("win");
   if (R.sortie){ R.sortie = false; const h = R.hero; if (h){ h.manual = false; h.pd = null; if (!h.dead){ const hh = heroHome(); h.tx = hh.tx; h.ty = hh.ty; } } } // 진이 무너지면 출격한 병사·장수는 돌아온다
@@ -5095,6 +5097,7 @@ function startWave(){
   }
   R.wave = next; if (next === 1 && R.m && R.m.fort && !R.st.tutorial && !R.test) R.tacTipT = 7; /* v11 전술 첫 귀띔(물결 띠가 지나간 뒤) */ R.hardNow = lateK(next) > 0; /* v10: 후반 물결(진행 60% 뒤)은 어려움 규칙: 적 레벨 +2, 대장 기술 ×0.8, 앞 장 완화값(bossCd·bossHp·bossLives) 끔, 진 어려움 값 */ R.started = true; R.waveActive = true; R.queue = waveQueue(R.wave); R.qt = 0; R.countdown = 0; if (R.m.fort) fortWaveStart();
   if (R.wave === R.total && campOk()) campStart(); // 마지막 물결: 그 장 요괴의 진
+  thiefPlanWave(); // 요청 24: 이번 물결에 약탈꾼이 오는지
   if (R.mound && !R.mound.ours && R.wave > 1 && R.mound.lv < 3){ R.mound.lv++; addText(R.mound.x, R.mound.y - 1, "적이 토산을 쌓소! (" + R.mound.lv + "/3)", "#E8C48A", 1.8); if (R.mound.lv === 1) moveTip("mound", "적이 가운데 토산을 쌓고 있소. 토산 곁에 선 적은 망루를 더 세게 치오. 성주의 '토산 빼앗기'를 토산에 쓰시오!"); }
   Sound.play("wave");
   if (R.tut < 0){
@@ -5131,6 +5134,7 @@ function spawn(type, q){
   if (type === "fox") e.sc = shortcutsOf(pi).map(s => ({from:s.from, to:s.to, done:false}));
   if (type === "mole") e.digCd = 2 + Math.random()*2;
   if (type === "boss") e.roarCd = 4 + Math.random()*3;
+  if (type === "thief") e.thief = true; // 요청 24 약탈꾼
   if (E.chief && type !== "lord"){ if (q && q.elite) eliteInit(e, q.elite); else bossInit(e); }
   const p2 = epos(e, d); e.x = p2.x; e.y = p2.y; R.enemies.push(e);
   if (form && q.slot === 2) moveTip("form", "방패 도깨비가 셋씩 대열을 지었소. 대열이 있으면 화살이 덜 박히니 총통으로 흩트리시오.");
@@ -5153,6 +5157,55 @@ function shortcutsOf(pi){
 }
 // 새 움직임이 처음 나올 때 박 노장 한 줄(어려움 모드·서장 생략, 한 번 켠 동안 한 번)
 const MOVE_TIP_SEEN = {};
+/* ---------- 요청 24: 약탈꾼(불특정 시기에 엽전·옥·쇠를 빼앗음) ----------
+   장마다 판당 1~2번, 앞 20% 물결을 뺀 무작위 물결의 무작위 순간에 범위 가장자리에서 나온다(서장·무한 물결 제외, 물결 적 수와 별도).
+   성 밖 건물이나 문에 닿으면 문을 치지 않고 엽전 20%(최대 150)·이번 판 옥·쇠 15%를 빼앗아 왔던 길로 달아난다(성 안 행궁까지 오면 25%).
+   달아나면 잃고, 그 전에 잡으면 전부 되찾고 엽전 +30. 약탈 전에 잡으면 +20. 영구 저축(M.jade·M.iron)은 건드리지 않는다(이번 판 수입만) */
+const THIEF = {gold:.2, goldMax:150, run:.15, inside:.25, back:10, early:20, flee:1.6}; /* back < early: 일부러 빼앗기게 둔 뒤 잡아 더 버는 일이 없게 */
+const thiefOk = () => !!(R && R.m && R.m.fort && !R.st.tutorial && !R.st.endless && isFinite(R.total) && R.total >= 3);
+function thiefPlanWave(){
+  if (!thiefOk()){ R.thiefT = null; return; }
+  if (!R.thiefPlan){ const lo = Math.max(2, Math.floor(R.total*.2) + 1), ws = []; for (let w = lo; w <= R.total; w++) ws.push(w);
+    const n = Math.min(ws.length, 1 + (Math.random() < .5 ? 1 : 0)); R.thiefPlan = {}; for (let i = 0; i < n; i++){ const j = Math.floor(Math.random()*ws.length); R.thiefPlan[ws.splice(j, 1)[0]] = 3 + Math.random()*10; } }
+  R.thiefT = R.thiefPlan[R.wave] != null ? R.thiefPlan[R.wave] : null;
+}
+function thiefSpawn(){
+  if (!R || R.over || !R.m || !R.m.fort) return null; spawn("thief"); const e = R.enemies[R.enemies.length - 1]; if (!e || e.type !== "thief") return null;
+  showBanner("약탈꾼이 나타났어요!", "놓치면 엽전·옥·쇠를 빼앗겨요. 성에 닿기 전에 잡으세요");
+  if (!MOVE_TIP_SEEN.thief && !R.st.tutorial){ MOVE_TIP_SEEN.thief = true; R.bannerNext = ["박 노장", "보따리 진 놈은 약탈꾼이오! 성에 닿기 전에 잡으시오."]; }
+  return e;
+}
+function thiefSteal(e, kg, kr, inside){
+  const a = Math.min(THIEF.goldMax, Math.floor(Math.max(0, R.gold)*kg)), b = Math.max(0, (R.jadeRun || 0)*kr), c = Math.max(0, (R.ironRun || 0)*kr);
+  R.gold -= a; R.jadeRun = (R.jadeRun || 0) - b; R.ironRun = (R.ironRun || 0) - c; e.loot = {a, b, c}; e.fixPath = true; e.atGate = -1;
+  if (inside){ const P = R.paths[e.pi]; burst(e.x, e.y, 8, "#8A6A3A", 1.2, .4, .06, "smoke"); e.inside = false; e.d = Math.max(0, P.total - .05); const p = epos(e, e.d); e.x = p.x; e.y = p.y; } // 행궁에서 빼앗고 문 밖으로 빠져나감
+  addText(e.x, e.y - .7, "약탈! 엽전 −" + a, "#FF9A6A", 1.5); Sound.play("gate"); R.shake = Math.max(R.shake, 4);
+}
+function thiefTick(e, dt){ // true: 이번 프레임 움직임을 여기서 처리함
+  if (e.loot){ // 빼앗고 왔던 길로 빠르게 달아남
+    e.phase += dt*10; e.flash -= dt;
+    if (enemyHold(e, dt)) return true; // 장병에게 붙들리면 멈춰 싸움
+    e.d -= e.spd*THIEF.flee*(e.slowMul || 1)*dt;
+    if (e.d <= 0){ thiefEscape(e); return true; }
+    const p = epos(e, e.d); e.x = p.x; e.y = p.y; e.dx = -p.dx; e.dy = -p.dy; return true; }
+  if (R.m.fort){ const G = R.base || R.grid; for (const t of R.towers){ if (t.ruin || t.virtual || t.type === "caltrop") continue; const v = G[t.y] && G[t.y][t.x]; if (v === 8 || v === 9) continue;
+    if (dist(t.x + .5, t.y + .5, e.x, e.y) < .75){ thiefSteal(e, THIEF.gold, THIEF.run, false); return true; } } } // 성 밖 건물에 닿으면 약탈
+  return false;
+}
+function thiefEscape(e){
+  const L = e.loot || {a:0, b:0, c:0}; e.dead = true; e.noReward = true; e.loot = null; R.thiefLost = (R.thiefLost || 0) + 1;
+  showBanner("약탈당했어요", "엽전 −" + L.a + " · 옥 −" + Math.round(L.b*10)/10 + " · 쇠 −" + Math.round(L.c*10)/10);
+}
+function thiefDown(e){ // 처치(hit 안에서). 빼앗긴 것 되찾기
+  if (e.loot){ const L = e.loot; e.loot = null; R.gold += L.a + THIEF.back; R.jadeRun = (R.jadeRun || 0) + L.b; R.ironRun = (R.ironRun || 0) + L.c; showBanner("되찾았어요!", "엽전 +" + (L.a + THIEF.back) + " · 빼앗긴 옥·쇠도 돌아왔어요"); }
+  else { R.gold += THIEF.early; addText(e.x, e.y - .7, "약탈꾼 처치 +" + THIEF.early, "#F4D06F", 1.2); }
+}
+function drawThiefBag(c, e, T){ // 등에 진 보따리(빼앗았으면 불룩·엽전 반짝)
+  const px = e.x*T, py = e.y*T, r = T*(e.loot ? .2 : .15), bx = px - (e.dx >= 0 ? 1 : -1)*T*.14, by = py - T*.3;
+  c.fillStyle = "#B8873E"; c.strokeStyle = "#5A3A16"; c.lineWidth = Math.max(1, T*.03); circle(c, bx, by, r); c.fill(); c.stroke();
+  c.fillStyle = "#5A3A16"; c.beginPath(); c.moveTo(bx - r*.35, by - r*.9); c.lineTo(bx + r*.35, by - r*.9); c.lineTo(bx, by - r*.55); c.closePath(); c.fill();
+  if (e.loot){ c.fillStyle = (performance.now()/200|0) % 2 ? "#FFE27A" : "#F4B13B"; circle(c, bx + r*.3, by - r*.2, r*.28); c.fill(); }
+}
 function moveTip(k, line){ if (!R || R.st.tutorial || MOVE_TIP_SEEN[k]) return; MOVE_TIP_SEEN[k] = true; showBanner("박 노장", line); }
 // 방패 대열: 한 마리가 쓰러지거나 성문을 넘는 즉시 인원을 다시 세고, 3마리 미만이면 대열을 풀어 생존자를 보통 적으로(겹침 방지에도 다시 포함)
 function formBreak(e){
@@ -5181,6 +5234,7 @@ function hit(e, dmg, quiet, mul){
     e.dead = true; formBreak(e); const E = ET[e.type], big = E.lives > 1, g = e.noReward ? 0 : Math.round(E.gold*(e.elite ? ELITE.gold : 1)*(M.perks.bounty ? 1.15 : 1)); // 진에서 나온 적은 noReward(campSpawnAt)라 보상 없음
     if (!E.chief && !e.clone && !e.revived && (!e.noReward || e.campKid) && R.bossE && R.bossE.type === "jeoseung") (R.deadPool || (R.deadPool = [])).push({type:e.type, pi:e.pi, d:e.d, off:e.off || 0, spd:e.spd, armor:e.armor, fly:e.fly, maxHp:e.maxHp, lv:e.lv, phase:0, dx:e.dx, dy:e.dy, zz:0});
     if (!e.noReward){ R.gold += g; R.jadeRun += (E.jade || 0)*(e.elite ? ELITE.jade : 1); R.ironRun = (R.ironRun || 0) + (big ? (e.elite ? 2 : 4) : .2); if (!R.st.tutorial) mprog("kill", 1); addText(e.x, e.y - .3, "+" + g, "#F4D06F", 1); } // 저승사자가 되살린 적: 엽전·옥·쇠·임무 모두 없음
+    if (e.thief) thiefDown(e); // 요청 24: 약탈꾼 처치 → 빼앗긴 것 되찾기
     Sound.play("kill");
     const col = e.type === "fox" ? "#FFB13B" : e.type === "bat" ? "#6A4590" : E.skin;
     burst(e.x, e.y, big ? 40 : 12, col, 2.2, .6, .07);
@@ -5245,6 +5299,7 @@ function fire(t, s, e){
 // 길 끝에 닿음: 아래 성문 지도는 곧바로 성문 피해. 사면 성곽은 문을 치고(문 체력), 문이 부서졌거나 하늘을 나는 적이면 성 안으로
 function atEnd(e, dt){
   if (!R.gates) return leak(e);
+  if (e.thief && !e.loot){ const P0 = R.paths[e.pi], g0 = P0 && R.gates[P0.gate]; if (g0 && !g0.broken){ thiefSteal(e, .2, .15, false); return; } } // 요청 24: 약탈꾼은 문을 치지 않고 약탈(부서진 문이면 성 안으로)
   if (R.ch === "gate1" && !R.over){ R.gate1Fail = true; defeat(); return; } // 문 여러 개 장의 성문 체력 1 도전: 땅 적이 문에 닿거나 하늘 적이 성 안으로 들면 바로 실패(v9B 2차)
   const P = R.paths[e.pi], g = R.gates[P.gate];
   if (!g || g.broken || e.fly){ e.atGate = -1; e.inside = {gate:P.gate, jx:(Math.random() - .5)*1.6, jy:(Math.random() - .5)*.9, route:(R.innerRoutes && R.innerRoutes[P.gate]) || [], ri:0}; if (e.under > 0) moleSurface(e); return; }
@@ -5294,7 +5349,7 @@ function moveInside(e, dt, slow){ // 부서진 문(또는 하늘)에서 성 안 
   if (wp && Math.hypot(wp[0] - e.x, wp[1] - e.y) < .15){ e.inside.ri = ri + 1; }
   const pp = palaceSpot(), px = wp ? wp[0] : pp[0] + (e.inside.jx || 0), py = wp ? wp[1] : pp[1] + (e.inside.jy || 0), dx = px - e.x, dy = py - e.y, L = Math.hypot(dx, dy); // 여럿이 한 점에 겹치지 않게 행궁 앞 조금씩 다른 자리로
   e.phase += dt*8*slow; e.flash -= dt; e.zz = (e.zz || 0) + dt;
-  if (!wp && L < .35){ leak(e); return; }
+  if (!wp && L < .35){ if (e.thief && !e.loot){ thiefSteal(e, .25, .25, true); return; } leak(e); return; }
   if (R.m.fort && !e.fly && fortInsideSmash(e, dt)) return; // v10 S2: 성 안 건물도 친다
   if (L < 1e-6) return;
   const s = Math.min(L, e.spd*GATE.inSpd*slow*(e.haste > 0 ? 1.25 : 1)*dt); // 성 안 골목에서는 느려진다(성벽 위 망루·장수가 잡을 틈)
@@ -5321,6 +5376,7 @@ function leak(e){
   e.dead = true; formBreak(e); const E = ET[e.type]; if (R.leaks) R.leaks[e.type] = (R.leaks[e.type] || 0) + 1; // 패배 귀띔용
   const lost = e.elite ? ELITE.lives : E.chief && R.st.bossLives && !e.hardSpawn ? R.st.bossLives : E.lives; if (R.bossE === e) R.bossE = null; // 지난 장 요괴는 3 // bossLives: 장별 대장이 닿을 때 깎는 성문 체력
   R.lives = Math.max(0, R.lives - lost); R.shake = Math.max(R.shake, E.lives > 1 ? 12 : 5);
+  if (R.m && R.m.fort && e.inside && !e.thief && !R.st.tutorial && Math.random() < .1){ const a = Math.floor(Math.max(0, R.gold)*.1); if (a > 0){ R.gold -= a; addText(e.x, e.y - 1, "엽전 −" + a + " 약탈", "#FF9A6A", 1.4); } } // 요청 24: 성 안 침입 약탈(달아나지 않고 사라짐)
   Sound.play("gate");
   if (M.set.vib && navigator.vibrate){ try { navigator.vibrate(E.lives > 1 ? 200 : 60); } catch(err){} }
   const gp = leakSpot(e);
@@ -5499,6 +5555,7 @@ function update(dt){
   if (R.waveActive){
     R.qt += dt;
     while (R.queue.length && R.queue[0].t <= R.qt){ const q0 = R.queue.shift(); spawn(q0.type, q0); }
+    if (R.thiefT != null){ R.thiefT -= dt; if (R.thiefT <= 0){ R.thiefT = null; thiefSpawn(); } } // 요청 24
     if (!R.queue.length && !R.enemies.length && !campAlive()) waveCleared(); // 진이 살아 있으면 물결이 끝나지 않는다
   } else if (R.started && R.countdown > 0 && !tutHold){
     R.countdown -= dt; if (R.countdown <= 0) startWave();
@@ -5519,6 +5576,7 @@ function update(dt){
   R.enemies.forEach(e => {
     if (e.dead || R.over) return; // 같은 프레임에 여러 마리가 성문에 닿아도 패배 정산은 한 번
     if (e.inside){ moveInside(e, dt, e.slowMul); return; } // 부서진 문으로 들어와 행궁으로 가는 중
+    if (e.thief && thiefTick(e, dt)) return; // 요청 24: 빼앗고 달아나는 중이거나 방금 약탈
     if ((e.atGate === undefined || e.atGate < 0) && !enemyHold(e, dt)) moveEnemy(e, dt, e.fid && fcount[e.fid] === 3 ? fslow[e.fid] : e.slowMul);
     if (e.d >= R.paths[e.pi].total) atEnd(e, dt);
     if (e.type === "fox" && Math.random() < dt*14) R.parts.push({x:e.x, y:e.y, vx:(Math.random()-.5)*.4, vy:-.6, life:.4, max:.4, size:.06, color:"#FFB13B", kind:"fire"});
@@ -5789,6 +5847,13 @@ const Cam = {
         c.fillStyle = "#FFD27A"; c.beginPath(); c.moveTo(x + Math.cos(a)*34, y + Math.sin(a)*34); c.lineTo(x + Math.cos(a+.45)*24, y + Math.sin(a+.45)*24); c.lineTo(x + Math.cos(a-.45)*24, y + Math.sin(a-.45)*24); c.closePath(); c.fill();
         c.fillStyle = "#fff"; c.font = "700 17px 'Gowun Dodum', sans-serif"; c.fillText(R.sortie ? "병사" : "진", x, y + 1);
         this.arrows.push({x, y, r:30, wx:tp[0], wy:tp[1]}); } }
+    for (const e of R.enemies){ if (e.dead || !e.thief || (e.x >= v.x0 && e.x <= v.x1 && e.y >= v.y0 && e.y <= v.y1)) continue; // 요청 24: 화면 밖 약탈꾼
+      const s = this.toScreen(e.x*T, e.y*T), dx = s[0] - W/2, dy = s[1] - H/2, kx = dx ? (W/2 - M0)/Math.abs(dx) : Infinity, ky = dy ? (H/2 - M0)/Math.abs(dy) : Infinity, k = Math.min(kx, ky);
+      const x = Math.max(30, Math.min(W - 30, W/2 + dx*k)), y = Math.max(30, Math.min(H - 30, H/2 + dy*k)), a = Math.atan2(y - H/2, x - W/2);
+      c.fillStyle = "rgba(190,70,20,.9)"; c.strokeStyle = "#FFD27A"; c.lineWidth = 3; circle(c, x, y, 22); c.fill(); c.stroke();
+      c.fillStyle = "#FFD27A"; c.beginPath(); c.moveTo(x + Math.cos(a)*32, y + Math.sin(a)*32); c.lineTo(x + Math.cos(a+.45)*22, y + Math.sin(a+.45)*22); c.lineTo(x + Math.cos(a-.45)*22, y + Math.sin(a-.45)*22); c.closePath(); c.fill();
+      c.fillStyle = "#fff"; c.font = "700 14px 'Gowun Dodum', sans-serif"; c.fillText("약탈", x, y + 1);
+      this.arrows.push({x, y, r:28, wx:e.x, wy:e.y}); }
     c.restore(); },
   arrowAt(sx, sy){ return this.arrows.find(a => Math.hypot(sx - a.x, sy - a.y) <= a.r) || null; },
   tap(clientX, clientY){ // 끌지 않고 누른 것: 화살표 → 그리로, 두 번 톡 → 위급한 문, 그 밖은 보통 누르기(망루·장수·필살기)
@@ -5810,6 +5875,7 @@ const Cam = {
     c.setTransform(1,0,0,1,0,0); c.drawImage(this.small, 0, 0);
     if (R.bound){ const B = R.bound, x0 = B.x0*T*k, y0 = B.y0*T*k, x1 = (B.x1 + 1)*T*k, y1 = (B.y1 + 1)*T*k, mw = miniCv.width, mh = miniCv.height; c.fillStyle = "rgba(60,60,60,.14)"; c.fillRect(0, 0, mw, y0); c.fillRect(0, y1, mw, mh - y1); c.fillRect(0, y0, x0, y1 - y0); c.fillRect(x1, y0, mw - x1, y1 - y0); c.strokeStyle = "#FFE296"; c.lineWidth = 1.5; c.setLineDash([3, 2]); c.strokeRect(x0 + .75, y0 + .75, x1 - x0 - 1.5, y1 - y0 - 1.5); c.setLineDash([]); } // v10: 아직 안 열린 전장
     c.fillStyle = "#FF5A4A"; for (const e of R.enemies){ if (e.dead) continue; c.fillRect(e.x*T*k - 2, e.y*T*k - 2, 4, 4); }
+    for (const e of R.enemies){ if (e.dead || !e.thief) continue; c.fillStyle = (performance.now()/250|0) % 2 ? "#FFD27A" : "#FF2A1A"; c.beginPath(); c.arc(e.x*T*k, e.y*T*k, 3.6, 0, Math.PI*2); c.fill(); } // 약탈꾼: 깜박이는 큰 점
     const h = R.hero; if (h && !h.dead){ c.fillStyle = "#FFD27A"; c.beginPath(); c.arc(h.x*T*k, h.y*T*k, 3.5, 0, Math.PI*2); c.fill(); }
     if (campAlive()){ const cx = R.camp.x*T*k, cy = R.camp.y*T*k; c.fillStyle = "#C0302A"; c.strokeStyle = "#FFD27A"; c.lineWidth = 1.5; c.beginPath(); c.moveTo(cx, cy - 7); c.lineTo(cx + 6, cy + 5); c.lineTo(cx - 6, cy + 5); c.closePath(); c.fill(); c.stroke(); } // 진
     c.strokeStyle = "#fff"; c.lineWidth = 2; c.strokeRect(this.x*k + 1, this.y*k + 1, W/this.z*k - 2, H/this.z*k - 2); }
@@ -6699,7 +6765,7 @@ function start(){
   Shop.init();
   if (M.stars[0] && M.daily.login < kstDate()) showDaily(); // 하루 첫 접속이면 매일 보상부터
   if (!TabLock.pending && !TabLock.ok()) lockScreen(true); // 다른 창이 게임을 갖고 있으면 안내부터(Web Lock 은 잡히면/못 잡히면 그때 처리)
-  window.SanseongDebug = {get T(){ return T; }, TUT, tutOk, tutCells, fortDbg:{unitTerrMul, cellTerr, fortMove, volDanger, fortWallHit, fortPlan, fortGateSafe, fortGatePts, fortFlagPos, fortVolunteers, flagBtnTap, toggleSortie, tapFlag:(x,y)=>{ R.flagMode = true; const ts = null; if (fortIn(x, y) && fortWalk(x, y)){ R.flag = {x:x + .5, y:y + .5}; } R.flagMode = false; }}, pickMusic, musicNow:() => Sound.musicNow(), MUSIC, WebApp, showStory, Raid, RAID, GATE, STAGES, TabLock, Cam, tapAt, reloadFromDisk, get M(){ return M; }, get R(){ return R; }, newRun, grantStarter, saveMeta, showMenu, castSkill, Track, update, victory, defeat, hideOverlay, Ads, Shop, contOk, loadMeta, CloudSave, SaveCode, Notify, castlePending, castleCollect, ensureMissions, mprog, dailyBoot, showCastle, normMeta, Ledger, castleSettle, claimMission, startWave, get saveGen(){ return saveGen; }, get castleBonus(){ return castleBonus; }, set castleBonus(v){ castleBonus = v; }, get overlayMode(){ return overlayMode; }, bot:{buyUnit, UNITS, canBuildAt, cellBuildable, upLimit, rforgeUp, TT, ET, HEROES, TERRAIN, hit, toggleSortie, buildable, upCost, initBarracks, towerMaxHp, spawnHero, towerAt, repairCost, stat, get ROWS(){ return ROWS; }, get COLS(){ return COLS; }}}; // 점검용(bot: 자동 봇 균형 시험)
+  window.SanseongDebug = {thiefSpawn, get T(){ return T; }, TUT, tutOk, tutCells, fortDbg:{unitTerrMul, cellTerr, fortMove, volDanger, fortWallHit, fortPlan, fortGateSafe, fortGatePts, fortFlagPos, fortVolunteers, flagBtnTap, toggleSortie, tapFlag:(x,y)=>{ R.flagMode = true; const ts = null; if (fortIn(x, y) && fortWalk(x, y)){ R.flag = {x:x + .5, y:y + .5}; } R.flagMode = false; }}, pickMusic, musicNow:() => Sound.musicNow(), MUSIC, WebApp, showStory, Raid, RAID, GATE, STAGES, TabLock, Cam, tapAt, reloadFromDisk, get M(){ return M; }, get R(){ return R; }, newRun, grantStarter, saveMeta, showMenu, castSkill, Track, update, victory, defeat, hideOverlay, Ads, Shop, contOk, loadMeta, CloudSave, SaveCode, Notify, castlePending, castleCollect, ensureMissions, mprog, dailyBoot, showCastle, normMeta, Ledger, castleSettle, claimMission, startWave, get saveGen(){ return saveGen; }, get castleBonus(){ return castleBonus; }, set castleBonus(v){ castleBonus = v; }, get overlayMode(){ return overlayMode; }, bot:{buyUnit, UNITS, canBuildAt, cellBuildable, upLimit, rforgeUp, TT, ET, HEROES, TERRAIN, hit, toggleSortie, buildable, upCost, initBarracks, towerMaxHp, spawnHero, towerAt, repairCost, stat, get ROWS(){ return ROWS; }, get COLS(){ return COLS; }}}; // 점검용(bot: 자동 봇 균형 시험)
   requestAnimationFrame(loop);
 }
 if (window.claude && window.claude.hot && window.claude.hot.snapshot) window.claude.hot.snapshot(() => ({}));

@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta name="app-version" content="20261122-f02668b4af">
+<meta name="app-version" content="20261122-66a0c40b72">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>산성</title>
@@ -307,7 +307,7 @@ body.fs2 .box{max-height:calc(100% / 1.25)}
     <button class="ibtn" id="b-speed" aria-label="빠르기">1×</button>
     <button class="ibtn" id="b-pause" aria-label="멈춤">Ⅱ</button>
   </header>
-  <div id="stagebox"><canvas id="cv" aria-label="전장"></canvas><div id="banner" hidden></div><button id="skill" data-act="skill" hidden aria-label="장수 필살기"><canvas width="120" height="120"></canvas><span class="cdv" hidden></span><span class="lbl"></span></button><button id="sortie" hidden aria-label="출격">출격!</button><button id="flagbtn" hidden aria-label="깃발">깃발</button><div id="coach" hidden><canvas width="136" height="136"></canvas><p><b>박 노장</b><span id="coach-text"></span></p><button id="tutskip" data-act="tutskip">건너뛰기</button></div></div>
+  <div id="stagebox"><canvas id="cv" aria-label="전장"></canvas><div id="banner" hidden></div><button id="skill" data-act="skill" hidden aria-label="장수 필살기"><canvas width="120" height="120"></canvas><span class="cdv" hidden></span><span class="lbl"></span></button><button id="sortie" hidden>출격!</button><button id="flagbtn" hidden>깃발</button><div id="coach" hidden><canvas width="136" height="136"></canvas><p><b>박 노장</b><span id="coach-text"></span></p><button id="tutskip" data-act="tutskip">건너뛰기</button></div></div>
   <section id="panel" aria-live="polite"></section>
 </div>
 <div id="overlay" hidden></div>
@@ -830,7 +830,7 @@ Object.assign(SPEAK, {ansi:"양만춘", parkseo:"박서", kimyunhu:"김윤후", 
           ["old","판이 끝나면 엽전은 사라지오. 대신 쇠를 모아 내 성 대장간에서 무기를 영원히 강화하시오."],
           ["nar","그날 밤 소식이 왔다. 봉인에서 깨어난 두억시니가 옛 싸움터마다 오래 잠든 귀신을 대장으로 깨워 도깨비를 보낸다는 것이다."],
           ["old","가장 오래된 싸움터부터 지켜야 하오. 요동의 안시성이오."]]}),
-    {title:"1장 · 안시성", place:"안시성", map:14, tags:"넓은 평야 · S자 길 · 토산 · 돌성", waves:W, cm:1, mul:0.92 /* v10 S7b 봇 */ /* v10 S7a 봇: 서툰 3승1패·보통 5승 */, hardHp:0.89 /* v10 S7b: 이전×0.82 */ /* mul을 낮춘 만큼 어려움을 일부 되돌림(1.19는 보통 봇이 6판 중 4패 → 1.08: 20~40% 아슬아슬 승) */, bossHp:.8, bossCd:1.3, bossLives:5, /* 1~3장은 무난하게(docs/난이도표.md 2026-11-22 2차) */ towers:["archer","catapult","barracks"], unit:"spear", hero:"ansi", boss:"eoduk", music:1, ch:ch("archers","gate1"),
+    {title:"1장 · 안시성", place:"안시성", map:14, tags:"넓은 평야 · S자 길 · 토산 · 돌성", waves:W, cm:1, mul:0.64, hardLv:1, lateHp:.45 /* v10 후반=어려움: 서툰 봇 9/12·보통 봇 거의 이김 */ /* v10 후반 물결: 서툰 봇 10/12 */ /* v10 S7b 봇 */ /* v10 S7a 봇: 서툰 3승1패·보통 5승 */, hardHp:0.89 /* v10 S7b: 이전×0.82 */ /* mul을 낮춘 만큼 어려움을 일부 되돌림(1.19는 보통 봇이 6판 중 4패 → 1.08: 20~40% 아슬아슬 승) */, bossHp:.8, bossCd:1.3, bossLives:5, /* 1~3장은 무난하게(docs/난이도표.md 2026-11-22 2차) */ towers:["archer","catapult","barracks"], unit:"spear", hero:"ansi", boss:"eoduk", music:1, ch:ch("archers","gate1"),
      synopsis:"가운데 토산을 빼앗기지 마세요. 어둑시니가 깨어나요.",
      note:["645년 당 태종의 대군이 안시성을 88일 동안 에워쌌다.", "당군이 성보다 높게 쌓은 토산이 무너지자 고구려군이 그 토산을 차지했다. 성주의 이름은 뒷날의 기록에 양만춘으로 전한다."],
      pre:[["title","1장 · 안시성"],["nar","요동 벌판의 안시성. 가운데 언덕 위로 도깨비불이 모여든다."],
@@ -839,7 +839,7 @@ Object.assign(SPEAK, {ansi:"양만춘", parkseo:"박서", kimyunhu:"김윤후", 
           ["ansi","병영 병사로 길을 막고, 활과 돌로 몰아치시오."]],
      events:{10:{lines:[["nar","해가 지자 언덕 그림자가 일어서더니 끝없이 커진다. 어둑시니다."],["old","오래 맞을수록 커지는 헛것이오! 망루를 모아 짧게 몰아치시오!"]]}},
      post:[["ansi","어둠이 걷혔소. 이 들판은 다시 조용하오."],["old","검은 안개가 고려 땅 북쪽, 귀주성으로 흘러가오."]]},
-    Object.assign({}, O[3], {title:"2장 · 귀주성", place:"귀주성", map:12, tags:"눈 덮인 능선 · 두 갈래 길 · 성벽 수리", waves:W, cm:1.1, mul:0.93 /* v10 S7b 봇 */ /* v10 S7a 봇 */, hardHp:0.86 /* v10 S7b: 이전×0.82 */, bossHp:.75, bossCd:1.3, bossLives:6, towers:["archer","crossbow","catapult","barracks"], unit:"spear", hero:"parkseo", boss:"bulgasari", music:3, ch:ch("noup","archers"),
+    Object.assign({}, O[3], {title:"2장 · 귀주성", place:"귀주성", map:12, tags:"눈 덮인 능선 · 두 갈래 길 · 성벽 수리", waves:W, cm:1.1, mul:0.52, hardLv:1, lateHp:.45 /* v10 후반=어려움: 서툰 봇 7/10(행궁 14~32%) */ /* v10 후반 물결(.62): 서툰 봇 9/12 */ /* v10 S7b 봇 */ /* v10 S7a 봇 */, hardHp:0.86 /* v10 S7b: 이전×0.82 */, bossHp:.75, bossCd:1.3, bossLives:6, towers:["archer","crossbow","catapult","barracks"], unit:"spear", hero:"parkseo", boss:"bulgasari", music:3, ch:ch("noup","archers"),
      synopsis:"두 갈래 능선으로 몰려와요. 쇠를 먹는 불가살이가 와요.",
      note:["1231년 몽골의 첫 침입 때 박서가 귀주성을 지켰다.", "끓는 쇳물과 진흙물로 누거와 불 공격을 막아 냈다. 다만 조정이 화의를 맺은 뒤 성문을 열었다."],
      pre:[["title","2장 · 귀주성"],["nar","눈 덮인 능선 위의 귀주성. 두 갈래 길로 도깨비들이 내려온다."],
@@ -847,7 +847,7 @@ Object.assign(SPEAK, {ansi:"양만춘", parkseo:"박서", kimyunhu:"김윤후", 
           ["old","쇠뇌는 무거운 화살로 갑옷을 반쯤 뚫소. 길이 만나는 곳에 화력을 모으시오."]],
      events:{10:{lines:[["nar","쿵, 쿵. 쇠붙이를 씹어 먹으며 불가살이가 다가온다."],["parkseo","창칼은 저놈 밥이오! 쇳물을 부으시오. 불에는 약하오!"]]}},
      post:[["parkseo","불가살이가 불길 속에 사라졌소."],["old","남쪽 처인성에서 도깨비불이 오르오. 서두릅시다."]]}),
-    {title:"3장 · 처인성", place:"처인성", map:15, tags:"작은 흙성 · 양옆 짧은 길 · 뛰는 적", waves:W, cm:1.3, mul:1.1 /* v10 S7b 봇 */, hardHp:0.57 /* v10 S7b: 이전×0.82 */ /* 새 지도(어려움은 양옆 두 갈래): 1.78·1.3은 4물결, 0.9는 6~7물결에 무너짐, 0.6은 30~75% 승 */, bossHp:.7, bossCd:1.4, bossLives:5, towers:["archer","crossbow","barracks"], unit:"sword", hero:"kimyunhu", boss:"gumiho", music:1, ch:ch("nohero","noup"),
+    {title:"3장 · 처인성", place:"처인성", map:15, tags:"작은 흙성 · 양옆 짧은 길 · 뛰는 적", waves:W, cm:1.3, mul:0.59, hardLv:1, lateHp:.5 /* v10 후반=어려움: 서툰 봇 6/12·보통 봇 8/8 */ /* v10 후반 물결(.62): 서툰 봇 8/12 */ /* v10 S7b 봇 */, hardHp:0.57 /* v10 S7b: 이전×0.82 */ /* 새 지도(어려움은 양옆 두 갈래): 1.78·1.3은 4물결, 0.9는 6~7물결에 무너짐, 0.6은 30~75% 승 */, bossHp:.7, bossCd:1.4, bossLives:5, towers:["archer","crossbow","barracks"], unit:"sword", hero:"kimyunhu", boss:"gumiho", music:1, ch:ch("nohero","noup"),
      synopsis:"길이 짧아 뛰는 적이 금방 닿아요. 구미호의 진짜를 찾아요.",
      note:["1232년 12월, 승려 김윤후가 처인성에 피란한 백성들과 함께 몽골 장수 살리타이를 쏘아 죽였다.", "장수를 잃은 몽골군은 물러갔다."],
      pre:[["title","3장 · 처인성"],["nar","흙으로 쌓은 작은 성, 처인성. 길이 짧아 숨 돌릴 틈이 없다."],
@@ -855,7 +855,7 @@ Object.assign(SPEAK, {ansi:"양만춘", parkseo:"박서", kimyunhu:"김윤후", 
           ["old","칼병은 빨리 베고, 쇠뇌는 멀리서 꿰뚫소. 뛰는 적은 길이 짧을수록 무섭소."]],
      events:{10:{lines:[["nar","아홉 갈래 푸른 불꽃이 피어오른다. 천 년 묵은 구미호다."],["kimyunhu","분신이 나오면 꼬리가 빛나는 놈을 저격하겠소!"]]}},
      post:[["kimyunhu","대장을 잃은 무리는 흩어졌소."],["old","이번엔 바다 가까운 연안성이오. 의병들이 모이고 있소."]]},
-    {title:"4장 · 연안성", place:"연안성", map:17, tags:"넓은 숲 들판 · 모서리 성곽 · 문 둘 · 기는 적", waves:W, cm:1.25, mul:1.28 /* v10 S7b 봇 */ /* 새 지도(문 2, 한 칸 길): 2.03은 보통 봇 67~100%, 2.4는 13·67·L@7 */, hardHp:0.66 /* v10 S7b: 이전×0.82 */, towers:["archer","cannon","barracks"], unit:"militia", hero:"leejeongam", boss:"egg", music:2, ch:ch("gate1","archers"),
+    {title:"4장 · 연안성", place:"연안성", map:17, tags:"넓은 숲 들판 · 모서리 성곽 · 문 둘 · 기는 적", waves:W, cm:1.25, mul:0.98 /* v10 후반 물결: 보통 봇 7/12 */ /* v10 S7b 봇 */ /* 새 지도(문 2, 한 칸 길): 2.03은 보통 봇 67~100%, 2.4는 13·67·L@7 */, hardHp:0.66 /* v10 S7b: 이전×0.82 */, towers:["archer","cannon","barracks"], unit:"militia", hero:"leejeongam", boss:"egg", music:2, ch:ch("gate1","archers"),
      synopsis:"숲에 숨어 기어 오는 적. 얼굴 없는 달걀귀신은 붙어서 싸워야 해요.",
      note:["1592년 8월 28일부터 9월 2일까지 초토사 이정암이 의병을 이끌고 연안성을 지켜 냈다."],
      pre:[["title","4장 · 연안성"],["nar","숲이 짙은 연안성. 풀숲 사이로 무언가 낮게 기어 온다."],
@@ -863,32 +863,32 @@ Object.assign(SPEAK, {ansi:"양만춘", parkseo:"박서", kimyunhu:"김윤후", 
           ["old","총통이 처음 왔소. 다만 기어 오는 놈에겐 범위 피해가 반만 드오. 의병으로 길을 막으시오."]],
      events:{10:{lines:[["nar","흰 옷자락, 그런데 얼굴이 없다. 달걀귀신이다."],["leejeongam","멀리서 쏘면 반도 안 드오! 의병들, 붙어서 싸우시오!"]]}},
      post:[["leejeongam","고을을 지켜 냈소."],["old","남강 가 진주성이 위태롭소. 서두릅시다."]]},
-    Object.assign({}, O[4], {title:"5장 · 진주성", map:16, tags:"남강 · 다리 두 곳 · 강가 석성", cm:1.4, mul:1.0 /* v10 S7b 봇 */, hardHp:0.49 /* v10 S7b: 이전×0.82 */ /* 새 지도(어려움은 두 다리 두 갈래). 어려움은 전에도 보통 봇이 짐 — 0.3에서도 7물결 패배라 갈래 구조 문제, 사람 시험으로 다시 */, towers:["cannon","archer","caltrop","barracks"], unit:"spear", hero:"kimsimin", music:4, ch:ch("gate1","nohero"),
+    Object.assign({}, O[4], {title:"5장 · 진주성", map:16, tags:"남강 · 다리 두 곳 · 강가 석성", cm:1.4, mul:0.72, hardLv:2, lateHp:1.65 /* v10 뒷장 계단식: 보통 봇 16/36(44%), 서툰 봇 0/6 */ /* v10 S7b 봇 */, hardHp:0.49 /* v10 S7b: 이전×0.82 */ /* 새 지도(어려움은 두 다리 두 갈래). 어려움은 전에도 보통 봇이 짐 — 0.3에서도 7물결 패배라 갈래 구조 문제, 사람 시험으로 다시 */, towers:["cannon","archer","caltrop","barracks"], unit:"spear", hero:"kimsimin", music:4, ch:ch("gate1","nohero"),
      pre:[["title","5장 · 진주성"],["nar","남강이 휘감아 도는 벼랑 위 진주성. 성문 위 누각에서 강물이 내려다보인다."],
           ["kimsimin","군사와 백성이 한마음이면 성은 무너지지 않소."],
           ["old","벼랑에 세운 망루는 더 멀리 쏘오. 강 위 나루에도 망루 하나를 세울 수 있소."],
           ["lord","남강 밑 이무기여, 깨어나라! 이 성을 삼켜라!"]],
      post:[["nar","이무기가 쓰러지자 남강의 물빛이 다시 맑아졌다."],["old","검은 안개가 한강 가 행주산성으로 모이오."]]}),
-    Object.assign({}, O[1], {title:"6장 · 행주산성", map:13, tags:"긴 산비탈 · 지그재그 길 · 산마루 성", cm:1.55, mul:1.38 /* v10 S7b 봇 */, hardHp:0.59 /* v10 S7b: 이전×0.82 */, towers:["rocket","archer","cannon","barracks"], unit:"sword", hero:"gwon", boss:"jeoseung", music:1, ch:ch("archers","gate1"),
+    Object.assign({}, O[1], {title:"6장 · 행주산성", map:13, tags:"긴 산비탈 · 지그재그 길 · 산마루 성", cm:1.55, mul:1.19, hardLv:2, lateHp:1.6 /* v10 뒷장 계단식: 보통 봇 14/36(39%) */ /* v10 S7b 봇 */, hardHp:0.59 /* v10 S7b: 이전×0.82 */, towers:["rocket","archer","cannon","barracks"], unit:"sword", hero:"gwon", boss:"jeoseung", music:1, ch:ch("archers","gate1"),
      events:{10:{lines:[["nar","검은 갓에 명부를 든 그림자가 산마루에 섰다. 홀린 저승사자다."],["gwon","쓰러진 놈을 다시 일으키오! 신기전과 화살비로 한꺼번에 쓸어 버리시오."]]}},
      pre:[["title","6장 · 행주산성"],["nar","한강 가 산마루의 행주산성. 큰 싸움을 이겨 낸 이 성에 도깨비불이 모여든다."],
           ["yeon","늦지 않았네요! 화약을 다루는 연화예요. 신기전 화차를 끌고 왔어요."],
           ["gwon","이 성은 한 번 지켜 낸 성이오. 다시 지켜 냅시다."]],
      post:[["gwon","명부가 찢어졌소. 쓰러진 자들은 이제 편히 쉬겠지."],["old","두억시니가 남한산성을 사방에서 에워싸려 하오."]]}),
-    Object.assign({}, O[5], {title:"7장 · 남한산성", special:false, cm:1.5, mul:.76 /* v10 가운데 성: 보통 봇 W5/8(37·20·70·33·33·73), 1.3은 6판 전패 */, hardHp:0.7 /* v10: 0.35는 어려움 4판 전승, 0.6은 2/5 */, towers:["archer","crossbow","catapult","cannon","caltrop","rocket","musket","barracks"], unit:"spear", hero:"yeon", boss:"cheonyeo",
+    Object.assign({}, O[5], {title:"7장 · 남한산성", special:false, cm:1.5, mul:0.70, hardLv:3, lateHp:1.7 /* v10 뒷장 계단식: 보통 봇 11/36(31%), 서툰 봇 0/6 */ /* v10 가운데 성: 보통 봇 W5/8(37·20·70·33·33·73), 1.3은 6판 전패 */, hardHp:0.7 /* v10: 0.35는 어려움 4판 전승, 0.6은 2/5 */, towers:["archer","crossbow","catapult","cannon","caltrop","rocket","musket","barracks"], unit:"spear", hero:"yeon", boss:"cheonyeo",
      events:{10:{lines:[["nar","눈보라 속에서 흰 소복의 그림자가 떠오른다. 처녀귀신의 울음이 성벽을 울린다."],["yeon","울음에 망루가 얼어요! 봉인 부적으로 끊을게요. 다른 문으로도 사라지니 조심해요!"]]}},
      pre:[["title","7장 · 남한산성"],["nar","산마루를 빙 두른 남한산성. 네 대문 밖으로 도깨비불이 모여든다."],
           ["yeon","문마다 힘이 따로예요. 하나라도 부서지면 그리로 성 안까지 들어와요."],
           ["old","성벽 위 망루는 더 멀리 쏘오. 물결 사이에는 엽전으로 문을 고칠 수 있소."]],
      post:[["yeon","네 문을 모두 지켜 냈어요!"],["old","남은 기운이 수원 화성 수문으로 흘러가오."]]}),
-    Object.assign({}, O[2], {title:"8장 · 수원 화성", place:"수원 화성 화홍문", map:18, tags:"큰 성곽 고리 · 장안문·팔달문 · 화홍문 수문", cm:1.75, mul:.95 /* v10 가운데 성: 보통 봇 W5/8, 1.3은 6판 전패. 옛 메모: 새 지도(문 3·화홍문 물길): 1.98은 3물결에 장안문·수문이 무너짐. 1.3은 L@3·13·27 */, hardHp:0.85 /* v10: 어려움 1/5 */, towers:["archer","crossbow","catapult","cannon","caltrop","rocket","musket","barracks"], unit:"spear", hero:"jeongyakyong", boss:"mul", music:2, ch:ch("nohero","noup"),
+    Object.assign({}, O[2], {title:"8장 · 수원 화성", place:"수원 화성 화홍문", map:18, tags:"큰 성곽 고리 · 장안문·팔달문 · 화홍문 수문", cm:1.75, mul:0.88, hardLv:3, lateHp:1.9 /* v10 뒷장 계단식: 보통 봇 9/36(25%) */ /* v10 가운데 성: 보통 봇 W5/8, 1.3은 6판 전패. 옛 메모: 새 지도(문 3·화홍문 물길): 1.98은 3물결에 장안문·수문이 무너짐. 1.3은 L@3·13·27 */, hardHp:0.85 /* v10: 어려움 1/5 */, towers:["archer","crossbow","catapult","cannon","caltrop","rocket","musket","barracks"], unit:"spear", hero:"jeongyakyong", boss:"mul", music:2, ch:ch("nohero","noup"),
      note:O[2].note.concat(["정약용은 거중기를 만들어 무거운 돌을 쉽게 들어 올렸다."]),
      pre:[["title","8장 · 수원 화성"],["nar","개울이 성 안으로 흘러드는 북쪽 수문, 화홍문. 수문 위로 검은 안개가 깔린다."],
           ["jeongyakyong","돌 하나하나를 거중기로 올려 쌓은 성이오. 무너지면 다시 들어 올리면 되오."],
           ["old","개울이 길을 네 번 가로지르오. 물가에 병영을 두면 병사가 물로 끌려가오."]],
      post:[["jeongyakyong","성도 사람도 다치지 않았소."],["old","마지막 남은 기운이 강화도 정족산성으로 숨었소. 밤길이오."]]}),
-    {title:"9장 · 정족산성", place:"정족산성", map:19, tags:"밤 산성 고리 · 문 셋 · 매복 · 날짐승", waves:W, cm:1.9, mul:1.3 /* v10 가운데 성: 보통 봇 W4/8(46·73·38·27), 2.5는 6판 전패. 옛 메모: 새 지도(가운데 산성·문 3, 보통은 동문 한 갈래): 2.3은 73~87%, 2.75는 옛 길에서 3물결 패배 */, hardHp:0.75 /* v10: 0.7은 어려움 2/5 */, towers:["musket","cannon","archer","barracks"], unit:"spear", hero:"yanghunsu", boss:"gangcheol", music:3, ch:ch("gate1","nohero"),
-     synopsis:"어두운 밤길. 하늘을 나는 강철이가 망루를 태워요. 어려움 모드는 두 갈래 길.",
+    {title:"9장 · 정족산성", place:"정족산성", map:19, tags:"밤 산성 고리 · 문 셋 · 매복 · 날짐승", waves:W, cm:1.9, mul:1.0, hardLv:3, lateHp:1.88 /* v10 뒷장 계단식: lateHp 1.85는 9/36(25%), 1.92는 5/36(14%) → 그 사이. 서툰 봇 0/6 */ /* v10 가운데 성: 보통 봇 W4/8(46·73·38·27), 2.5는 6판 전패. 옛 메모: 새 지도(가운데 산성·문 3, 보통은 동문 한 갈래): 2.3은 73~87%, 2.75는 옛 길에서 3물결 패배 */, hardHp:0.75 /* v10: 0.7은 어려움 2/5 */, towers:["musket","cannon","archer","barracks"], unit:"spear", hero:"yanghunsu", boss:"gangcheol", music:3, ch:ch("gate1","nohero"),
+     synopsis:"어두운 밤길. 하늘을 나는 강철이가 망루를 태워요.",
      note:["1866년 병인양요 때 양헌수가 밤에 강화해협을 몰래 건너 정족산성에 매복했다가 프랑스군을 물리쳤다.", "이 뒤 프랑스 함대는 강화도에서 물러났다."],
      pre:[["title","9장 · 정족산성"],["nar","달도 없는 밤, 정족산성. 숲 그림자 속으로 무언가 날아든다."],
           ["yanghunsu","어둠은 숨는 쪽의 편이오. 매복했다가 한꺼번에 칩시다."],
@@ -923,11 +923,11 @@ const FORT_SPECS = {
   2:{name:"귀주 눈 벌판", seed:223, theme:"ridge", ground:"#DCE5E9", decor:.12, deco:["snowpine","snowpine","snowrock"], wall:"brick", dusk:true, cols:19, rows:21, shape:"rect", cw:7, ch:6, gates:["n","e"], river:{axis:"v", at:16}, hills:4, cliffs:2, dirW:{n:3, e:3, w:1, s:1}, tags:"눈 벌판 · 벽돌 성 · 북문·동문"},
   3:{name:"처인 흙성 들", seed:227, theme:"meadow", ground:"#6E9A4A", decor:.1, deco:["bush","hay","tree"], wall:"earth", cols:17, rows:17, shape:"small", gates:["n","w"], hills:2, dirW:{n:2, w:2, e:1, s:1}, tags:"작은 흙성 · 들판 · 사방에서 짧게"},
   4:{name:"연안 숲", seed:229, theme:"forest", ground:"#4F7E40", decor:.24, deco:["tree","tree","bush","pine"], wall:"stone", cols:21, rows:21, shape:"rect", gates:["n","w"], hills:2, dirW:{n:3, w:3, e:1, s:1}, tags:"짙은 숲 · 네모 성 · 숲에 숨은 적"},
-  5:{name:"진주 남강", seed:233, theme:"riverbank", ground:"#7D8C4E", decor:.1, deco:["maple","maple","rock","reed"], wall:"riverstone", riverOut:true, cols:19, rows:21, shape:"half", oy:2, gates:["n","w","s"], river:{axis:"h", at:16, bridges:[3, 15]}, cliffs:3, dirW:{n:3, w:2, e:2, s:2}, tags:"남강 · 다리 · 강가 반달 성 · 문 셋"},
-  6:{name:"행주 산비탈", seed:239, theme:"forest", ground:"#5B8A47", decor:.13, deco:["tree","pine"], wall:"stone", cols:19, rows:23, shape:"ridge", gates:["n","s"], waterBelow:8, hills:6, cliffs:5, dirW:{n:3, w:2, e:2, s:1}, tags:"산비탈 · 언덕·벼랑 · 산마루 성"},
-  7:{name:"남한산성 능선", seed:241, theme:"forest", ground:"#587F45", decor:.14, deco:["pine","rock","tree"], wall:"stone", cols:21, rows:21, shape:"rect", gates:["n","s","w","e"], gateNames:["북문 전승문","남문 지화문","서문 우익문","동문 좌익문"], hills:4, cliffs:2, dirW:{n:1, s:1, w:1, e:1}, tags:"사방 포위 · 네 대문 · 행궁"},
-  8:{name:"화성 수원천", seed:251, theme:"valley", ground:"#5E8447", decor:.1, deco:["rock","reed","tree"], wall:"stone", riverOut:true, cols:21, rows:21, shape:"long", gates:["n","e","w"], gateNames:["장안문","팔달문","화서문"], river:{axis:"v", at:6, from:-1, to:6}, hills:3, dirW:{n:3, e:2, w:2, s:1}, tags:"길쭉한 큰 성 · 수원천 · 문 셋"},
-  9:{name:"정족산 밤 능선", seed:257, theme:"forest", ground:"#3E5E3A", decor:.14, deco:["tree","pine","rock"], wall:"stone", dusk:true, night:true, cols:19, rows:21, shape:"ridge", cw:7, ch:6, gates:["e","w","s"], gateNames:["동문","서문","남문"], ambush:9, hills:3, cliffs:2, dirW:{e:3, w:2, s:2, n:1}, tags:"밤 산성 · 덤불 매복 · 문 셋"}
+  5:{name:"진주 남강", seed:233, theme:"riverbank", ground:"#7D8C4E", decor:.1, deco:["maple","maple","rock","reed"], wall:"riverstone", riverOut:true, cols:19, rows:21, shape:"half", oy:2, gates:["n","w","s"], river:{axis:"h", at:16, bridges:[3, 15]}, cliffs:3, dirW:{n:3, w:2, e:2, s:2}, tags:"남강 · 다리 · 강가 반달 성 · 거세짐"},
+  6:{name:"행주 산비탈", seed:239, theme:"forest", ground:"#5B8A47", decor:.13, deco:["tree","pine"], wall:"stone", cols:19, rows:23, shape:"ridge", gates:["n","s"], waterBelow:8, hills:6, cliffs:5, dirW:{n:3, w:2, e:2, s:1}, tags:"산비탈 · 산마루 성 · 결사 항전"},
+  7:{name:"남한산성 능선", seed:241, theme:"forest", ground:"#587F45", decor:.14, deco:["pine","rock","tree"], wall:"stone", cols:21, rows:21, shape:"rect", gates:["n","s","w","e"], gateNames:["북문 전승문","남문 지화문","서문 우익문","동문 좌익문"], hills:4, cliffs:2, dirW:{n:1, s:1, w:1, e:1}, tags:"사방 포위 · 네 대문 · 험난함"},
+  8:{name:"화성 수원천", seed:251, theme:"valley", ground:"#5E8447", decor:.1, deco:["rock","reed","tree"], wall:"stone", riverOut:true, cols:21, rows:21, shape:"long", gates:["n","e","w"], gateNames:["장안문","팔달문","화서문"], river:{axis:"v", at:6, from:-1, to:6}, hills:3, dirW:{n:3, e:2, w:2, s:1}, tags:"길쭉한 큰 성 · 수원천 · 더 험난함"},
+  9:{name:"정족산 밤 능선", seed:257, theme:"forest", ground:"#3E5E3A", decor:.14, deco:["tree","pine","rock"], wall:"stone", dusk:true, night:true, cols:19, rows:21, shape:"ridge", cw:7, ch:6, gates:["e","w","s"], gateNames:["동문","서문","남문"], ambush:9, hills:3, cliffs:2, dirW:{e:3, w:2, s:2, n:1}, tags:"밤 산성 · 덤불 매복 · 최후의 산성"}
 };
 Object.keys(FORT_SPECS).forEach(k => { const sp = FORT_SPECS[k], st = STAGES[+k]; if (!st) return; MAPS.push(makeFortMap(Object.assign({chap:+k}, sp))); st.map = MAPS.length - 1; st.tags = sp.tags; }); // 적 기본 레벨: 서장·1장 1, 2장 2 … (10장 재구성 때 장마다 다시 정함)
 // v10 서장(요청 6): 상태를 보고 넘어가는 단계. done(s) = 해야 넘어감, hl() = 반짝일 칸, gold() = 그 단계에 필요한 만큼 채워 주는 엽전(서장만),
@@ -948,7 +948,7 @@ const TUT = [
   {say:"병영도 강화하시오. 훈련된 병영은 정예 장병을 만드오.", act:["upgrade","barracks"], need:"병영 강화", hl:() => tutAt("barracks"), gold:() => { const t = tutT("barracks")[0]; return t ? upCost(t) : 0; }, done:() => tutT("barracks").some(t => t.lvl >= 1)},
   {say:"정예 장병을 하나 사시오. 체력과 힘이 더 세오.", act:["buyu"], need:"정예 장병 사기", hl:() => tutAt("barracks"), gold:() => UNITS.spear.cost, tick:s => tutFreeSlot(s, false), at:() => R.buyN || 0, done:s => (R.buyN || 0) > s.at0},
   {say:"성 안에 마굿간을 지으시오. 시간이 지나면 말이 생기오.", act:["build","stable"], need:"마굿간 짓기", hl:() => tutCells("stable", 4), gold:() => TT.stable.cost, done:() => tutT("stable").length > 0},
-  {say:"말이 생겼소! 병영에서 기마병을 사시오. 말 수만큼만 살 수 있소.", act:["buyu","cavalry"], need:"기마병 사기", hl:() => tutAt("barracks"), enter:() => { if ((R.horses || 0) < 1){ R.horses = 1; const s = tutT("stable")[0]; if (s) addText(s.x + .5, s.y - .2, "말 +1", "#E8C48A", 1.4); } }, gold:() => UNITS.cavalry.cost, tick:s => { if ((R.horses || 0) < 1 && hasStable()) R.horses = 1; tutFreeSlot(s, true); }, done:() => R.lastBuy === "cavalry"},
+  {say:"말이 생겼소! 병영에서 기마병을 사시오. 말 수만큼만 살 수 있소. 말은 길에선 빠르나 산에선 느리오.", act:["buyu","cavalry"], need:"기마병 사기", hl:() => tutAt("barracks"), enter:() => { if ((R.horses || 0) < 1){ R.horses = 1; const s = tutT("stable")[0]; if (s) addText(s.x + .5, s.y - .2, "말 +1", "#E8C48A", 1.4); } }, gold:() => UNITS.cavalry.cost, tick:s => { if ((R.horses || 0) < 1 && hasStable()) R.horses = 1; tutFreeSlot(s, true); }, done:() => R.lastBuy === "cavalry"},
   {say:"의용병이 성 밖에서 합류했소! 공짜지만 약하고, 가끔 오오.", enter:() => fortVolunteers(true), time:5},
   {say:"왼쪽 아래 깃발 단추를 누른 뒤 지도를 누르시오. 장병이 그리로 가오.", at:() => R.flagN || 0, done:s => (R.flagN || 0) > s.at0},
   {say:"마지막 물결이오! 적의 진이 설 것이오. 물결을 부르시오.", btn:"go", enter:() => { (R.gates || []).forEach(g => { if (g.hp < g.max || g.broken){ g.hp = g.max; g.broken = false; addText(g.x + .5, g.y - .4, "박 노장이 고쳐 둠", "#9FE0A0", 1.6); } }); R.navDirty = true; }},
@@ -963,7 +963,7 @@ function tutFreeSlot(s, cav){ // 서장: 아직 살 일이 남았는데 모든 �
   let best = null, bt = null; bs.forEach(t => t.units.forEach(u => { if (u.base || (cav && u.k === "cavalry")) return; const sc = u.dead ? -1 : u.hp; if (!best || sc < (best.dead ? -1 : best.hp)){ best = u; bt = t; } })); // 이미 나온 장병 가운데 가장 약한 것부터 해산
   if (best){ soldierRelease(best); bt.units = bt.units.filter(u => u !== best); addText(best.x, best.y - .4, "해산(자리 비움)", "#E8D9A8", 1.4); renderPanel(true); return; }
   const q0 = R.tutQ0 || new Set(); // 대기열 취소는 이 단계에 들어서기 전에 주문한 것만(이 단계에서 산 장병은 취소하지 않는다)
-  for (const t of bs){ const q = t.q || []; for (let i = q.length - 1; i >= 0; i--){ const o = q[i]; if (!q0.has(o)) continue; q.splice(i, 1); R.gold += o.cost || 0; if (o.horse) R.horses = (R.horses || 0) + 1; addText(t.x + .5, t.y - .2, "훈련 취소(자리 비움)", "#E8D9A8", 1.4); renderPanel(true); return; } }
+  for (const t of bs){ const q = t.q || []; for (let i = q.length - 1; i >= 0; i--){ const o = q[i]; if (!q0.has(o)) continue; q.splice(i, 1); refundQ([o]); addText(t.x + .5, t.y - .2, "훈련 취소(자리 비움)", "#E8D9A8", 1.4); renderPanel(true); return; } }
 }
 // 서장: 할 일이 있는 단계에서는 그 단계가 시키는 행동만 허용(보충 엽전을 다른 데 쓰던 문제, 검수 v10 2차). 할 일이 없는 단계(물결·깃발 등)는 제 엽전으로 자유롭게
 const TUT_SPEND = ["build", "buyu", "rforge", "upgrade", "trepair", "repair"];
@@ -975,7 +975,7 @@ function tutRoom(s){ // 짓는 단계인데 지을 칸이 없으면(여분 건�
   if (!s.act || s.act[0] !== "build" || tutCells(s.act[1], 1).length) return;
   const keep = ["archer", "smithy", "stable"], c = R.towers.find(t => !t.virtual && zoneOf(t.x, t.y) === "in" && keep.indexOf(t.type) < 0 && (t.type !== "barracks" || tutT("barracks").length > 1));
   if (!c) return;
-  if (c.units) c.units.forEach(soldierRelease); if (c.q){ R.gold += c.q.reduce((a, o) => a + (o.cost || 0), 0); R.horses = (R.horses || 0) + c.q.filter(o => o.horse).length; }
+  if (c.units) c.units.forEach(soldierRelease); if (c.q) refundQ(c.q);
   R.gold += c.ruin ? 0 : Math.round(c.spent*(R.sellRate || .7)); R.towers = R.towers.filter(x => x !== c); R.grid[c.y][c.x] = R.base[c.y][c.x];
   addText(c.x + .5, c.y, "자리 비움(팔아 줌)", "#E8D9A8", 1.6);
 }
@@ -3075,15 +3075,15 @@ const BUILD = [ // 내 성: 건물마다 3단계. 효과는 작게(병법서와 
   {k:"forge",    name:"대장간",           unit:"망루 강화비 −{n}%",            step:5,  cost:[100,200,360]},
   {k:"market",   name:"장터 열기",        unit:"시간마다 옥 {n}개",             step:2,  cost:[80,180,320], rate:2},
   {k:"beacon",   name:"봉수대",           unit:"시작 엽전 +{n}",               step:10, cost:[90,180,320], need:{stars:4}},
-  {k:"school",   name:"서당",             unit:"옥 보상 +{n}%",                step:3,  cost:[120,240,400], need:{hard:2}},
-  {k:"pavilion", name:"연못 정자",        unit:"시간마다 옥 {n}개",             step:1,  cost:[150,300,500], rate:1, need:{hard:4}}
+  {k:"school",   name:"서당",             unit:"옥 보상 +{n}%",                step:3,  cost:[120,240,400], need:{stars:15}},
+  {k:"pavilion", name:"연못 정자",        unit:"시간마다 옥 {n}개",             step:1,  cost:[150,300,500], rate:1, need:{stars:30}}
 ];
 const CASTLE_MAXH = 12; // 꺼 둔 동안 보상은 최대 12시간분
 const castleLv = k => (M.castle.b[k] || 0);
 const castleDone = () => BUILD.filter(b => castleLv(b.k) > 0).length;
 const castleRate = () => BUILD.reduce((a,b) => a + (b.rate ? b.rate*castleLv(b.k) : 0), 0); // 옥/시간
 function castleFx(){ const L = castleLv; return {sell:.7 + .05*L("wall"), heroHp:1 + .05*L("gate"), lives:L("well"), up:1 - .05*L("forge"), gold:10*L("beacon"), jade:1 + .03*L("school")}; }
-function castleNeed(b){ const n = b.need; if (!n) return ""; if (n.stars && starsTotal() < n.stars) return "별 "+n.stars+"개 필요"; if (n.hard && hardTotal() < n.hard) return "어려움 별 "+n.hard+"개 필요"; return ""; }
+function castleNeed(b){ const n = b.need; if (!n) return ""; if (n.stars && starsTotal() < n.stars) return "별 "+n.stars+"개 필요"; return ""; }
 // 꺼 둔 동안 쌓인 옥 = 대기 옥(acc, 강화 때 정산한 소수 포함) + 기준 시각(last) 뒤로 지금 빠르기로 쌓인 양(최대 12시간분).
 // 시계가 기준 시각보다 과거면(되돌리면) 새로 쌓이지 않고 기준 시각도 바꾸지 않는다. 기준 시각은 처음 생산을 시작할 때만 0에서 정해진다.
 function castleRaw(){ const r = castleRate(), last = M.castle.last, now = Date.now(), acc = M.castle.acc || 0;
@@ -3357,11 +3357,11 @@ function showCastle(msg){
     : '<p class="center hint">장터나 연못 정자를 고치면 꺼 둔 동안에도 옥이 쌓여요.</p>';
   showOverlay('<h2>내 성</h2>'
     + (ART.ok("k_title") ? '<div class="cbanner"><img src="'+ART.url("k_title")+'" alt=""><span>고친 건물 '+done+'/'+BUILD.length+' · 단계 '+lv+'/'+(BUILD.length*3)+'</span></div>' : '<p class="center">고친 건물 '+done+'/'+BUILD.length+' · 단계 '+lv+'/'+(BUILD.length*3)+'</p>')
-    + '<div class="wallet"><span>'+jadeTag(M.jade)+' 옥</span><span><span class="stars">★</span> 별 '+starsTotal()+'</span><span>어려움 별 '+hardTotal()+'</span></div>'
+    + '<div class="wallet"><span>'+jadeTag(M.jade)+' 옥</span><span><span class="stars">★</span> 별 '+starsTotal()+'</span></div>'
     + collect + (msg ? '<p class="center" style="color:var(--gold);font-size:18px">'+msg+'</p>' : '')
     + '<button class="btn primary" data-act="forge">대장간 · 무기 레벨 올리기 (쇠 '+(M.iron || 0)+')</button>'
     + '<div class="bgrid">'+cards+'</div>'
-    + '<p class="foot">건물 효과는 다음 판부터 들어가요. 서당·연못 정자는 어려움 모드 별이 있어야 고칠 수 있어요.</p>'
+    + '<p class="foot">건물 효과는 다음 판부터 들어가요. 서당은 별 15개, 연못 정자는 별 30개를 모으면 고칠 수 있어요.</p>'
     + '<button class="btn" data-act="menu">처음 화면</button>', "castle");
 }
 function missionsHTML(){
@@ -3729,6 +3729,7 @@ const TOWER_HP = {archer:90, cannon:120, rocket:105, caltrop:75, barracks:135, c
 const towerMaxHp = (k, lvl) => Math.round((TOWER_HP[k] || 60)*(1 + .3*(lvl || 0))*forgeMul("wall"));
 const towerRepairCost = t => t.hp >= t.maxHp ? 0 : Math.max(5, Math.ceil(TT[t.type].cost*.5*(1 + .5*t.lvl)*(1 - t.hp/t.maxHp)));
 // 병사 종류(병영마다 하나). 장 재구성 때 장별로 STAGES[i].unit 으로 고른다
+const UNIT_TERRAIN_TIP = {militia:"숲·산에서 빨라요", spear:"무거워 산비탈에서 느려요", archer:"숲·덤불에서 조금 빨라요", cavalry:"말은 숲·산에서 아주 느려요, 길·들판에서 빨라요"};
 const UNITS = {
   spear:  {name:"창병", hp:70, dmg:7,   rate:1.1, n:2, img:"u_spear",   forge:"spear", vsArmor:1.6, tip:"튼튼하고 갑옷 두른 적에 강해요"},
   sword:  {name:"칼병", hp:50, dmg:6,   rate:2.0, n:2, img:"u_sword",   forge:"sword", vsArmor:1,   tip:"칼을 빠르게 휘둘러요"},
@@ -3737,31 +3738,49 @@ const UNITS = {
   cavalry:{name:"기마병", hp:85, dmg:8, rate:1.2, n:1, img:"u_cavalry", forge:"spear", vsArmor:1.2, tip:"말을 타고 빠르게 돌격해요 · 첫 타격 2배 · 말이 있어야 사요", spd:2, charge:2, horse:true}
 };
 // v10 병영: 장병은 엽전으로 산다(값·훈련 시간이 종류마다 다름). 기본 장병 1명만 공짜(쓰러지면 15초 뒤 다시). 강화한 병영에서 새로 나오는 장병은 정예(+35%)·최정예(+70%)
-Object.assign(UNITS.militia, {cost:10, time:3}); Object.assign(UNITS.sword, {cost:20, time:6}); Object.assign(UNITS.spear, {cost:25, time:8}); Object.assign(UNITS.archer, {cost:30, time:9}); Object.assign(UNITS.cavalry, {cost:35, time:10});
+Object.assign(UNITS.militia, {cost:10, time:3}); Object.assign(UNITS.sword, {cost:20, time:6}); Object.assign(UNITS.spear, {cost:25, time:8}); Object.assign(UNITS.archer, {cost:30, time:9}); Object.assign(UNITS.cavalry, {cost:35, time:10, jade:3});
+const RANK_JADE = [0, 1, 2]; // v10 요청: 고급 장병은 옥도 든다(기마병 옥 3, 정예 +1, 최정예 +2). 서장·시험 판·봇(R.noJade)은 옥 없이
+const unitJade = (t, k) => (!R || R.st.tutorial || R.test || R.noJade) ? 0 : ((UNITS[k] && UNITS[k].jade) || 0) + (RANK_JADE[(t && t.lvl) || 0] || 0);
+function refundQ(list){ // 아직 안 나온 장병: 엽전·말을 돌려준다. 옥은 나오는 순간에 치르므로 돌려줄 옥이 없다(검수 v10b 1차)
+  (list || []).forEach(o => { R.gold += o.cost || 0; if (o.horse) R.horses = (R.horses || 0) + 1; });
+}
+const jadeReserved = () => { let j = 0; if (R) R.towers.forEach(o => (o.q || []).forEach(q => { j += q.jade || 0; })); return j; }; // 대기열에 예약된(아직 안 치른) 옥
+function payUnitJade(t, q0){ // 장병이 나오는 순간 옥을 치른다. true면 나와도 됨, false면 이번 틱은 기다리거나 취소됨
+  const jd = q0.jade || 0; if (!jd) return true;
+  if ((M.jade || 0) < jd){ t.q.shift(); refundQ([q0]); addText(t.x + .5, t.y - .2, "옥이 모자라 훈련 취소", "#FFB0A0", 1.6); if (R.sel && R.sel.x === t.x && R.sel.y === t.y) renderPanel(true); return false; }
+  if ((q0.retryT || 0) > 0) return false; // 저장 실패 뒤 2초 쉬고 다시(검수 v10b 2차)
+  M.jade -= jd;
+  if (!saveMeta()){ M.jade += jd; q0.fails = (q0.fails || 0) + 1; q0.retryT = 2; if (q0.fails >= 3){ t.q.shift(); refundQ([q0]); addText(t.x + .5, t.y - .2, "저장이 안 돼 훈련 취소(엽전 돌려줌)", "#FFB0A0", 1.8); if (R.sel && R.sel.x === t.x && R.sel.y === t.y) renderPanel(true); } else if (!q0.waitTold){ q0.waitTold = true; addText(t.x + .5, t.y - .2, "저장이 안 돼 기다려요", "#FFB0A0", 1.6); } return false; } // 저장 실패: 옥을 되돌리고 2초 뒤 다시, 세 번 실패하면 맨 앞 주문만 취소해 뒤 주문이 막히지 않게
+  Track.event("unit_jade", {k:q0.k, jade:jd}); return true;
+}
+for (const k in UNITS){ const tt = UNIT_TERRAIN_TIP[k]; if (tt) UNITS[k].tip += " · " + tt; } // 지형 한 줄(병영 판·장병 설명)
 const PAID = {hp:1.8, dmg:1.25, regen:.04}; // 산 장병은 다시 살아나지 않으니 더 튼튼하게, 싸우지 않을 때 천천히 회복(초당 최대 체력 4%)
 const UNIT_ORDER = ["militia","sword","spear","archer","cavalry"], RANK_NAME = ["", "정예 ", "최정예 "], RANK_COL = [null, "#9FD0FF", "#F4D06F"];
 const BAR_CAP = lvl => 3 + (lvl || 0), BAR_QMAX = 3, BASE_RT = 15;
 const unitStat = (t, kind) => { const U = UNITS[kind] || UNITS.spear, lv = t.lvl || 0;
   return {hp:U.hp*(1 + .35*lv)*forgeMul("armor"), dmg:U.dmg*(1 + .45*lv)*forgeMul(U.forge), rate:U.rate, n:U.n}; };
 const soldierStat = (t, u) => { const s = unitStat({lvl:u.rank != null ? u.rank : t.lvl}, u.k || t.unit); if (u.k){ s.hp *= PAID.hp; s.dmg *= PAID.dmg; } return s; }; // 장병마다 태어날 때 병영 단계(rank)로 고정
-function newSoldier(t, k, base){
+function newSoldier(t, k, base, rank){
   const used = t.units.map(u => u.i); let i = 0; while (used.indexOf(i) >= 0) i++;
   const a = i < 5 ? [0, -.42, .42, -.84, .84][i] : (Math.random() - .5);
-  const u = {t, i, k, rank:t.lvl || 0, base:!!base, ox:a, oy:Math.abs(a)*.3 + (UNITS[k] && UNITS[k].ranged ? .3 : 0), x:t.x + .5, y:t.y + .5, hp:1, max:1, cd:0, dead:false, rt:0, tg:null, face:1, walk:0};
+  const u = {t, i, k, rank:rank != null ? rank : (t.lvl || 0), base:!!base, ox:a, oy:Math.abs(a)*.3 + (UNITS[k] && UNITS[k].ranged ? .3 : 0), x:t.x + .5, y:t.y + .5, hp:1, max:1, cd:0, dead:false, rt:0, tg:null, face:1, walk:0};
   const s = soldierStat(t, u); u.hp = u.max = s.hp; t.units.push(u); return u;
 }
 function buyUnit(t, k){
   const U = UNITS[k]; if (!t || t.type !== "barracks" || t.virtual || t.ruin || !U || !U.cost) return false;
   if (!t.units) initBarracks(t); if (!t.q) t.q = [];
-  if (t.q.length >= BAR_QMAX || t.units.length + t.q.length >= BAR_CAP(t.lvl) || R.gold < U.cost) return false;
-  if (U.horse){ if (!hasStable() || (R.horses || 0) < 1) return false; R.horses--; } // 기마병은 말 1마리를 씁니다(죽으면 말도 잃음)
-  R.gold -= U.cost; t.q.push({k, left:U.time, cost:U.cost, horse:!!U.horse}); R.buyN = (R.buyN || 0) + 1; R.lastBuy = k; return true;
+  const jd = unitJade(t, k);
+  if (t.q.length >= BAR_QMAX || t.units.length + t.q.length >= BAR_CAP(t.lvl) || R.gold < U.cost || (jd && (M.jade || 0) < jadeReserved() + jd)) return false; // 옥은 예약만 하고 나올 때 치른다
+  if (U.horse){ if (!anyStable() || (R.horses || 0) < 1) return false; R.horses--; } // 기마병은 말 1마리를 씁니다(죽으면 말도 잃음)
+  R.gold -= U.cost; t.q.push({k, left:U.time, cost:U.cost, horse:!!U.horse, jade:jd, rank:t.lvl || 0}); R.buyN = (R.buyN || 0) + 1; R.lastBuy = k; return true;
 }
 // v10 S3: 마굿간·판 안 대장간
+const RUIN_LINE = {barracks:"병영이 무너져 장병이 안 나와요.", stable:"마굿간이 무너져 말이 안 생겨요(남은 말은 그대로).", smithy:"대장간이 무너져 강화를 못 해요."};
 const hasStable = () => !!(R && R.towers.some(t => t.type === "stable" && !t.ruin));
 const smithyOf = () => R && R.towers.find(t => t.type === "smithy" && !t.ruin);
 const horseCap = () => { const s = R && R.towers.find(t => t.type === "stable" && !t.ruin); return s ? STABLE.cap[s.lvl] : 0; };
-const unitList = () => UNIT_ORDER.filter(k => k !== "cavalry" || hasStable());
+const anyStable = () => !!(R && R.towers.some(t => t.type === "stable")); // 무너진 마굿간도: 말은 안 생기지만 남은 말로 기마병은 살 수 있다
+const unitList = () => UNIT_ORDER.filter(k => k !== "cavalry" || anyStable());
 function updateStable(t, dt){ // 시간이 지날 때마다 말이 생긴다(단계별 최대 수까지)
   const cap = STABLE.cap[t.lvl] || 3; if ((R.horses || 0) >= cap){ t.ht = 0; return; }
   t.ht = (t.ht || 0) + dt; const ev = STABLE.every[t.lvl] || 25;
@@ -3771,19 +3790,23 @@ function updateStable(t, dt){ // 시간이 지날 때마다 말이 생긴다(단
 function upLimit(t){ if (!R || !R.m || !R.m.fort || TT[t.type].noCap) return 2; const s = smithyOf(); return s ? Math.min(2, s.lvl + 1) : 0; }
 function smithyPanel(t){
   const cap = t.lvl + 1, rf = R.rforge || {};
-  const rows = FORGE.keys.map(k => { const lv = rf[k] || 0, c = RFORGE.cost(lv), full = lv >= cap;
+  const rows = rforgeKeys().map(k => { const lv = rf[k] || 0, c = RFORGE.cost(lv), full = lv >= cap;
     return '<button class="btn" style="min-height:54px;font-size:16px;line-height:1.2;padding:4px 2px" data-act="rforge" data-k="'+k+'"'+(full || R.gold < c || !tutOk("rforge", k) ? ' disabled' : '')+'>'+FORGE.name[k]+' '+lv+'단계<br><small style="font-size:13px">'+(full ? (cap < 3 ? '대장간 강화하면' : '최고') : '+10% · '+c+'엽전')+'</small></button>'; }).join("");
   return '<p style="font-size:15px;margin:6px 0 4px">이번 판 무기 강화(장이 끝나면 사라져요) · 망루는 '+(Math.min(2, t.lvl + 1) + 1)+'단계까지 강화돼요</p><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">'+rows+'</div>';
 }
+function rforgeKeys(){ /* 판 안 대장간: 그 장에서 쓰는 무기 계통만(화약은 화약 무기가 있는 장만, 활은 활 망루·활병이 있을 때) */
+  const tw = (R && R.st && R.st.towers) || [], ul = typeof unitList === "function" ? unitList() : [];
+  return FORGE.keys.filter(k => k === "powder" ? tw.some(x => x === "cannon" || x === "rocket" || x === "musket") : k === "bow" ? (tw.some(x => x === "archer" || x === "crossbow") || ul.indexOf("archer") >= 0) : true);
+}
 function rforgeUp(k){
-  const t = smithyOf(); if (!t || FORGE.keys.indexOf(k) < 0) return false; if (!R.rforge) R.rforge = {};
+  const t = smithyOf(); if (!t || rforgeKeys().indexOf(k) < 0) return false; if (!R.rforge) R.rforge = {};
   const lv = R.rforge[k] || 0, c = RFORGE.cost(lv); if (lv >= t.lvl + 1 || R.gold < c) return false;
   const before = k === "wall" ? R.towers.map(o => o.maxHp || 0) : null;
   R.gold -= c; R.rforge[k] = lv + 1;
   if (before) R.towers.forEach((o, i) => { if (!o.maxHp) return; const m1 = towerMaxHp(o.type, o.lvl); if (!o.ruin) o.hp = Math.min(m1, o.hp + (m1 - before[i])); o.maxHp = m1; }); // 성벽: 지금 건물 체력도 늘림
   return true;
 }
-function barSig(t){ return (t.units || []).map(u => u.dead ? 0 : 1).join("") + ":" + (t.q || []).map(o => Math.ceil(o.left)).join(",") + ":" + unitList().map(k => R.gold >= UNITS[k].cost ? 1 : 0).join("") + ":" + (R.horses || 0); }
+function barSig(t){ return (t.ruin ? "R" : "") + (M.jade || 0) + ":" + (t.units || []).map(u => u.dead ? 0 : 1).join("") + ":" + (t.q || []).map(o => Math.ceil(o.left)).join(",") + ":" + unitList().map(k => R.gold >= UNITS[k].cost ? 1 : 0).join("") + ":" + (R.horses || 0); }
 function barracksLine(t){
   const g = {}; (t.units || []).forEach(u => { if (u.dead && !u.base) return; const nm = RANK_NAME[u.rank | 0] + (UNITS[u.k || t.unit] || UNITS.spear).name; g[nm] = (g[nm] || 0) + 1; });
   const s = Object.keys(g).map(k => k + " " + g[k]).join(" · ");
@@ -3793,10 +3816,12 @@ function barracksBuy(t){
   if (!t.units) initBarracks(t); if (!t.q) t.q = [];
   const cap = BAR_CAP(t.lvl), n = t.units.length, full = n + t.q.length >= cap || t.q.length >= BAR_QMAX;
   const list = unitList(), five = list.length > 4;
-  const btn = k => { const U = UNITS[k], noHorse = U.horse && (R.horses || 0) < 1; return '<button class="btn" style="min-height:58px;font-size:'+(five ? 15 : 17)+'px;line-height:1.2;padding:4px 1px" data-act="buyu" data-k="'+k+'"'+(full || noHorse || R.gold < U.cost || !tutOk("buyu", k) ? ' disabled' : '')+'>'+U.name+'<br><small style="font-size:'+(five ? 11 : 13)+'px;white-space:nowrap">'+U.cost+'엽전'+(five ? '<br>' : ' ')+(U.horse ? '말 '+(R.horses || 0) : U.time+'초')+'</small></button>'; };
+  const btn = k => { const U = UNITS[k], noHorse = U.horse && (R.horses || 0) < 1, jd = unitJade(t, k), noJade = jd > 0 && (M.jade || 0) < jadeReserved() + jd; return '<button class="btn" style="min-height:58px;font-size:'+(five ? 15 : 17)+'px;line-height:1.2;padding:4px 1px" data-act="buyu" data-k="'+k+'"'+(t.ruin || full || noHorse || noJade || R.gold < U.cost || !tutOk("buyu", k) ? ' disabled' : '')+'>'+((t.lvl || 0) ? '<small style="font-size:12px;color:'+RANK_COL[Math.min(2, t.lvl)]+'">'+RANK_NAME[Math.min(2, t.lvl)].trim()+'</small><br>' : '')+U.name+'<br><small style="font-size:'+(five ? 11 : 13)+'px;white-space:nowrap">'+U.cost+'엽전'+(jd ? '·옥 '+jd : '')+(five ? '<br>' : ' ')+(U.horse ? '말 '+(R.horses || 0) : U.time+'초')+'</small></button>'; };
   const q = t.q.map((o, i) => { const U = UNITS[o.k], p = i ? 0 : Math.max(0, Math.min(1, 1 - o.left/U.time));
     return '<span style="display:inline-block;margin-right:8px">'+U.name+(i ? ' 대기' : ' '+Math.ceil(o.left)+'초')+'<span style="display:inline-block;width:46px;height:8px;margin-left:4px;border-radius:4px;background:rgba(0,0,0,.35);vertical-align:middle;overflow:hidden"><i style="display:block;height:100%;width:'+Math.round(p*100)+'%;background:#F4D06F"></i></span></span>'; }).join("");
-  return '<p style="font-size:16px;margin:6px 0 4px">장병 <b>'+n+'/'+cap+'</b>'+(t.q.length ? ' · 훈련 '+t.q.length+'/'+BAR_QMAX+' · ' : ' · 사면 차례로 나와요')+q+'</p>'
+  const jline = unitJade(t, "militia") > 0 || list.indexOf("cavalry") >= 0 ? '<p style="font-size:14px;margin:4px 0 0;color:#E8D9A8">정예 장병·기마병은 옥도 들어요 · 내 옥 '+(M.jade || 0)+'</p>' : '';
+  if (t.ruin) return '<p style="font-size:16px;margin:6px 0 4px;color:#FF9A8A">병영이 무너졌어요 · 고치면 다시 훈련해요</p>' + jline + '<div style="display:grid;grid-template-columns:repeat('+list.length+',1fr);gap:'+(five ? 4 : 6)+'px">' + list.map(btn).join("") + '</div>';
+  return jline + '<p style="font-size:16px;margin:6px 0 4px">장병 <b>'+n+'/'+cap+'</b>'+(t.q.length ? ' · 훈련 '+t.q.length+'/'+BAR_QMAX+' · ' : ' · 사면 차례로 나와요')+q+'</p>'
     + '<div style="display:grid;grid-template-columns:repeat('+list.length+',1fr);gap:'+(five ? 4 : 6)+'px">' + list.map(btn).join("") + '</div>';
 }
 function initBarracks(t){ // 집결점: 망루에서 가장 가까운 길 칸
@@ -3841,7 +3866,34 @@ function fortNext(o, gx, gy){ // 성 밖에서 (gx,gy)로 가는 다음 칸(걸�
   if (found){ let k = goal, guard = COLS*ROWS; while (prev[k] !== s0 && guard-- > 0) k = prev[k]; if (k !== goal){ const x = k % COLS; res = {x:x + .5, y:(k - x)/COLS + .5}; } else res = okGoal ? {x:gx, y:gy} : {x:ex + .5, y:ey + .5}; }
   o.nx = res; o.nxG = key; o.nxT = .4; return res;
 }
-function fortMove(o, gx, gy, spd, dt){ const d = dist(o.x, o.y, gx, gy); if (d > .04){ const v = Math.min(d, spd*dt); o.x += (gx - o.x)/d*v; o.y += (gy - o.y)/d*v; o.walk = (o.walk || 0) + dt*8; if (Math.abs(gx - o.x) > .02) o.face = gx >= o.x ? 1 : -1; } return d; }
+// 지형별 장병 이동 배율(칸 지형 × 비탈). 기마병은 길·풀에서 빠르고 숲·언덕·비탈·눈에서 크게 느림, 의병·의용병(산척)은 숲·산에서 빠름, 창병은 무거워 비탈에 약함, 활병은 덤불·숲에서 조금 빠름
+const UNIT_TERRAIN = {
+  def:     {road:1.05, grass:1, forest:.85, hill:.85, bush:.95, snow:.8,  inside:1, up:1.5, upMin:.55},
+  militia: {road:1,    grass:1, forest:1.25, hill:1.2, bush:1.1, snow:1,  inside:1, up:.8,  upMin:.75, tip:"숲·산에서 빨라요"},
+  sword:   {road:1.05, grass:1, forest:.85, hill:.85, bush:.95, snow:.8,  inside:1, up:1.5, upMin:.55},
+  spear:   {road:1.05, grass:1, forest:.8,  hill:.8,  bush:.9,  snow:.75, inside:1, up:2,   upMin:.5,  tip:"무거워 산비탈에서 느려요"},
+  archer:  {road:1.05, grass:1, forest:1.1, hill:.85, bush:1.1, snow:.8,  inside:1, up:1.5, upMin:.55, tip:"숲·덤불에서 조금 빨라요"},
+  cavalry: {road:1.3,  grass:1.1, forest:.6, hill:.45, bush:.8, snow:.6,  inside:1, up:3,   upMin:.35, tip:"길·들판에서 빠르고 숲·산에서 아주 느려요"},
+  hero:    {road:1.05, grass:1, forest:.9,  hill:.9,  bush:1,   snow:.85, inside:1, up:1.2, upMin:.6}
+};
+function cellTerr(X, Y){ // 칸 지형 이름
+  const G = R.base || R.grid; if (!G || !G[Y]) return "grass"; const v = G[Y][X];
+  if (v === 9 || v === 8) return "inside"; if (v === 1) return "road"; if (v === 5) return "hill"; if (v === 10) return "bush"; if (v === 2) return "forest";
+  const L = R.m.land; if (L && L.c){ const S = LAND_S, k = L.c[(Y*S + (S >> 1))*L.w + X*S + (S >> 1)]; if (k === 1) return "forest"; }
+  if (THEMES[R.m.theme] && THEMES[R.m.theme].snow) return "snow";
+  return "grass";
+}
+function unitKind(o){ if (o === R.hero) return "hero"; if (o.t && o.t.vol) return "militia"; return o.k || (o.t && o.t.unit) || "def"; }
+function unitTerrMul(o, gx, gy){
+  if (!R || !R.m || !R.m.fort) return 1;
+  const K = UNIT_TERRAIN[unitKind(o)] || UNIT_TERRAIN.def, X = Math.floor(o.x), Y = Math.floor(o.y);
+  if (X < 0 || Y < 0 || X >= COLS || Y >= ROWS) return 1;
+  let m = K[cellTerr(X, Y)] || 1;
+  if (R.m.hgt && R.m.cellM){ const d = dist(o.x, o.y, gx, gy) || 1, ux = (gx - o.x)/d, uy = (gy - o.y)/d, sl = (hAt(o.x + ux*.4, o.y + uy*.4) - hAt(o.x - ux*.4, o.y - uy*.4))/(.8*R.m.cellM);
+    m *= sl > 0 ? Math.max(K.upMin, 1 - K.up*sl) : Math.min(1.1, 1 - sl*.5); }
+  return m;
+}
+function fortMove(o, gx, gy, spd, dt){ const d = dist(o.x, o.y, gx, gy); if (d > .04){ spd *= unitTerrMul(o, gx, gy); o.tm = spd; const v = Math.min(d, spd*dt); o.x += (gx - o.x)/d*v; o.y += (gy - o.y)/d*v; o.walk = (o.walk || 0) + dt*8; if (Math.abs(gx - o.x) > .02) o.face = gx >= o.x ? 1 : -1; } return d; }
 function fortFoe(o, ax, ay, r, air, inside, keep, noKid){ // 깃발(ax,ay) r칸 안에서 나에게 가장 가까운 적. 지금 표적은 r+1 안이면 유지. noKid: 진을 치러 갈 때 진에서 갓 나온 적은 상대 안 함
   const ok = e => e && !e.dead && !(e.under > 0) && (air || !e.fly) && !!e.inside === !!inside && !(noKid && e.campKid);
   if (ok(keep) && dist(ax, ay, keep.x, keep.y) < r + 1 && R.enemies.indexOf(keep) >= 0) return keep; // 목록 확인은 지금 표적을 유지할 때만(검수 v10 1차 6)
@@ -4028,19 +4080,47 @@ function fortHeroAI(h, dt){ // 장수도 같은 방식(활 장수라 사거리 7
   else if (pl.camp){ const d = dist(h.x, h.y, pl.x, pl.y); if (d < 1.4){ gx = h.x; gy = h.y; } }
   const n = pl.inner || (gx === h.x && gy === h.y) ? {x:gx, y:gy} : fortNext(h, gx, gy); h.tx = n.x; h.ty = n.y;
 }
-function fortVolunteers(force){ // 의용병: 적 주 방향 반대쪽 범위 가장자리에서 공짜로 합류(성 안 회복 없음, 장이 끝나면 사라짐). force: 서장 가르치기
-  if (!R.m.fort || (R.st.tutorial && !force) || !R.bound || !R.gates || !R.gates.length) return;
-  const n = R.st.militia || 3, B = R.bound, opp = {n:"s", s:"n", w:"e", e:"w"}[R.nextDir || R.waveDir] || "s", cells = [];
+function fortVolunteers(force, gate){ // 의용병: 범위 가장자리에서 공짜로 합류(성 안 회복 없음, 장이 끝나면 사라짐). force: 서장 가르치기. gate: 위급한 문(그 문 쪽 가장자리에서 온다)
+  if (!R.m.fort || (R.st.tutorial && !force) || !R.bound || !R.gates || !R.gates.length) return false;
+  const n = R.st.militia || 3, B = R.bound, opp = gate ? gate.dir : ({n:"s", s:"n", w:"e", e:"w"}[R.nextDir || R.waveDir] || "s"), cells = [];
   for (let i = B.x0; i <= B.x1; i++) for (let j = B.y0; j <= B.y1; j++){ const on = opp === "n" ? j === B.y0 : opp === "s" ? j === B.y1 : opp === "w" ? i === B.x0 : i === B.x1; if (on && fortWalk(i, j)) cells.push([i, j]); }
-  if (!cells.length) return; const mx = (B.x0 + B.x1)/2, my = (B.y0 + B.y1)/2; cells.sort((a, b) => dist(a[0], a[1], mx, my) - dist(b[0], b[1], mx, my));
+  if (!cells.length) return false; const mx = gate ? gate.x + .5 : (B.x0 + B.x1)/2, my = gate ? gate.y + .5 : (B.y0 + B.y1)/2; cells.sort((a, b) => dist(a[0], a[1], mx, my) - dist(b[0], b[1], mx, my));
   const c0 = cells[0], vt = {type:"barracks", unit:"militia", lvl:0, x:c0[0], y:c0[1], virtual:true, vol:true, rally:{x:c0[0] + .5, y:c0[1] + .5}, units:[], q:[]};
   for (let i = 0; i < n; i++){ const u = newSoldier(vt, "militia", false); u.k = null; u.fs = "out"; const s = soldierStat(vt, u); u.hp = u.max = s.hp; }
   if (!R.volB) R.volB = []; R.volB.push(vt);
-  showBanner("의용병이 합류했어요!", n + "명이 성 밖에서 함께 싸워요"); burst(c0[0] + .5, c0[1] + .5, 14, "#F4D06F", 1.6, .6, .07);
+  if (gate) showBanner("의용병이 위급함을 듣고 달려왔어요!", (gate.name || "문").split(" ")[0] + " 쪽 성 밖에서 " + n + "명이 함께 싸워요");
+  else showBanner("의용병이 합류했어요!", n + "명이 성 밖에서 함께 싸워요");
+  burst(c0[0] + .5, c0[1] + .5, 14, "#F4D06F", 1.6, .6, .07); return true;
+}
+// 불리함 점수: 행궁이 깎일수록, 문이 부서질수록, 성 안에 적이 들수록, 적이 우리 장병보다 훨씬 많을수록, 망루가 무너질수록 커진다
+const VOL = {judge:10, chance:.4, cd:60, max:3, need:2};
+function volDanger(){
+  let sc = 3*(1 - R.lives/Math.max(1, R.maxLives));
+  sc += 1.2*(R.gates || []).filter(g => g.broken).length;
+  let foes = 0, inside = 0; for (const e of R.enemies){ if (e.dead) continue; if (e.inside) inside++; else if ((R.gates || []).some(g => dist(e.x, e.y, g.x + .5, g.y + .5) < 3.5)) foes++; } // 문 곁에 몰린 적만 센다(멀리 있는 적은 아직 위급하지 않음)
+  sc += Math.min(3, inside*.5);
+  let ours = 0; R.towers.forEach(t => { if (t.units && !t.ruin) t.units.forEach(u => { if (!u.dead) ours++; }); }); (R.volB || []).forEach(vt => ours += vt.units.length);
+  sc += Math.min(2, Math.max(0, foes/(ours + 1) - 3)*.3);
+  sc += Math.min(1.6, .4*R.towers.filter(t => t.ruin && !t.virtual).length);
+  return sc;
+}
+function volGate(){ // 가장 위급한 문: 부서졌거나 체력 비율이 낮고 곁에 적이 많은 문
+  let best = null, bs = -Infinity;
+  (R.gates || []).forEach(g => { let n = 0; for (const e of R.enemies){ if (!e.dead && !e.fly && dist(e.x, e.y, g.x + .5, g.y + .5) < 4) n++; } const s = n*1.5 + (g.broken ? 6 : 4*(1 - g.hp/Math.max(1, g.max))); if (s > bs){ bs = s; best = g; } });
+  return best;
+}
+function volTick(dt){
+  if (!R.m.fort || R.st.tutorial || R.over || !R.waveActive) return;
+  if (R.volCd > 0){ R.volCd -= dt; return; }
+  const max = R.st.volMax || (VOL.max + (R.s >= 5 ? 1 : 0)); if ((R.volN || 0) >= max) return;
+  R.volJ = (R.volJ || 0) + dt; if (R.volJ < VOL.judge) return; R.volJ = 0;
+  if (volDanger() < VOL.need || Math.random() >= VOL.chance) return;
+  if (fortVolunteers(false, volGate())){ R.volN = (R.volN || 0) + 1; R.volCd = R.st.volCd || VOL.cd; }
 }
 function updateFortExtra(dt){
   ufxTick(dt);
   if (!R.m || !R.m.fort) return;
+  volTick(dt);
   (R.gates || []).forEach(g => { if (g.openT > 0) g.openT -= dt; if (g.waitT > 0) g.waitT -= dt; });
   if (R.volB && R.volB.length){ R.volB.forEach(vt => { updateBarracks(vt, dt); vt.units.forEach(u => { if (u.dead) soldierRelease(u); }); vt.units = vt.units.filter(u => !u.dead); }); R.volB = R.volB.filter(vt => vt.units.length); }
 }
@@ -4074,15 +4154,15 @@ function updateBarracks(t, dt){
     if (!t.q) t.q = [];
     if (t.units.some(u => u.dead && !u.base)) t.units = t.units.filter(u => !u.dead || u.base);
     const q0 = t.q[0];
-    if (q0){ if (q0.left > 0) q0.left = Math.max(0, q0.left - dt);
-      if (q0.left <= 0 && t.units.length < BAR_CAP(t.lvl)){ t.q.shift(); const nu = newSoldier(t, q0.k, false); burst(nu.x, nu.y, 8, nu.rank ? RANK_COL[nu.rank] : "#D9C9A0", 1.2, .4, .05); if (R.sel && R.sel.x === t.x && R.sel.y === t.y) renderPanel(true); } }
+    if (q0 && !t.ruin){ if (q0.left > 0) q0.left = Math.max(0, q0.left - dt); // 병영이 무너지면 훈련이 멈춘다(고치면 이어서)
+      if (q0.retryT > 0) q0.retryT -= dt; if (q0.left <= 0 && t.units.length < BAR_CAP(t.lvl) && payUnitJade(t, q0)){ t.q.shift(); const nu = newSoldier(t, q0.k, false, q0.rank); burst(nu.x, nu.y, 8, nu.rank ? RANK_COL[nu.rank] : "#D9C9A0", 1.2, .4, .05); if (R.sel && R.sel.x === t.x && R.sel.y === t.y) renderPanel(true); } }
   }
   const sortie = !!R.sortie && !t.virtual && campAlive();
   for (const u of t.units){
     const s = soldierStat(t, u), U = UNITS[u.k || t.unit] || UNITS.spear;
     if (u.k && !u.tg && !u.dead && u.hp < u.max) u.hp = Math.min(u.max, u.hp + u.max*PAID.regen*dt); // 쉬는 동안 회복
     if (u.max !== s.hp && !u.dead){ u.hp = u.hp*s.hp/u.max; u.max = s.hp; } // 강화·대장간 반영
-    if (u.dead){ if (t.virtual || !u.base) continue; u.rt -= dt; if (u.rt <= 0){ u.dead = false; u.rank = t.lvl || 0; { const s2 = soldierStat(t, u); u.hp = u.max = s2.hp; } u.x = t.x + .5; u.y = t.y + .5; u.pd = null; u.fs = null; u.gi = null; u.heal = false; u.wp = 0; u.nx = null; u.tg = null; } continue; } // 부활: 성 안(병영)에서 다시 시작
+    if (u.dead){ if (t.virtual || !u.base || t.ruin) continue; u.rt -= dt; if (u.rt <= 0){ u.dead = false; u.rank = t.lvl || 0; { const s2 = soldierStat(t, u); u.hp = u.max = s2.hp; } u.x = t.x + .5; u.y = t.y + .5; u.pd = null; u.fs = null; u.gi = null; u.heal = false; u.wp = 0; u.nx = null; u.tg = null; } continue; } // 부활: 성 안(병영)에서 다시 시작
     if (R.m && R.m.fort && (!t.virtual || t.vol) && R.gates && R.gates.length && !(u.flee > 0)){ fortUnit(t, u, dt, s, U); continue; } // v10 S4
     if (u.flee > 0){ u.flee -= dt; soldierRelease(u); const hx = t.x + .5, hy = t.y + .5, fd = dist(u.x, u.y, hx, hy); if (fd > .1){ const v = Math.min(fd, 2.6*dt); u.x += (hx - u.x)/fd*v; u.y += (hy - u.y)/fd*v; u.walk += dt*10; } continue; } // 달걀귀신에게 겁먹어 도망
     const tg = u.tg;
@@ -4121,11 +4201,14 @@ function updateBarracks(t, dt){
 function damageTower(t, dmg){
   if (!t || t.ruin || t.guard > 0) return; // guard: 정약용 '거중기'로 고친 뒤 잠깐 무적
   if (!t.maxHp){ t.maxHp = towerMaxHp(t.type, t.lvl); t.hp = t.maxHp; }
+  if (!isFinite(t.hp)) t.hp = t.maxHp;
   t.hp -= dmg; t.hitT = .25;
-  if (t.hp <= 0){ t.hp = 0; t.ruin = true; if (t.units) t.units.forEach(u => { if (!u.dead) soldierDie(u); });
+  if (t.hp <= 0){ t.hp = 0; t.ruin = true; if (t.units && t.type !== "barracks") t.units.forEach(u => { if (!u.dead) soldierDie(u); });
     burst(t.x + .5, t.y + .4, 18, "#8A8A80", 1.6, .9, .12, "smoke"); burst(t.x + .5, t.y + .4, 10, "#FFB13B", 2, .4, .07, "fire");
     addText(t.x + .5, t.y - .1, "폐허!", "#FF9A8A", 1.4); Sound.play("gate"); R.shake = Math.max(R.shake, 4);
-    if (!R.toldRuin){ R.toldRuin = true; moveTip("ruin", "망루가 무너져 폐허가 됐소. 물결 사이에 폐허를 눌러 엽전으로 고치시오."); } }
+    const RUIN_TIP = {barracks:"병영이 무너졌소! 고칠 때까지 그 병영에서는 장병이 나오지 않소.", stable:"마굿간이 무너졌소! 고칠 때까지 말이 더 생기지 않소.", smithy:"대장간이 무너졌소! 고칠 때까지 강화를 할 수 없소."};
+    if (RUIN_TIP[t.type]) moveTip("ruin_" + t.type, RUIN_TIP[t.type]);
+    else if (!R.toldRuin){ R.toldRuin = true; moveTip("ruin", "망루가 무너져 폐허가 됐소. 물결 사이에 폐허를 눌러 엽전으로 고치시오."); } }
 }
 function damageSoldiersAt(x, y, r, dmg){ R.towers.concat(R.tempB || []).forEach(t => { if (t.units) t.units.forEach(u => { if (!u.dead && dist(u.x, u.y, x, y) <= r){ u.hp -= dmg; ufxHurt(u, {x, y}, dmg); if (u.hp <= 0) soldierDie(u); } }); }); }
 // 대장·특수 적의 공격 공통: 1.2초 동안 붉은 원으로 예고한 뒤 그 안의 망루·병사에 피해
@@ -4180,7 +4263,7 @@ function enemyHold(e, dt){
   const E = ET[e.type];
   if (E.chief && !e.inside && !e.clone){
     e.stk = (e.stk === undefined ? 6 : e.stk) - dt;
-    if (e.stk <= 0){ e.stk = 9*(e.cdMul || (R.mode === "hard" ? .8 : 1)); /* cdMul: 어려움 .8, 보통은 장별 bossCd(부하 대장은 따로) */
+    if (e.stk <= 0){ e.stk = 9*(e.cdMul || (R.hardNow ? .8 : 1)); /* cdMul: 어려움 .8, 보통은 장별 bossCd(부하 대장은 따로) */
       let tg = null, bd = 3.2; R.towers.forEach(t => { if (t.ruin || hiddenT(t)) return; const d = dist(t.x + .5, t.y + .5, e.x, e.y); if (d < bd){ bd = d; tg = {x:t.x + .5, y:t.y + .5}; } });
       if (!tg && e.blk && !e.blk.dead) tg = {x:e.blk.x, y:e.blk.y};
       if (tg) bossStrike(tg.x, tg.y, .9, 22*atkOf(e)); }
@@ -4235,7 +4318,10 @@ function drawTowerFull(c, t, T){
     c.fillStyle = "#FFB0A0"; c.font = "700 " + Math.max(10, Math.round(T*.22)) + "px sans-serif"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("폐허", px, py + T*.15); return; }
   drawTower(c, t.type, t.lvl, px, py, T, t.ang, t.recoil);
   if (t.hitT > 0){ c.fillStyle = "rgba(255,80,60," + Math.min(.4, t.hitT*1.6) + ")"; circle(c, px, py, T*.38); c.fill(); }
-  if (t.maxHp && t.hp < t.maxHp){ const bw = T*.6, by = py + T*.38; c.fillStyle = "rgba(0,0,0,.6)"; c.fillRect(px - bw/2, by, bw, T*.07); c.fillStyle = t.hp/t.maxHp > .4 ? "#E2C04A" : "#E25C3A"; c.fillRect(px - bw/2, by, bw*t.hp/t.maxHp, T*.07); }
+  if (!t.virtual){ if (!t.maxHp) t.maxHp = towerMaxHp(t.type, t.lvl); if (!isFinite(t.hp)) t.hp = t.maxHp; // 내구도 막대: 늘 보임(가득이면 옅게, 깎이면 진하게, 30% 아래 빨강)
+    const f = Math.max(0, Math.min(1, t.hp/t.maxHp)), bw = T*.7, bh = Math.max(4, T*.1), by = py + T*.36, full = f >= .999;
+    c.save(); c.globalAlpha = full ? .45 : 1; c.fillStyle = "rgba(0,0,0,.65)"; c.fillRect(px - bw/2 - 1, by - 1, bw + 2, bh + 2);
+    c.fillStyle = f <= .3 ? "#E2493A" : f <= .6 ? "#E2C04A" : "#7BC86A"; c.fillRect(px - bw/2, by, bw*f, bh); c.restore(); }
 }
 // 대장간 화면: 무기 계통 6가지 레벨(상한 = 깬 장 수 + 2)
 function showForge(msg){
@@ -4293,7 +4379,7 @@ function startGold(st, mode, o){
   const fx = o.fx || castleFx(), Df = o.Df || DIFF[1];
   const meta = Math.min(Math.round(base*START_GOLD_META_CAP), (M.perks.grain ? 60 : 0) + (fx.gold || 0));
   let g = base + meta + (Df.gold || 0);
-  if (o.hard || mode === "hard") g = Math.round(g*HARD.gold);
+  /* v10: 따로 고르는 어려움 모드 없앰(HARD.gold 안 씀) */
   return g;
 }
 /* 끝 보상(v10 요청 14): 성문(행궁)을 많이 남길수록 옥·쇠를 더 준다. 남은 비율 r(0~1)에 대해 줄지 않는다(단조 증가). 진 판(패배)은 r=0.
@@ -4302,8 +4388,8 @@ const endMulOf = r => .5 + .5*Math.max(0, Math.min(1, +r || 0));
 function newRun(s, opt){
   if (typeof WebApp !== "undefined" && WebApp.blockStart()) return;
   opt = opt || {};
-  const endless = s === "endless", st = endless ? ENDLESS : (TEST_STAGES[s] || STAGES[s]), m = MAPS[st.map]; useMap(m); const mode = endless ? "endless" : (opt.mode || "normal"), ch = opt.ch || null;
-  const tut = !!st.tutorial, ez = tut || opt.easier == null ? null : Math.max(-1, Math.min(2, opt.easier | 0)), dv = tut ? 1 : ez == null ? M.diff : Math.max(0, ez), Df0 = DIFF[dv] || DIFF[1], Df = ez === -1 ? Object.assign({}, Df0, EASIEST) : Df0, hard = mode === "hard", fx = castleFx(); // ez: 광고 보고 '쉽게 다시 하기'로 이번 판만 낮춘 난이도(설정 값 M.diff는 그대로) // 난이도·내 성 효과는 서장(튜토리얼)에는 안 들어감
+  const endless = s === "endless", st = endless ? ENDLESS : (TEST_STAGES[s] || STAGES[s]), m = MAPS[st.map]; useMap(m); const mode = endless ? "endless" : (opt.mode && opt.mode !== "hard" ? opt.mode : "normal"), ch = opt.ch || null; /* v10: 어려움 모드 없앰 → 후반 물결이 어려움 규칙(R.hardNow) */
+  const tut = !!st.tutorial, ez = tut || opt.easier == null ? null : Math.max(-1, Math.min(2, opt.easier | 0)), dv = tut ? 1 : ez == null ? M.diff : Math.max(0, ez), Df0 = DIFF[dv] || DIFF[1], Df = ez === -1 ? Object.assign({}, Df0, EASIEST) : Df0, hard = false, fx = castleFx(); // ez: 광고 보고 '쉽게 다시 하기'로 이번 판만 낮춘 난이도(설정 값 M.diff는 그대로) // 난이도·내 성 효과는 서장(튜토리얼)에는 안 들어감
   const gated = !!m.gates; // 사면 성곽: lives = 행궁 체력, 문마다 따로 체력(GATE.hp + 같은 보너스를 줄여서)
   let lives = (gated ? (st.palaceHp || GATE.palace) : 20) + (M.perks.wall && !tut ? 5 : 0) + (tut ? 0 : Df.lives + fx.lives); if (ch === "gate1") lives = 1;
   const gateHp = (st.gateHp || GATE.hp) + (M.perks.wall ? 2 : 0) + Math.round(((tut ? 0 : Df.lives) + fx.lives)/2);
@@ -4314,11 +4400,11 @@ function newRun(s, opt){
        enemies:[], towers:[], projs:[], parts:[], texts:[], fx:[], sel:null, tut:st.tutorial ? 0 : -1, hero:null, heroSel:false, aim:false,
        jadeRun:0, jadePaid:0, lastJade:0, jade2x:false, offered:{}, speed:1, paused:false, over:false, adGold:false, adCont:false, shake:0, seen:{}, bannerT:0, time:0, sig:"", elv:(st.elv || 1) + (tut ? 0 : [0,1,2][dv] || 0) + (hard ? 2 : 0), ironRun:0, ironPaid:false,
        hpMul:tut ? 1 : lvHpMul(([0,1,2][dv] || 0) + (hard ? 2 : 0))*(hard && st.hardHp ? st.hardHp : 1)*(dv === 0 ? .85 : 1)*(ez === -1 ? EASIEST.hp : 1), jmul:tut ? 1 : Df.jade*fx.jade, upMul:tut ? 1 : fx.up, sellRate:tut ? .7 : fx.sell, leaks:{}, skillUses:0, diff:dv, helped:ez != null, helpDiff:ez,
-       runId:++runSeq, resultSeq:0, dayKey:kstDate(), weekKey:weekKey()};
+       hardNow:false, runId:++runSeq, resultSeq:0, dayKey:kstDate(), weekKey:weekKey()};
   // 적이 나오는 길: 보통 모드에서 m.normalPaths 가 있으면 그 길만(갈래는 높은 난이도부터), 어려움·그 밖은 모든 길
   dangerEdge(false);
   R.mound = m.mound ? {x:m.mound.x, y:m.mound.y, lv:0, ours:false} : null; R.tempB = []; R.visT = 0; R.vis = null;
-  R.spawnPaths = mode !== "hard" && m.normalPaths ? m.normalPaths.slice() : R.paths.map((_,i) => i);
+  R.spawnPaths = m.normalPaths ? m.normalPaths.slice() : R.paths.map((_,i) => i);
   if (gated){ // 문마다 체력. 길 끝 칸 = 그 문
     R.gates = m.gates.map(g => ({x:g.x, y:g.y, dir:g.dir, name:g.name || "문", hp:gateHp, max:gateHp, broken:false}));
     m.paths.forEach((p, i) => { const e = p[p.length-1]; R.paths[i].gate = m.gates.findIndex(g => g.x === e[0] && g.y === e[1]); });
@@ -4403,7 +4489,7 @@ function wavesOf(w){
     if (R.s >= 2 && w >= 5) l = l.concat([["mole", w >= 8 ? 2 : 1, .9]]);
     if (R.s >= 1 && w >= 6 && w < R.total) l = l.concat([["siege", w >= 9 ? 2 : 1, 2.2]]); // 포차 도깨비: 1장 6물결부터(망루를 부숨)
     if (R.s >= 2 && w >= 4 && w < R.total) l = l.concat([["centipede", w >= 8 ? 3 : 2, .8]]); // 지네 요괴(기기): 2장 4물결부터 // 땅굴 도깨비: 2장부터 5물결 이후 조금씩
-    if (R.mode === "hard"){ l = l.slice(); if (w >= 3) l = l.concat(HARD.extra[R.s] || []); const cap = (HARD.captains[R.s] || {})[w]; if (cap) l.push(["captain", cap, 2]); } // captain = 도깨비 대장(마지막 장에서도 두억시니로 바뀌지 않음)
+    /* v10: 옛 어려움 모드의 덧붙는 적(HARD.extra·captains)은 쓰지 않음. 후반 물결은 LATE(수·간격·총공세)와 R.hardNow 규칙 */ // captain = 도깨비 대장(마지막 장에서도 두억시니로 바뀌지 않음)
     return l;
   }
   const l = [["grunt", 6 + w, .7]]; // 무한: 물결마다 수가 늘고, 10물결마다 대장
@@ -4420,10 +4506,20 @@ function bossKind(type, w){
   if (type === "boss" && R.st.boss && !R.st.endless && w === R.total) return R.st.boss;
   return type;
 }
+/* v10 후반 물결(선생님 "각 장에서도 후반 물결은 어렵게"): 물결 진행 비율 p = w/total. p ≤ from 이면 체력 ×early(조금 쉽게),
+   p > from 이면 k = ((p−from)/(1−from))^pow 로 체력 ×(1+hp·k), 적 수 ×(1+n·k), 나오는 간격 ×(1−gap·k). 마지막 두 물결은 덩치 큰 적·지난 장 요괴를 더한다.
+   진 깨기 진 체력·생산 간격도 같은 배율. 서장·무한 물결 제외 */
+const LATE = {from:.6, pow:1.3, hp:.6, n:.3, gap:.25, early:.9, bigAdd:2};
+function lateOn(){ return !!R && !R.st.tutorial && !R.st.endless && isFinite(R.total) && R.total > 2; }
+function lateK(w){ if (!lateOn()) return 0; const p = w/R.total; return p <= LATE.from ? 0 : Math.pow(Math.min(1, (p - LATE.from)/(1 - LATE.from)), LATE.pow); }
+function lateHp(w){ if (!lateOn()) return 1; return w/R.total <= LATE.from ? LATE.early : 1 + LATE.hp*(R.st.lateHp != null ? R.st.lateHp : 1)*lateK(w); } /* st.lateHp: 장별 후반 체력 증가 배율(기본 1) */
+function lateN(w){ return 1 + LATE.n*lateK(w); }
+function lateGap(w){ return 1 - LATE.gap*lateK(w); }
+function lateFinal(w){ return lateOn() && w >= R.total - 1; } // 총공세(마지막 두 물결)
 function waveQueue(w){
   const q = []; let t = 0;
   wavesOf(w).forEach(([type,count,gap]) => {
-    const kind = bossKind(type, w), n = type === "boss" ? 1 : type === "captain" ? count : Math.round(count*R.st.cm);
+    const kind = bossKind(type, w), n = type === "boss" ? 1 : type === "captain" ? count : Math.round(count*R.st.cm*lateN(w)); gap *= lateGap(w);
     if (!R.m.wide || R.st.tutorial || n <= 2 || ET[kind].lives > 1){ for (let i=0;i<n;i++){ q.push({type:kind, t}); t += gap; } }
     else { // 넓은 길: 3~6마리씩 몰려온다(방패 도깨비는 3마리 대열). 묶음 사이를 길게 해 물결 길이는 거의 같게
       let i = 0;
@@ -4431,6 +4527,13 @@ function waveQueue(w){
         for (let j=0;j<k;j++) q.push(form ? {type:kind, t, fid, slot:j} : {type:kind, t:t + j*gap*.28}); t += k*gap; i += k; }
     }
     t += 1.5; });
+  if (lateFinal(w)){ // 총공세: 그 물결에서 가장 튼튼한 일반 적(대장 아님)을 더하고, 마지막 직전 물결엔 지난 장 요괴 하나를 더한다
+    const big = wavesOf(w).map(x => bossKind(x[0], w)).filter(k => ET[k] && !ET[k].chief && k !== "boss").sort((a, b) => ET[b].hp - ET[a].hp)[0];
+    const end = q.length ? q[q.length-1].t : 0;
+    if (big) for (let i = 0; i < LATE.bigAdd; i++) q.push({type:big, t:end*(.35 + .3*i)});
+    const L = R.st.elite; if (w === R.total - 1 && L && L.length && !R.test){ const x = L[L.length - 1]; if (ET[x.k] && !q.some(o => o.elite)) q.push({type:x.k, t:end*.6, elite:x}); }
+    q.sort((a, b) => a.t - b.t);
+  }
   eliteAdd(q, w);
   return q;
 }
@@ -4479,13 +4582,13 @@ function moleSurface(e){ // 땅속 이동을 끝내고 지상으로(마름쇠 �
 }
 /* ---------- 장별 대장(구미호·물귀신·처녀귀신·이무기·불가사리) ---------- */
 function bossInit(e){
-  e.boss = true; e.cdMul = R.mode === "hard" ? .8 : (R.st.bossCd || 1); e.t1 = 3; e.grow = 1; e.tpDone = []; // bossCd: 장별 기술 주기 배율(1보다 크면 느리게). bossCd·bossHp·bossLives는 앞 장을 무난하게 하는 값이라 어려움 모드엔 안 쓴다
-  const bh = R.mode === "hard" ? 1 : (R.st.bossHp || 1); if (bh !== 1){ e.hp *= bh; e.maxHp *= bh; } // bossHp: 장별 대장 체력 배율(앞 장을 무난하게)
+  e.boss = true; e.hardSpawn = !!R.hardNow; e.cdMul = R.hardNow ? .8 : (R.st.bossCd || 1); e.t1 = 3; e.grow = 1; e.tpDone = []; // bossCd: 장별 기술 주기 배율(1보다 크면 느리게). bossCd·bossHp·bossLives는 앞 장을 무난하게 하는 값이라 어려움 모드엔 안 쓴다
+  const bh = R.hardNow ? 1 : (R.st.bossHp || 1); if (bh !== 1){ e.hp *= bh; e.maxHp *= bh; } // bossHp: 장별 대장 체력 배율(앞 장을 무난하게)
   R.bossE = e; R.bfx = R.bfx || [];
   showBanner(ET[e.type].name + " 등장", BOSS_LINE[e.type] || "");
 }
 function eliteInit(e, x){ // 지난 장 요괴: 같은 특기를 쓰지만 약하고 느리게(기술 주기 ×1.5). 대장 체력 막대는 비어 있을 때만 차지
-  e.boss = true; e.elite = true; e.cdMul = (R.mode === "hard" ? .8 : (R.st.bossCd || 1))*ELITE.cd; e.t1 = 4; e.grow = 1; e.tpDone = [];
+  e.boss = true; e.elite = true; e.cdMul = (R.hardNow ? .8 : (R.st.bossCd || 1))*ELITE.cd; e.t1 = 4; e.grow = 1; e.tpDone = [];
   const k = x.hp || ELITE.hp; e.hp *= k; e.maxHp *= k;
   if (!R.bossE || R.bossE.dead) R.bossE = e; R.bfx = R.bfx || [];
   showBanner("지난 장 요괴 · " + ET[e.type].name, BOSS_LINE[e.type] || "");
@@ -4754,14 +4857,14 @@ function campPos(){ return R.camp ? {x:R.camp.x, y:R.camp.y} : null; }
 function campStart(){
   const boss = R.st.boss || R.st.campBoss, i = R.queue.findIndex(q => q.type === boss && !q.elite); if (i >= 0) R.queue.splice(i, 1); // 대장은 진이 절반 무너질 때 나온다
   let cpi = 0, cf = null; if (R.m.fort){ cf = fortCampCell(R.waveDir || "n"); if (cf) cpi = cf.pi; else { cpi = fortPi(R.waveDir || "n", true); if (cpi < 0) cpi = fortSpawnPi(); } } // v10: 주 방향 지도 끝 쪽, 성에서 6칸 이상
-  const P = R.paths[cpi], hard = R.mode === "hard"; let d = cf ? 0 : Math.min(Math.max(1.2, P.total*.1), 2.4);
+  const P = R.paths[cpi], hard = !!R.hardNow; let d = cf ? 0 : Math.min(Math.max(1.2, P.total*.1), 2.4);
   if (!Cam.active && !cf){ const dm = Math.min(6, P.total*.35); while (posAt(P, d).y < 3.8 && d < dm) d += .2; } // 카메라 없는 지도: 진 이름표가 위쪽 체력 막대에 가리지 않게 조금 아래로
   const p = posAt(P, d); R.sortie = false;
-  const hp = ET[boss].hp*(1 + .13*(R.wave-1))*R.st.mul*(R.hpMul || 1)*(R.m.wide ? WIDE_HP : 1)*(hard ? CAMP.hardHp : CAMP.hp)*(hard ? 1 : (R.st.bossHp || 1));
+  const hp = ET[boss].hp*(1 + .13*(R.wave-1))*R.st.mul*(R.hpMul || 1)*lateHp(R.wave)*(R.m.wide ? WIDE_HP : 1)*(hard ? CAMP.hardHp : CAMP.hp)*(hard ? 1 : (R.st.bossHp || 1));
   const pool = wavesOf(R.wave).map(w => w[0]).filter(ty => ty !== "boss" && ty !== "captain" && ET[ty] && !ET[ty].chief);
   R.camp = {camp:true, type:"camp", boss, name:ET[boss].name + "의 진", x:p.x, y:p.y, d, pi:cpi, off:0, spd:0, slowMul:1, armor:0, fly:false, inside:true,
     hp, max:hp, maxHp:hp, dead:false, flash:0, fade:0, spawnT:2.5, si:0, pool:pool.length ? pool : ["grunt"], bossOut:false};
-  showBanner(R.camp.name + "이 섰다", "진을 부수면 이겨요. 진이 살아 있는 동안 적이 계속 나와요.");
+  showBanner((lateOn() ? "총공세! " : "") + R.camp.name + "이 섰다", "진을 부수면 이겨요. 진이 살아 있는 동안 적이 계속 나와요.");
   moveTip("camp", "마지막 물결이오! 저 끝에 " + R.camp.name + "이 섰소. 진에서 적이 계속 나오오. 진 근처에 망루를 세우거나, 출격! 으로 병사를 보내 진을 부수시오. 반쯤 무너지면 " + ET[boss].name + "이(가) 직접 나오오.");
   burst(p.x, p.y, 24, "#8A5AB0", 2, .8, .1, "smoke");
 }
@@ -4771,10 +4874,10 @@ function campSpawnAt(type, q){ // 진 자리에서 길로 내보낸다
   const p = epos(e, e.d); e.x = p.x; e.y = p.y; return e;
 }
 function campUpdate(dt){
-  const c = R.camp, hard = R.mode === "hard"; if (c.flash > 0) c.flash -= dt;
+  const c = R.camp, hard = !!R.hardNow; if (c.flash > 0) c.flash -= dt;
   c.spawnT -= dt;
   if (c.spawnT <= 0 && R.enemies.filter(o => !o.dead && o.campKid).length >= (hard ? CAMP.hardMaxKids : CAMP.maxKids)) c.spawnT = 1;
-  if (c.spawnT <= 0){ c.spawnT = (c.hp < c.max*.5 ? CAMP.gapLow : CAMP.gap)*(hard ? CAMP.hardGap : 1); campSpawnAt(c.pool[c.si++ % c.pool.length]); burst(c.x, c.y, 6, "#8A5AB0", 1, .4, .06, "smoke"); }
+  if (c.spawnT <= 0){ c.spawnT = (c.hp < c.max*.5 ? CAMP.gapLow : CAMP.gap)*(hard ? CAMP.hardGap : 1)*lateGap(R.wave); campSpawnAt(c.pool[c.si++ % c.pool.length]); burst(c.x, c.y, 6, "#8A5AB0", 1, .4, .06, "smoke"); }
   campBossOut(c);
 }
 function campBossOut(c){ // 진 체력이 50%를 처음 넘는 순간 대장이 한 번 나온다(같은 프레임에 진이 무너져도 대장은 남아 싸운다 — 대장까지 처치해야 승리, v9B 2차)
@@ -4887,7 +4990,7 @@ function separate(dt){
     e.off = Math.max(-.8, Math.min(.8, e.off)); }
 }
 function waveSummary(w){
-  return wavesOf(w).map(([type,count]) => { const kind = bossKind(type, w); if (type === "boss" && w === R.total && kind === R.st.boss && campOk()) return ET[kind].name + "의 진"; return ET[kind].name + " " + (type === "boss" ? 1 : type === "captain" ? count : Math.round(count*R.st.cm)); }).join(" · ");
+  return wavesOf(w).map(([type,count]) => { const kind = bossKind(type, w); if (type === "boss" && w === R.total && kind === R.st.boss && campOk()) return ET[kind].name + "의 진"; return ET[kind].name + " " + (type === "boss" ? 1 : type === "captain" ? count : Math.round(count*R.st.cm*lateN(w))); }).join(" · ");
 }
 function startWave(){
   if (R.wave >= R.total) return;
@@ -4895,18 +4998,21 @@ function startWave(){
   if (ev && !R.evDone[next]){
     R.evDone[next] = true;
     const unlock = () => { if (ev.unlock && R.ch !== "archers" && R.towersOpen.indexOf(ev.unlock) < 0){ R.towersOpen.push(ev.unlock); addText(4.5, 6, TT[ev.unlock].name+" 열림", "#F4D06F", 2); } };
-    if (R.mode === "hard") unlock(); // 어려움 모드: 물결 중간 대화는 건너뛰고 그 물결의 망루 해금은 그대로
-    else { R.sel = null; R.aim = false; R.heroSel = false; showDialog(ev.lines, () => { unlock(); startWave(); }); return; }
+    /* v10: 어려움 모드 없앰 → 물결 중간 대화는 늘 보임 */
+    { R.sel = null; R.aim = false; R.heroSel = false; showDialog(ev.lines, () => { unlock(); startWave(); }); return; }
   }
-  R.wave = next; R.started = true; R.waveActive = true; R.queue = waveQueue(R.wave); R.qt = 0; R.countdown = 0; if (R.m.fort) fortWaveStart();
+  R.wave = next; R.hardNow = lateK(next) > 0; /* v10: 후반 물결(진행 60% 뒤)은 어려움 규칙: 적 레벨 +2, 대장 기술 ×0.8, 앞 장 완화값(bossCd·bossHp·bossLives) 끔, 진 어려움 값 */ R.started = true; R.waveActive = true; R.queue = waveQueue(R.wave); R.qt = 0; R.countdown = 0; if (R.m.fort) fortWaveStart();
   if (R.wave === R.total && campOk()) campStart(); // 마지막 물결: 그 장 요괴의 진
   if (R.mound && !R.mound.ours && R.wave > 1 && R.mound.lv < 3){ R.mound.lv++; addText(R.mound.x, R.mound.y - 1, "적이 토산을 쌓소! (" + R.mound.lv + "/3)", "#E8C48A", 1.8); if (R.mound.lv === 1) moveTip("mound", "적이 가운데 토산을 쌓고 있소. 토산 곁에 선 적은 망루를 더 세게 치오. 성주의 '토산 빼앗기'를 토산에 쓰시오!"); }
   Sound.play("wave");
   if (R.tut < 0){
     const kinds = R.queue.map(q => q.type).filter((t,i,a) => a.indexOf(t) === i), fresh = kinds.filter(t => !R.seen[t]);
     kinds.forEach(t => R.seen[t] = true);
-    if (fresh.length){ const t = fresh[fresh.length-1]; showBanner("처음 보는 적 · " + ET[t].name, ET[t].tip); }
-    else showBanner(R.wave + "번째 물결", waveSummary(R.wave));
+    if (lateFinal(R.wave) && !(R.wave === R.total && R.camp)) showBanner("총공세! · 어려움", R.wave + "번째 물결 · 적 레벨 +2, 더 많고 더 튼튼해요. 덩치 큰 적이 몰려와요!");
+    else if (R.wave === R.total && R.camp){ /* 진 띠(총공세!)를 그대로 둔다 */ }
+    else if (fresh.length && lateK(R.wave) > 0){ const t = fresh[fresh.length-1]; showBanner("거센 물결! · 어려움 " + R.wave + "번째 물결", waveSummary(R.wave)); R.bannerNext = ["처음 보는 적 · " + ET[t].name, ET[t].tip]; } /* 어려움 띠를 먼저, 처음 보는 적은 그다음 차례 */
+    else if (fresh.length){ const t = fresh[fresh.length-1]; showBanner("처음 보는 적 · " + ET[t].name, ET[t].tip); }
+    else showBanner((lateK(R.wave) > 0 ? "거센 물결! · 어려움 " : "") + R.wave + "번째 물결", waveSummary(R.wave));
   }
   if (R.tut >= 0 && TUT[R.tut].btn === "go") tutNext();
   renderPanel(true);
@@ -4914,7 +5020,7 @@ function startWave(){
 function waveCleared(){
   if (R.hero && !R.st.tutorial && (R.hero.slv || 0) < 5){ const h = R.hero; h.slv = (h.slv || 0) + 1; h.dmg *= 1.06; const m0 = h.maxHp; h.maxHp *= 1.06; h.hp = Math.min(h.maxHp, h.hp + (h.maxHp - m0)); addText(h.x, h.y - .6, "장수 성장 " + h.slv + "/5", "#9FE0A0", 1.4); } // 장 안 성장: 물결을 막을 때마다(최대 5), 공격·체력 +6%
   R.waveActive = false;
-  if (R.m.fort && R.wave % 2 === 0 && R.wave < R.total) fortVolunteers(); // v10 S4
+  // 의용병은 이제 물결마다가 아니라 불리할 때 간헐적으로 온다(volTick, v10 요청)
   const bonus = 20 + R.wave*5; R.gold += bonus;
   if (R.st.endless) R.jadeRun += 1;
   if (!R.st.tutorial && !R.test) saveMeta(); // 오늘의 임무 진행을 물결마다 저장(시험 판은 저장하지 않음)(도중에 나가도 남게)
@@ -4925,11 +5031,11 @@ function waveCleared(){
   R.countdown = 10; renderPanel(true);
 }
 function spawn(type, q){
-  const E = ET[type], hp = E.hp*(1 + .13*(R.wave-1))*R.st.mul*(R.hpMul || 1)*(R.m.wide && !R.st.tutorial ? WIDE_HP : 1)*(R.st.endless ? 1 + .12*R.wave : 1), p = posAt(R.paths[0], 0);
+  const E = ET[type], hp = E.hp*(1 + .13*(R.wave-1))*R.st.mul*(R.hpMul || 1)*lateHp(R.wave)*(R.m.wide && !R.st.tutorial ? WIDE_HP : 1)*(R.st.endless ? 1 + .12*R.wave : 1), p = posAt(R.paths[0], 0);
   const form = q && q.fid; let pi = form && q.slot > 0 ? R.lastFormPi : (R.spawnPaths && R.spawnPaths.length ? R.spawnPaths[R.spawnIdx++ % R.spawnPaths.length] : R.spawnIdx++ % R.paths.length); if (!(form && q.slot > 0)) pi = R.m.fort ? fortSpawnPi() : waterPick(pi, type); if (R.m.fort && E.fly && !(form && q.slot > 0)) pi = fortFlyPi(pi); if (form && q.slot === 0) R.lastFormPi = pi;
   const wide = !!R.m.wide && !R.st.tutorial;
   const off = form ? [0, -.5, .5][q.slot] : wide ? Math.random()*1.4 - .7 : 0, d = form && q.slot > 0 ? -.55 : 0; // 넓은 길: 길 안에서 옆 자리(-0.7~+0.7칸)
-  const e = {type, lv:(R.elv || 1) + (R.st.endless ? Math.floor(R.wave/5) : 0), pi, hp, maxHp:hp, d, off, spd:form ? E.spd : E.spd*(.94 + Math.random()*.12), armor:E.armor, fly:!!E.fly, x:p.x, y:p.y, dx:p.dx, dy:p.dy, phase:Math.random()*6, flash:0, slowMul:1, dead:false, fid:form || 0, zz:Math.random()*6};
+  const e = {type, lv:(R.elv || 1) + (R.st.endless ? Math.floor(R.wave/5) : 0) + (R.hardNow ? (R.st.hardLv != null ? R.st.hardLv : 2) : 0), pi, hp, maxHp:hp, d, off, spd:form ? E.spd : E.spd*(.94 + Math.random()*.12), armor:E.armor, fly:!!E.fly, x:p.x, y:p.y, dx:p.dx, dy:p.dy, phase:Math.random()*6, flash:0, slowMul:1, dead:false, fid:form || 0, zz:Math.random()*6};
   if (type === "fox") e.sc = shortcutsOf(pi).map(s => ({from:s.from, to:s.to, done:false}));
   if (type === "mole") e.digCd = 2 + Math.random()*2;
   if (type === "boss") e.roarCd = 4 + Math.random()*3;
@@ -4955,7 +5061,7 @@ function shortcutsOf(pi){
 }
 // 새 움직임이 처음 나올 때 박 노장 한 줄(어려움 모드·서장 생략, 한 번 켠 동안 한 번)
 const MOVE_TIP_SEEN = {};
-function moveTip(k, line){ if (!R || R.mode === "hard" || R.st.tutorial || MOVE_TIP_SEEN[k]) return; MOVE_TIP_SEEN[k] = true; showBanner("박 노장", line); }
+function moveTip(k, line){ if (!R || R.st.tutorial || MOVE_TIP_SEEN[k]) return; MOVE_TIP_SEEN[k] = true; showBanner("박 노장", line); }
 // 방패 대열: 한 마리가 쓰러지거나 성문을 넘는 즉시 인원을 다시 세고, 3마리 미만이면 대열을 풀어 생존자를 보통 적으로(겹침 방지에도 다시 포함)
 function formBreak(e){
   const fid = e.fid; if (!fid) return; e.fid = 0;
@@ -5048,6 +5154,14 @@ function atEnd(e, dt){
     e.x = sg.b[0] - ux*back - uy*j; e.y = sg.b[1] - uy*back + ux*j; e.dx = ux; e.dy = uy; }
   e.atGate -= dt*(e.haste > 0 ? 1.25 : 1); e.phase += dt*4;
   if (e.atGate <= 0){ e.atGate = GATE.rate; hitGate(g, e); }
+  if (R.m.fort && !ET[e.type].siege) fortWallHit(e, dt); // 문 앞 적은 곁 성벽 위 망루도 친다(성벽 위라 피해 반)
+}
+function fortWallHit(e, dt){
+  e.wcd = (e.wcd === undefined ? 1 + Math.random() : e.wcd) - dt; if (e.wcd > 0) return; e.wcd = 2.2;
+  const G = R.base || R.grid; let tg = null, bd = 1.6;
+  R.towers.forEach(t => { if (t.ruin || t.virtual || !G[t.y] || G[t.y][t.x] !== 8) return; const d = dist(t.x + .5, t.y + .5, e.x, e.y); if (d < bd){ bd = d; tg = t; } });
+  if (!tg) return; damageTower(tg, (ET[e.type].hit || 8)*atkOf(e)*.5); burst(tg.x + .5, tg.y + .5, 3, "#A0968A", .8, .25, .05, "smoke");
+  if (!R.toldWall){ R.toldWall = true; moveTip("wallhit", "문 앞 요괴가 성벽 위 망루까지 치오! 내구도를 보고 물결 사이에 고치시오."); }
 }
 function hitGate(g, e){
   const dmg = Math.round(gatePow(e)*(e.type === "bulgasari" && !e.elite ? BOSS_SKILL.bulgasari.gate : 1)*10)/10; // v10: 요괴 레벨이 문 부수는 힘
@@ -5104,7 +5218,7 @@ function gateUrgent(){ // 가장 위급한 문: 성 안에 적이 있으면 행�
 function repairCost(g){ return g.hp >= g.max ? 0 : Math.ceil((g.max - g.hp)*GATE.repair) + (g.broken ? GATE.repairBroken : 0); }
 function leak(e){
   e.dead = true; formBreak(e); const E = ET[e.type]; if (R.leaks) R.leaks[e.type] = (R.leaks[e.type] || 0) + 1; // 패배 귀띔용
-  const lost = e.elite ? ELITE.lives : E.chief && R.st.bossLives && R.mode !== "hard" ? R.st.bossLives : E.lives; if (R.bossE === e) R.bossE = null; // 지난 장 요괴는 3 // bossLives: 장별 대장이 닿을 때 깎는 성문 체력
+  const lost = e.elite ? ELITE.lives : E.chief && R.st.bossLives && !e.hardSpawn ? R.st.bossLives : E.lives; if (R.bossE === e) R.bossE = null; // 지난 장 요괴는 3 // bossLives: 장별 대장이 닿을 때 깎는 성문 체력
   R.lives = Math.max(0, R.lives - lost); R.shake = Math.max(R.shake, E.lives > 1 ? 12 : 5);
   Sound.play("gate");
   if (M.set.vib && navigator.vibrate){ try { navigator.vibrate(E.lives > 1 ? 200 : 60); } catch(err){} }
@@ -5138,7 +5252,7 @@ function updateHero(dt){
   }
   const dx = h.tx - h.x, dy = h.ty - h.y, d = Math.hypot(dx, dy);
   if (h.bind > 0) h.bind -= dt; // 물귀신에게 끌려 묶임: 못 움직이고 못 쏜다
-  if (d > .04 && !(h.bind > 0)){ const v = Math.min(d, 2.4*dt); h.x += dx/d*v; h.y += dy/d*v; h.walk += dt*9; if (Math.abs(dx) > .05) h.face = dx > 0 ? 1 : -1; }
+  if (d > .04 && !(h.bind > 0)){ const v = Math.min(d, 2.4*unitTerrMul(h, h.tx, h.ty)*dt); h.x += dx/d*v; h.y += dy/d*v; h.walk += dt*9; if (Math.abs(dx) > .05) h.face = dx > 0 ? 1 : -1; }
   let dps = 0;
   for (const e of R.enemies) if (!e.dead && !e.fly && !(e.under > 0) && dist(h.x, h.y, e.x, e.y) < .8) dps += ET[e.type].hit || 0;
   if (dps){
@@ -5265,7 +5379,7 @@ function tutNext(){
   R.tut++;
   if (R.tut >= TUT.length) R.tut = -1;
   Track.event("tutorial_step", {step:R.tut < 0 ? "done" : R.tut});
-  R.tutHl = null; updateCoach(); renderPanel(true);
+  R.tutHl = null; R.sel = null; R.aim = false; /* 서장: 단계가 넘어가면 열린 판을 닫아 아래 단추(물결 부르기 등)가 보이게 */ updateCoach(); renderPanel(true);
 }
 function updateCoach(){
   const s = tutStep(), sp = document.getElementById("b-speed");
@@ -5312,7 +5426,7 @@ function update(dt){
   R.towers.forEach(t => {
     t.recoil = Math.max(0, t.recoil - dt*4);
     if (t.hitT > 0) t.hitT -= dt;
-    if (t.ruin) return; // 폐허: 물결 사이에 고칠 때까지 공격 안 함
+    if (t.ruin){ if (t.type === "barracks" && t.units) updateBarracks(t, dt); return; } // 폐허: 물결 사이에 고칠 때까지 공격 안 함. 무너진 병영은 훈련·되살림만 멈추고 이미 나온 장병은 계속 싸운다
     if (t.dark > 0) t.dark -= dt;
     if (t.burn > 0){ t.burn -= dt; damageTower(t, 6*dt); if (t.ruin) return; }
     if (t.guard > 0) t.guard -= dt;
@@ -5373,7 +5487,7 @@ function update(dt){
   R.texts = R.texts.filter(t => t.life > 0);
   R.enemies = R.enemies.filter(e => !e.dead);
   R.shake = Math.max(0, R.shake - dt*30);
-  if (R.bannerT > 0){ R.bannerT -= dt; if (R.bannerT <= 0) banner.hidden = true; }
+  if (R.bannerT > 0){ R.bannerT -= dt; if (R.bannerT <= 0){ if (R.bannerNext){ const bn = R.bannerNext; R.bannerNext = null; showBanner(bn[0], bn[1]); } else banner.hidden = true; } }
 }
 
 /* ---------- 그리기 ---------- */
@@ -5641,29 +5755,31 @@ function renderPanel(force){
       + '<p class="role" id="role">'+(ts && ts.build ? TT[ts.build].role : zn ? ZONE_HINT[zn] : tr ? tr.hint : "망루를 골라 세우세요")+'</p>';
   } else if (t && (t.ruin || (t.maxHp && t.hp < t.maxHp && !R.waveActive))){ // 망루 체력: 폐허이거나 다쳤으면 물결 사이에 고치기
     const D0 = TT[t.type], rc = towerRepairCost(t), refund = Math.round(t.spent*(R.sellRate || .7));
-    h = '<div class="info"><img src="'+ICONS[t.type]+'" alt=""><div><h3>'+D0.name+(t.ruin ? ' · 폐허' : ' · 체력 '+Math.round(t.hp)+'/'+t.maxHp)+'</h3><p>'+(R.waveActive ? '물결 사이에 고칠 수 있어요.' : '엽전으로 고치면 다시 싸워요.')+'</p></div></div>'
+    h = '<div class="info"><img src="'+ICONS[t.type]+'" alt=""><div><h3>'+D0.name+(t.ruin ? ' · 폐허' : ' · 내구도 '+Math.round(t.hp)+'/'+t.maxHp)+'</h3><p>'+(t.ruin && RUIN_LINE[t.type] ? RUIN_LINE[t.type]+' ' : '')+(R.waveActive ? '물결 사이에 고칠 수 있어요.' : '엽전으로 고치면 다시 '+(t.type === "barracks" || t.type === "stable" || t.type === "smithy" ? '돌아가요.' : '싸워요.'))+'</p></div></div>'
       + '<div class="row"><button class="btn primary" data-act="trepair"'+(R.waveActive || R.gold < rc ? ' disabled' : '')+'>고치기 · '+rc+' 엽전</button><button class="btn danger" data-act="sell">'+(t.ruin ? '치우기' : '팔기 · +'+refund)+'</button></div>';
+    if (t.type === "barracks") h += barracksBuy(t);
   } else if (t){
     const D0 = TT[t.type], s = stat(t), uc = upCost(t), refund = Math.round(t.spent*(R.sellRate || .7));
     const us = t.type === "barracks" ? unitStat(t, t.unit) : null;
+    if (!t.maxHp) t.maxHp = towerMaxHp(t.type, t.lvl); if (!isFinite(t.hp)) t.hp = t.maxHp; const hpLine = "<br>내구도 " + Math.round(t.hp) + "/" + t.maxHp + (t.hp < t.maxHp ? " · 물결 사이에 고칠 수 있어요" : "");
     const line = us ? barracksLine(t) : t.type === "stable" ? "말 "+(R.horses || 0)+"/"+STABLE.cap[t.lvl]+" · "+STABLE.every[t.lvl]+"초마다 1마리 · 병영에서 기마병을 사요" : t.type === "smithy" ? "대장간 "+(t.lvl+1)+"단계 · 망루 강화 상한 "+(Math.min(2, t.lvl+1)+1)+"단계" : t.type === "fence" ? "체력 "+Math.round(t.hp || 0)+"/"+(t.maxHp || 0)+" · 적이 돌아가거나 부숴요" : t.type === "caltrop" ? "느리게 "+Math.round(s.slow*100)+"% · 사거리 "+s.range.toFixed(1)
       : "공격력 "+Math.round(s.dmg)+(s.count > 1 ? "×"+s.count : "")+" · 초당 "+s.rate.toFixed(1)+"발 · 사거리 "+s.range.toFixed(1);
     const upBtn = R.ch === "noup" ? '<button class="btn" disabled>강화 없이 도전 중</button>'
       : t.lvl >= 2 ? '<button class="btn" disabled>최고 단계</button>'
       : t.lvl >= upLimit(t) ? '<button class="btn" disabled>'+(smithyOf() ? '대장간을 강화하면 돼요' : '대장간이 있어야 강화돼요')+'</button>'
       : '<button class="btn primary'+pulse("upgrade")+'" data-act="upgrade"'+(R.gold < uc || !tutOk("upgrade", t.type) ? " disabled" : "")+'>강화 · '+uc+' 엽전</button>';
-    h = '<div class="info"><img src="'+ICONS[t.type]+'" alt=""><div><h3>'+D0.name+' '+(t.lvl+1)+'단계'+(t.terr ? ' · '+t.terr : '')+'</h3><p>'+line+'</p>'+(us ? '' : '<p>'+D0.role+'</p>')+'</div></div>'
+    h = '<div class="info"><img src="'+ICONS[t.type]+'" alt=""><div><h3>'+D0.name+' '+(t.lvl+1)+'단계'+(t.terr ? ' · '+t.terr : '')+'</h3><p>'+line+hpLine+'</p>'+(us ? '' : '<p>'+D0.role+'</p>')+'</div></div>'
       + '<div class="row">' + upBtn + '<button class="btn danger" data-act="sell"'+(ts ? " disabled" : "")+'>팔기 · +'+refund+'</button></div>';
     if (us) h += barracksBuy(t);
     if (t.type === "smithy") h += smithyPanel(t);
   } else if (!R.started){
-    h = '<p class="hint">빈 땅을 눌러 망루를 세운 뒤 시작하세요.'+(hero ? ' 장수를 누르면 옮길 수 있어요.' : '')+'</p><p class="next">첫 물결: '+waveSummary(1)+'</p>'
-      + '<div class="'+rowCls+'"><button class="btn primary'+pulse("go")+'" data-act="go"'+(ts && ts.btn !== "go" ? ' disabled' : '')+'>첫 물결 시작</button>'+adBtn+'</div>';
+    h = '<p class="hint">'+(R.towers.length ? '준비되면 아래 단추로 첫 물결을 부르세요.' : '빈 땅을 눌러 망루를 세운 뒤 시작하세요.')+(hero ? ' 장수를 누르면 옮길 수 있어요.' : '')+'</p><p class="next">첫 물결: '+waveSummary(1)+'</p>'
+      + '<div class="'+rowCls+'"><button class="btn primary'+pulse("go")+'" data-act="go"'+(ts && ts.btn !== "go" ? ' disabled' : '')+'>'+(R.st.tutorial ? '물결 부르기' : '첫 물결 시작')+'</button>'+adBtn+'</div>';
   } else if (!R.waveActive){
-    h = repairRow() + '<p class="next">다음 물결: '+waveSummary(R.wave+1)+'</p>'
-      + '<div class="'+rowCls+'"><button class="btn primary'+pulse("go")+'" data-act="go"'+(ts && ts.btn !== "go" ? ' disabled' : '')+'>바로 부르기 +10'+(ts ? '' : ' (<span id="cd">10</span>)')+'</button>'+adBtn+'</div>';
+    h = repairRow() + '<p class="next">'+(lateFinal(R.wave+1) ? '<b style="color:#FF6A55">총공세! · 어려움</b> ' : lateK(R.wave+1) > 0 ? '<b style="color:#FF6A55">거센 물결! · 어려움</b> ' : '')+'다음 물결: '+waveSummary(R.wave+1)+'</p>'
+      + '<div class="'+rowCls+'"><button class="btn primary'+pulse("go")+'" data-act="go"'+(ts && ts.btn !== "go" ? ' disabled' : '')+'>'+(R.st.tutorial ? '물결 부르기' : '바로 부르기 +10')+(ts ? '' : ' (<span id="cd">10</span>)')+'</button>'+adBtn+'</div>';
   } else {
-    h = '<p class="next">'+R.wave+'번째 물결 · '+waveSummary(R.wave)+'</p><p class="hint">'+(hero ? (hero.dead ? '장수가 쓰러졌어요. 10초 뒤 성문 앞에서 일어나요.' : '장수를 누르면 옮겨요. 망루를 누르면 강화·팔기.') : '망루를 누르면 강화하거나 팔 수 있어요.')+'</p>'
+    h = '<p class="next">'+(lateFinal(R.wave) ? '<b style="color:#FF6A55">총공세! · 어려움</b> ' : lateK(R.wave) > 0 ? '<b style="color:#FF6A55">거센 물결! · 어려움</b> ' : '')+R.wave+'번째 물결 · '+waveSummary(R.wave)+'</p><p class="hint">'+(hero ? (hero.dead ? '장수가 쓰러졌어요. 10초 뒤 성문 앞에서 일어나요.' : '장수를 누르면 옮겨요. 망루를 누르면 강화·팔기.') : '망루를 누르면 강화하거나 팔 수 있어요.')+'</p>'
       + (R.st.tutorial ? '' : '<div class="row"><button class="btn" disabled>막는 중</button>'+adBtn+'</div>');
   }
   panel.innerHTML = h;
@@ -5803,9 +5919,9 @@ function showStory(){ // 이야기 화면: 이어서 하기(다음 장) · 장 �
   const stages = STAGES.map((st,i) => { const open = isOpen(i);
     const chN = st.tutorial ? 0 : st.ch.filter((_,ci) => M.ch[i][ci]).length;
     const right = st.tutorial ? (M.stars[0] ? '<span class="done">완료</span>' : '') : '<span class="stgstar">'+starsHTML(M.stars[i])+(st.ch.length ? '<small class="chn'+(chN ? ' got' : '')+'">도전 '+chN+'/'+st.ch.length+'</small>' : '')+'</span>';
-    const modes = st.tutorial || !open ? "" : '<div class="modes"><button class="btn" data-act="stage" data-k="'+i+'">보통</button><button class="btn hard'+(M.hard[i] ? ' got' : '')+'" data-act="hard" data-k="'+i+'"'+(M.stars[i] ? '' : ' disabled')+'>어려움 '+(M.stars[i] ? starsHTML(M.hard[i]) : '· 별 1개로 열려요')+'</button></div>';
+    const modes = ""; /* v10: 어려움 모드 없앰(후반 물결이 어려움) */
     const chs = st.tutorial || !open ? "" : '<div class="chs">' + st.ch.map((c,ci) => '<button class="btn'+(M.ch[i][ci] ? ' got' : '')+'" data-act="chal" data-k="'+i+'" data-c="'+ci+'"'+(M.stars[i] ? '' : ' disabled')+' title="'+CHAL[c].desc+'">'+(M.ch[i][ci] ? '★' : '☆')+' 도전 · '+CHAL[c].name+'</button>').join("") + '</div>';
-    return '<div class="stgwrap"><button class="stg'+(i===nextIdx?' now':'')+(M.hard[i] ? ' hardwin' : '')+'" data-act="stage" data-k="'+i+'"'+(open ? "" : " disabled")+'><img class="band" data-c="'+i+'" src="'+(ART.url(stArt(i)) || THUMBS[st.map])+'" alt="">'+'<span class="txt"><span><b>'+st.title+'</b><small>'+(open ? st.synopsis : "앞 장을 마치면 열려요")+'</small><small class="tags">'+st.tags+'</small></span>'+right+'</span></button>'+modes+chs+'</div>'; }).join("");
+    return '<div class="stgwrap"><button class="stg'+(i===nextIdx?' now':'')+'" data-act="stage" data-k="'+i+'"'+(open ? "" : " disabled")+'><img class="band" data-c="'+i+'" src="'+(ART.url(stArt(i)) || THUMBS[st.map])+'" alt="">'+'<span class="txt"><span><b>'+st.title+'</b><small>'+(open ? st.synopsis : "앞 장을 마치면 열려요")+'</small><small class="tags">'+st.tags+'</small></span>'+right+'</span></button>'+modes+chs+'</div>'; }).join("");
   const perks = PERKS.map(p => '<div class="perk"><span><b>'+p.name+'</b><small>'+p.desc+'</small></span>'
     + (M.perks[p.k] ? '<button class="btn" disabled>익힘</button>' : '<button class="btn" data-act="perk" data-k="'+p.k+'"'+(avail < p.cost ? " disabled" : "")+'>별 '+p.cost+'개</button>') + '</div>').join("");
   const finOpen = Raid.finalOpen();
@@ -5819,7 +5935,7 @@ function showStory(){ // 이야기 화면: 이어서 하기(다음 장) · 장 �
     + (gateNo ? '<li><b>'+gateNo+'</b>: 네 문 가운데 하나도 부서지지 않아야 ★3 (★2는 두 문까지)</li>' : '')
     + '<li><b>도전</b> 2개(보통 모드를 이긴 뒤 열림): 하나 깰 때마다 ★+1 → 장마다 최대 ★5</li>'
     + '<li>★1 이상 받으면 다음 장이 열려요. 모은 별로 아래 <b>병법서</b>를 익혀요.</li>'
-    + '<li><b>어려움 모드</b> 별(장마다 최대 3)은 따로 쌓여 내 성 서당·연못 정자를 고칠 때 써요.</li>'
+    + '<li><b>물결 후반</b>(진행 60% 뒤)은 어려움이에요. 적 레벨이 2 오르고 더 많이 몰려와요.</li>'
     + '</ul></details>';
   showOverlay('<h2>이야기</h2>' + startBtn + starGuide
     + '<div class="stages">'+stages+finalCard+'</div>'
@@ -5988,13 +6104,13 @@ function victory(){
   let note = "", bonus = st.tutorial ? 0 : 10 + stars*10, flat = 0;
   if (!st.tutorial) R.ironRun = (R.ironRun || 0) + 6 + 3*stars; // 이기면 쇠 보너스
   if (R.mode === "normal") M.stars[R.s] = Math.max(M.stars[R.s], stars);
-  else if (R.mode === "hard"){ M.hard[R.s] = Math.max(M.hard[R.s], stars); if (!M.hardPaid[R.s]){ M.hardPaid[R.s] = true; flat = HARD.first(R.s); note = "어려움 모드 첫 승리! 옥 "+flat+"개 더"; } else note = "어려움 모드 승리!"; }
+  /* v10: 어려움 모드 결과(어려움 별·첫 승리 옥) 없앰. 저장의 M.hard·hardPaid는 남겨 둠 */
   else if (R.mode === "chal"){ const ci = st.ch.indexOf(R.ch); note = M.ch[R.s][ci] ? "도전 성공! (별은 이미 받았어요)" : "도전 성공! 별 +1"; M.ch[R.s][ci] = 1; }
   else if (R.mode === "daily"){
     if (R.dayKey !== today) note = "어제 시작한 도전이라 보상은 없어요";
     else if (M.daily.done < today){ M.daily.done = today; flat += DAILY_REWARD; note = "일일 도전 성공! 옥 "+DAILY_REWARD+"개 더"; } else note = "일일 도전 성공!"; }
   R.endRatio = st.tutorial ? 1 : Math.max(0, Math.min(1, R.lives/(R.maxLives || 1))); R.endMul = st.tutorial ? 1 : endMulOf(R.endRatio); dangerEdge(false); // 끝 보상: 성문을 많이 지킬수록 많이(아슬아슬 보너스 없앰, v10)
-  if (!st.tutorial){ mprog("win", 1); if (stars === 3 && (R.mode === "normal" || R.mode === "hard")) mprog("star3", 1); if (M.lose.s === R.s) M.lose = {s:-1, m:"", n:0}; }
+  if (!st.tutorial){ mprog("win", 1); if (stars === 3 && R.mode === "normal") mprog("star3", 1); if (M.lose.s === R.s) M.lose = {s:-1, m:"", n:0}; }
   finishJade(bonus, flat);
   Track.event("stage_end", {stage:R.s, mode:R.mode, ch:R.ch || "", result:"win", stars, wave:R.wave, hero:R.hero ? R.hero.k : "none"});
   saveMeta(); CloudSave.auto();
@@ -6003,10 +6119,10 @@ function victory(){
     const toFinal = story && last; // 4대문을 이기면 최종장으로
     const nextBtn = story && !last ? '<button class="btn primary" data-act="stage" data-k="'+(R.s+1)+'">'+STAGES[R.s+1].title+'</button>' : toFinal ? '<button class="btn primary" data-act="raid-final">10장 · 두억시니의 진</button>' : '<button class="btn primary" data-act="menu">처음 화면</button>';
     if (st.tutorial){ showOverlay('<img class="rface" src="'+FACES.old+'" alt="박 노장"><h2>훈련 완료</h2><p class="center">이제 진짜 싸움이 시작돼요.</p>'+'<div class="row one">'+nextBtn+'</div>', "result"); return; }
-    const head = ending ? '<h2>이야기 끝</h2>' : (R.mode === "hard" ? '<h2>어려움 · 성을 지켰어요</h2>' : '<h2>성을 지켰어요</h2>');
+    const head = ending ? '<h2>이야기 끝</h2>' : '<h2>성을 지켰어요</h2>';
     const msg = ending ? '두억시니를 물리쳤어요. 특별 장 · 남한산성 4대문이 열렸어요. 도전과 무한 물결로 별과 옥을 더 모아 보세요.' : R.gates ? st.title+' · 행궁 체력 '+R.lives+'/'+R.maxLives+' · 부서진 문 '+(R.gatesBroken || 0)+'개' : st.title+' · 성문 체력 '+R.lives+'/'+R.maxLives;
     const leftBtn = story && !last ? '<button class="btn" data-act="menu">처음 화면</button>' : '<button class="btn" data-act="retry">다시 하기</button>';
-    showOverlay('<img class="rface" src="'+FACES[ending ? "lord" : (R.hero ? HEROES[R.hero.k].face : "old")]+'" alt="">' + head + (story || R.mode === "hard" ? '<div class="big-stars">'+starsHTML(stars)+'</div>' : '') + '<p class="center">'+msg+'</p>'
+    showOverlay('<img class="rface" src="'+FACES[ending ? "lord" : (R.hero ? HEROES[R.hero.k].face : "old")]+'" alt="">' + head + (story ? '<div class="big-stars">'+starsHTML(stars)+'</div>' : '') + '<p class="center">'+msg+'</p>'
       + (st.tutorial ? '' : '<p class="center" style="color:var(--muted);font-size:15px">'+(R.gates ? '행궁' : '성문')+' '+Math.round(R.endRatio*100)+'% 지킴 → 옥 ×'+R.endMul.toFixed(2)+'</p>')
       + (note ? '<p class="center" style="color:var(--gold);font-size:18px">'+note+'</p>' : '')
       + (R.helped ? '<p class="center" style="color:var(--muted);font-size:15px">도움 받은 판('+diffName(R.helpDiff)+') · 별은 최대 2개</p>' : '')
@@ -6028,7 +6144,7 @@ function defeat(){
   finishJade(0);
   if (R.st.endless){ endlessEnd(); return; }
   Track.event("stage_end", {stage:R.s, mode:R.mode, ch:R.ch || "", result:"lose", stars:0, wave:R.wave, hero:R.hero ? R.hero.k : "none"});
-  if (!R.st.tutorial && (R.mode === "normal" || R.mode === "hard")){ M.lose = M.lose.s === R.s && M.lose.m === R.mode ? {s:R.s, m:R.mode, n:Math.min(99, M.lose.n + 1)} : {s:R.s, m:R.mode, n:1}; saveMeta(); } // 같은 장 연패
+  if (!R.st.tutorial && R.mode === "normal"){ M.lose = M.lose.s === R.s && M.lose.m === R.mode ? {s:R.s, m:R.mode, n:Math.min(99, M.lose.n + 1)} : {s:R.s, m:R.mode, n:1}; saveMeta(); } // 같은 장 연패
   CloudSave.auto();
   const canCont = contOk(R), hints = loseHints(), canEasy = easierOk(R);
   if (canCont) Ads.offer("continue");
@@ -6167,7 +6283,7 @@ document.addEventListener("click", ev => {
       R.gold -= c; g.hp = g.max; g.broken = false; burst(g.x + .5, g.y + .5, 14, "#F4D06F", 1.8, .5, .05); addText(g.x + .5, g.y - .3, "고침", "#9FE08A", 1.2); Sound.play("build"); renderPanel(true); break; }
     case "buyu": { const t = R.sel && towerAt(R.sel.x, R.sel.y); if (!t || R.over || !buyUnit(t, k)) return; Sound.play("coin"); renderPanel(true); break; }
     case "trepair": { const t = towerAt(R.sel.x, R.sel.y); if (!t || R.waveActive) return; const rc = towerRepairCost(t); if (!rc || R.gold < rc) return; R.gold -= rc; t.ruin = false; t.maxHp = towerMaxHp(t.type, t.lvl); t.hp = t.maxHp; if (t.units) t.units.forEach(u => { u.dead = false; u.rt = 0; u.hp = u.max; u.x = t.x + .5; u.y = t.y + .5; u.fs = null; u.gi = null; u.heal = false; u.wp = 0; u.nx = null; u.tg = null; }); burst(t.x+.5, t.y+.3, 12, "#F4D06F", 1.6, .5, .05); Sound.play("build"); renderPanel(true); break; }
-    case "sell": { const t = towerAt(R.sel.x, R.sel.y); if (R.st.tutorial && R.tut >= 0 && t && t.type !== "fence" && t.type !== "caltrop"){ showBanner("박 노장", "서장에서는 건물을 팔거나 치울 수 없소. 다음 단계에서 고쳐 주겠소."); return; } /* 서장: 필수 건물을 치워 단계가 막히는 일 방지(검수 v10 4차) */ if (t.units) t.units.forEach(soldierRelease); if (t.q){ R.gold += t.q.reduce((a, o) => a + (o.cost || 0), 0); R.horses = (R.horses || 0) + t.q.filter(o => o.horse).length; } /* 아직 안 나온 장병 값과 말은 돌려준다 */ R.gold += t.ruin ? 0 : Math.round(t.spent*(R.sellRate || .7)); R.towers = R.towers.filter(x => x !== t); R.grid[t.y][t.x] = R.base[t.y][t.x]; R.sel = null; renderPanel(true); break; }
+    case "sell": { const t = towerAt(R.sel.x, R.sel.y); if (R.st.tutorial && R.tut >= 0 && t && t.type !== "fence" && t.type !== "caltrop"){ showBanner("박 노장", "서장에서는 건물을 팔거나 치울 수 없소. 다음 단계에서 고쳐 주겠소."); return; } /* 서장: 필수 건물을 치워 단계가 막히는 일 방지(검수 v10 4차) */ if (t.units) t.units.forEach(soldierRelease); if (t.q) refundQ(t.q); /* 아직 안 나온 장병 값·말·옥은 돌려준다 */ R.gold += t.ruin ? 0 : Math.round(t.spent*(R.sellRate || .7)); R.towers = R.towers.filter(x => x !== t); R.grid[t.y][t.x] = R.base[t.y][t.x]; R.sel = null; renderPanel(true); break; }
     case "go": if (R.started && !R.waveActive) R.gold += 10; R.sel = null; R.heroSel = false; startWave(); break;
     case "adgold": { const run = R; if (!run || run.adGold || run.over) return; // 요청 당시 판에만, 한 번만
       Ads.showRewarded("gold100").then(ok => { if (!ok || R !== run || run.adGold || run.over){ if (R === run) renderPanel(true); return; } run.adGold = true; run.gold += 100; addText(4.5, 6, "엽전 +100", "#F4D06F", 1.6); renderPanel(true); }); break; }
@@ -6224,7 +6340,7 @@ document.addEventListener("click", ev => {
     case "pwaupdate": WebApp.apply(); break;
     case "wipe": if (!TabLock.ok()) break; if (wipeStep < 2){ wipeStep++; showSettings(); } else { if (!writeTombstone()){ toast("저장을 지우지 못했어요. 잠시 뒤 다시 해 보세요."); break; }
       [V3_KEY, OLD_KEY, LOG_KEY].forEach(x => { try { localStorage.removeItem(x); } catch(e){} }); TabLock.reloadPage(); } break; // 주 저장은 묘비로 바꾼다(검수 v4b 7차)
-    case "hard": if (M.stars[+k]) newRun(+k, {mode:"hard"}); break;
+    case "hard": newRun(+k); break; /* v10: 어려움 모드 없앰(옛 단추가 남아 있어도 보통으로) */
     case "diff": case "diffpick": case "diffease": break; // 난이도 고르기 없앰(2026-11-22)
     case "castle-open": showCastle(); break;
     case "forge": showForge(); break;
@@ -6350,7 +6466,7 @@ function start(){
   Shop.init();
   if (M.stars[0] && M.daily.login < kstDate()) showDaily(); // 하루 첫 접속이면 매일 보상부터
   if (!TabLock.pending && !TabLock.ok()) lockScreen(true); // 다른 창이 게임을 갖고 있으면 안내부터(Web Lock 은 잡히면/못 잡히면 그때 처리)
-  window.SanseongDebug = {get T(){ return T; }, TUT, tutOk, tutCells, fortDbg:{fortPlan, fortGateSafe, fortGatePts, fortFlagPos, fortVolunteers, flagBtnTap, toggleSortie, tapFlag:(x,y)=>{ R.flagMode = true; const ts = null; if (fortIn(x, y) && fortWalk(x, y)){ R.flag = {x:x + .5, y:y + .5}; } R.flagMode = false; }}, pickMusic, musicNow:() => Sound.musicNow(), MUSIC, WebApp, showStory, Raid, RAID, GATE, STAGES, TabLock, Cam, tapAt, reloadFromDisk, get M(){ return M; }, get R(){ return R; }, newRun, grantStarter, saveMeta, showMenu, castSkill, Track, update, victory, defeat, hideOverlay, Ads, Shop, contOk, loadMeta, CloudSave, SaveCode, Notify, castlePending, castleCollect, ensureMissions, mprog, dailyBoot, showCastle, normMeta, Ledger, castleSettle, claimMission, startWave, get saveGen(){ return saveGen; }, get castleBonus(){ return castleBonus; }, set castleBonus(v){ castleBonus = v; }, get overlayMode(){ return overlayMode; }, bot:{buyUnit, UNITS, canBuildAt, cellBuildable, upLimit, rforgeUp, TT, ET, HEROES, TERRAIN, hit, toggleSortie, buildable, upCost, initBarracks, towerMaxHp, spawnHero, towerAt, repairCost, stat, get ROWS(){ return ROWS; }, get COLS(){ return COLS; }}}; // 점검용(bot: 자동 봇 균형 시험)
+  window.SanseongDebug = {get T(){ return T; }, TUT, tutOk, tutCells, fortDbg:{unitTerrMul, cellTerr, fortMove, volDanger, fortWallHit, fortPlan, fortGateSafe, fortGatePts, fortFlagPos, fortVolunteers, flagBtnTap, toggleSortie, tapFlag:(x,y)=>{ R.flagMode = true; const ts = null; if (fortIn(x, y) && fortWalk(x, y)){ R.flag = {x:x + .5, y:y + .5}; } R.flagMode = false; }}, pickMusic, musicNow:() => Sound.musicNow(), MUSIC, WebApp, showStory, Raid, RAID, GATE, STAGES, TabLock, Cam, tapAt, reloadFromDisk, get M(){ return M; }, get R(){ return R; }, newRun, grantStarter, saveMeta, showMenu, castSkill, Track, update, victory, defeat, hideOverlay, Ads, Shop, contOk, loadMeta, CloudSave, SaveCode, Notify, castlePending, castleCollect, ensureMissions, mprog, dailyBoot, showCastle, normMeta, Ledger, castleSettle, claimMission, startWave, get saveGen(){ return saveGen; }, get castleBonus(){ return castleBonus; }, set castleBonus(v){ castleBonus = v; }, get overlayMode(){ return overlayMode; }, bot:{buyUnit, UNITS, canBuildAt, cellBuildable, upLimit, rforgeUp, TT, ET, HEROES, TERRAIN, hit, toggleSortie, buildable, upCost, initBarracks, towerMaxHp, spawnHero, towerAt, repairCost, stat, get ROWS(){ return ROWS; }, get COLS(){ return COLS; }}}; // 점검용(bot: 자동 봇 균형 시험)
   requestAnimationFrame(loop);
 }
 if (window.claude && window.claude.hot && window.claude.hot.snapshot) window.claude.hot.snapshot(() => ({}));

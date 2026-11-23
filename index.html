@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta name="app-version" content="20261123-3a97e9409d">
+<meta name="app-version" content="20261123-96ef8aca38">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>산성</title>
@@ -339,7 +339,9 @@ html,body{margin:0}#game{position:relative;max-width:none!important;padding:0!im
 #cmdbar #flagbtn,#cmdbar #tacbtn{width:var(--cb)!important;min-width:var(--cb)!important;max-width:none!important;height:var(--cb)!important;border-radius:50%!important;padding:0 2px!important;font-size:13px!important;line-height:1.1}
 body.scr-t #panel,body.scr-t #tacpanel.inbar{left:auto!important;right:max(8px,env(safe-area-inset-right,0px));top:calc(var(--vt,52px) + 4px)!important;bottom:8px;height:auto;width:var(--pw,300px)!important}
 body.scr-t #cmdbar{right:calc(var(--pw,300px) + 16px);bottom:8px;flex-wrap:nowrap}
-#banner{bottom:calc(var(--vb,200px) + 8px)!important}
+#banner{bottom:auto!important;top:calc(var(--vt,52px) + (100% - var(--vt,52px) - var(--vb,200px))*.16)} /* v18: 큰 띠는 보이는 영역 위쪽(확대 단추·미니맵 아래, topLayout이 자리 잡음) */
+#tip{position:absolute;z-index:5;box-sizing:border-box;background:rgb(20 16 12 / .88);border:1px solid var(--gold);border-radius:10px;padding:5px 10px;font-size:13px;line-height:1.35;color:#FFE9C0;cursor:pointer;box-shadow:0 2px 8px rgb(0 0 0 / .4)}#tip[hidden]{display:none}#tip .tt{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}#tip b{color:var(--gold);font-weight:700;margin-right:5px}body.scr-l #tip{font-size:14px}
+#cmdbar #herobtn{order:5;width:var(--cb)!important;min-width:var(--cb)!important;height:var(--cb)!important;border-radius:50%!important;padding:0 2px!important;font-size:13px!important;line-height:1.1;opacity:.94;box-shadow:0 3px 12px rgb(0 0 0 / .45)}#cmdbar #skill{order:6}
 #coach{bottom:calc(var(--vb,200px) + 8px)}#coach.top{top:calc(var(--vt,52px) + 8px)!important;bottom:auto}
 body.scr-t #banner,body.scr-t #coach{left:calc((100% - var(--pw,300px) - 16px)/2)}
 </style>
@@ -354,8 +356,8 @@ body.scr-t #banner,body.scr-t #coach{left:calc((100% - var(--pw,300px) - 16px)/2
     <button class="ibtn" id="b-speed" aria-label="빠르기">1×</button>
     <button class="ibtn" id="b-pause" aria-label="멈춤">Ⅱ</button>
   </header>
-  <div id="stagebox"><canvas id="cv" aria-label="전장"></canvas><div id="banner" hidden></div><button id="skill" data-act="skill" hidden aria-label="장수 필살기"><canvas width="120" height="120"></canvas><span class="cdv" hidden></span><span class="lbl"></span></button><button id="sortie" hidden>출격!</button><button id="flagbtn" hidden>깃발</button><div id="coach" hidden><canvas width="136" height="136"></canvas><p><b>박 노장</b><span id="coach-text"></span></p><button id="tutskip" data-act="tutskip">건너뛰기</button></div></div>
-  <div id="cmdbar" hidden><span class="cbsp"></span></div>
+  <div id="stagebox"><canvas id="cv" aria-label="전장"></canvas><div id="banner" hidden></div><div id="tip" hidden data-act="tipclose" role="status"></div><button id="skill" data-act="skill" hidden aria-label="장수 필살기"><canvas width="120" height="120"></canvas><span class="cdv" hidden></span><span class="lbl"></span></button><button id="sortie" hidden>출격!</button><button id="flagbtn" hidden>깃발</button><div id="coach" hidden><canvas width="136" height="136"></canvas><p><b>박 노장</b><span id="coach-text"></span></p><button id="tutskip" data-act="tutskip">건너뛰기</button></div></div>
+  <div id="cmdbar" hidden><span class="cbsp"></span><button id="herobtn" class="btn" data-act="herofollow" hidden>장군<br>보기</button></div>
   <section id="panel" aria-live="polite"></section>
 </div>
 <div id="overlay" hidden></div>
@@ -2237,7 +2239,7 @@ function freshMeta(){
   const NS = STAGES.length; // 장 수가 늘어도(특별 장) 배열 길이를 맞춘다. 예전 저장(길이 5)은 normMeta 가 빈 칸을 0 으로 채운다
   return {v:4, stars:Array(NS).fill(0), ch:Array.from({length:NS}, () => [0,0]), perks:{}, ads:0, jade:0, heroes:{gwon:1, yeon:0}, awake:{}, unlocked:{}, noAds:false, starter:false,
           starterOwned:false, starterJadeGranted:false, purchases:{},
-          set:{sfx:true, music:true, vib:true, easy:true, easyTold:false /* v12 쉬운 조작 */, decide:true /* v16 결정 순간 */, font:0, notif:true, notifAsked:false, autocam:null /* 위급한 곳 자동 이동: null=난이도 따라(편하게면 켬), true/false=사용자가 고름 */}, daily:{login:"", idx:0, chest:"", done:""}, endless:{best:0, week:"", weekBest:0}, from:"new",
+          set:{sfx:true, music:true, vib:true, easy:true, easyTold:false /* v12 쉬운 조작 */, decide:true /* v16 결정 순간 */, follow:false /* v18 장군 따라가기 자동 */, font:0, notif:true, notifAsked:false, autocam:null /* 위급한 곳 자동 이동: null=난이도 따라(편하게면 켬), true/false=사용자가 고름 */}, daily:{login:"", idx:0, chest:"", done:""}, endless:{best:0, week:"", weekBest:0}, from:"new",
           // v4: 난이도, 장마다 어려움 별, 내 성, 오늘의 임무, 접속 시각(알림용), 같은 장 연패, 하루 첫 클라우드 저장 날짜
           diff:1, diffChosen:false, hard:Array(NS).fill(0), hardPaid:Array(NS).fill(false), castle:{b:{}, last:0, acc:0, got:0}, /* last: 생산 정산 시각, got: 실제로 받은 시각 */
           mis:{day:"", ids:[], prog:{}, got:{}, all:false}, /* got: 임무 ID → 1 (배열 위치가 아니라 ID에 연결) */ play:[], lose:{s:-1, m:"", n:0}, cloudDay:"",
@@ -2291,7 +2293,7 @@ function normMeta(m){
   safe(() => { o.noAds = bool(m.noAds, false); o.starter = bool(m.starter, false); o.starterOwned = bool(m.starterOwned, o.starter); });
   safe(() => { o.starterJadeGranted = bool(m.starterJadeGranted, o.starter); }); // 옛 판에서 이미 산 경우 옥 500은 이미 받은 것으로 본다
   safe(() => { if (isObj(m.purchases)) Object.keys(m.purchases).forEach(k => { const v = m.purchases[k]; if (v === true) o.purchases[k] = true; else if (isObj(v)) o.purchases[k] = {at:int(v.at, 0, 9e15, 0), id:typeof v.id === "string" ? v.id : "", gave:typeof v.gave === "string" ? v.gave : ""}; }); });
-  if (isObj(m.set)){ ["sfx", "music", "vib", "notif", "easy", "decide"].forEach(k => safe(() => { o.set[k] = bool(m.set[k], true); })); safe(() => { o.set.easyTold = bool(m.set.easyTold, false); }); safe(() => { o.set.font = int(m.set.font, 0, 2, 0); }); safe(() => { o.set.notifAsked = bool(m.set.notifAsked, false); }); safe(() => { o.set.autocam = m.set.autocam === true || m.set.autocam === false ? m.set.autocam : null; }); }
+  if (isObj(m.set)){ ["sfx", "music", "vib", "notif", "easy", "decide"].forEach(k => safe(() => { o.set[k] = bool(m.set[k], true); })); safe(() => { o.set.easyTold = bool(m.set.easyTold, false); }); safe(() => { o.set.follow = bool(m.set.follow, false); }); safe(() => { o.set.font = int(m.set.font, 0, 2, 0); }); safe(() => { o.set.notifAsked = bool(m.set.notifAsked, false); }); safe(() => { o.set.autocam = m.set.autocam === true || m.set.autocam === false ? m.set.autocam : null; }); }
   if (isObj(m.daily)){ ["login", "chest", "done"].forEach(k => safe(() => { o.daily[k] = day(m.daily[k]); })); safe(() => { o.daily.idx = int(m.daily.idx, 0, 6, 0); }); }
   if (isObj(m.endless)){ safe(() => { o.endless.best = int(m.endless.best, 0, 1e5, 0); }); safe(() => { o.endless.week = day(m.endless.week); }); safe(() => { o.endless.weekBest = int(m.endless.weekBest, 0, 1e5, 0); }); }
   // v4 칸 (v3 저장에는 없으니 기본값)
@@ -4635,7 +4637,7 @@ function newRun(s, opt){
       if (!tut && R.ch !== "archers" && typeof s === "number") Object.keys(BLUEPRINTS).forEach(k => { if (bpOwned(k) && s >= BLUEPRINTS[k].from && R.towersOpen.indexOf(k) < 0) R.towersOpen.push(k); }); } // v11: 쇠로 연 설계도 망루 // v10: 커지는 전장·사방 스폰, S3 목책·마굿간·대장간
     R.horses = 0; R.rforge = {};
   } // 시작한 한국 날짜·주로 보상·기록을 귀속
-  setSpeed(1); banner.hidden = true;
+  setSpeed(1); banner.hidden = true; { const te = document.getElementById("tip"); if (te) te.hidden = true; }
   hideOverlay(); resize(); renderPanel(true);
   Track.event("stage_start", {stage:endless ? "endless" : s, mode, ch:ch || ""});
   const ready = () => { if (st.tutorial) return; showNote(() => showFoeCard(pickHero)); };
@@ -5977,8 +5979,11 @@ function update(dt){
   R.texts = R.texts.filter(t => t.life > 0);
   R.enemies = R.enemies.filter(e => !e.dead);
   R.shake = Math.max(0, R.shake - dt*30);
-  if (R.bannerT > 0){ R.bannerT -= dt; if (R.bannerT <= 0){ if (R.bannerNext){ const bn = R.bannerNext; R.bannerNext = null; showBanner(bn[0], bn[1]); } else banner.hidden = true; } }
+  if (R.bannerT > 0){ R.bannerT -= dt; if (R.bannerT <= 0){ if (R.bannerNext){ const bn = R.bannerNext; R.bannerNext = null; showBanner(bn[0], bn[1]); } else { banner.hidden = true; topLayout(); } } }
+  if (R.tipT > 0){ R.tipT -= dt; if (R.tipT <= 0) tipNext(); }
+  if (M.set.follow && R.waveActive && R.hero && !R.hero.dead && Cam.active){ R.followT = (R.followT || 0) - dt; if (R.followT <= 0){ R.followT = .5; const v = Cam.vis(-.6), h = R.hero; if ((h.x < v.x0 || h.x > v.x1 || h.y < v.y0 || h.y > v.y1) && performance.now() - Cam.userT > 2500) heroLook(); } } // v18: 장군 따라가기 자동(설정)
 }
+function heroLook(){ const h = R && R.hero; if (!h || !Cam.active || !isFinite(h.x) || !isFinite(h.y)) return false; Cam.aim(h.x*T, h.y*T); return isFinite(Cam.tx) && isFinite(Cam.ty); } // v18: 카메라를 장군에게(부드럽게, clampXY 거침)
 
 /* ---------- 그리기 ---------- */
 function draw(){
@@ -6200,6 +6205,13 @@ const Cam = {
         c.fillStyle = "#FFD27A"; c.beginPath(); c.moveTo(x + Math.cos(a)*34, y + Math.sin(a)*34); c.lineTo(x + Math.cos(a+.45)*24, y + Math.sin(a+.45)*24); c.lineTo(x + Math.cos(a-.45)*24, y + Math.sin(a-.45)*24); c.closePath(); c.fill();
         c.fillStyle = "#fff"; c.font = "700 17px 'Gowun Dodum', sans-serif"; c.fillText(R.sortie ? "병사" : "진", x, y + 1);
         this.arrows.push({x, y, r:30, wx:tp[0], wy:tp[1]}); } }
+    { const h = R.hero; if (h && !h.dead && isFinite(h.x) && isFinite(h.y) && !(h.x >= v.x0 && h.x <= v.x1 && h.y >= v.y0 && h.y <= v.y1)){ // v18: 화면 밖 장군(얼굴 화살표, 누르면 그리로)
+      const s = toS(h.x*T, h.y*T), dx = s[0] - W/2, dy = s[1] - H/2, kx = dx ? (W/2 - M0)/Math.abs(dx) : Infinity, ky = dy ? (H/2 - M0)/Math.abs(dy) : Infinity, k = Math.min(kx, ky);
+      let x = Math.max(30, Math.min(W - 30, W/2 + dx*k)), y = Math.max(30, Math.min(H - 30, H/2 + dy*k)); for (const [x0, y0, x1, y1] of avoid) if (!(x + 30 < x0 || x - 30 > x1 || y + 30 < y0 || y - 30 > y1)) y = Math.min(H - 30, y1 + 32);
+      const a = Math.atan2(y - H/2, x - W/2); c.fillStyle = "#F4D06F"; c.beginPath(); c.moveTo(x + Math.cos(a)*33, y + Math.sin(a)*33); c.lineTo(x + Math.cos(a+.5)*22, y + Math.sin(a+.5)*22); c.lineTo(x + Math.cos(a-.5)*22, y + Math.sin(a-.5)*22); c.closePath(); c.fill();
+      c.fillStyle = "rgba(30,60,40,.92)"; c.strokeStyle = "#F4D06F"; c.lineWidth = 3; circle(c, x, y, 22); c.fill(); c.stroke();
+      const pc = skillBtn && skillBtn.querySelector("canvas"); if (pc && pc.width){ c.save(); c.beginPath(); c.arc(x, y, 19, 0, Math.PI*2); c.clip(); try { c.drawImage(pc, x - 19, y - 19, 38, 38); } catch(err){} c.restore(); } else { c.fillStyle = "#fff"; c.font = "700 14px 'Gowun Dodum', sans-serif"; c.fillText("장군", x, y + 1); }
+      this.arrows.push({x, y, r:30, wx:h.x, wy:h.y}); } }
     for (const e of R.enemies){ if (e.dead || !e.thief || (e.x >= v.x0 && e.x <= v.x1 && e.y >= v.y0 && e.y <= v.y1)) continue; // 요청 24: 화면 밖 약탈꾼
       const s = toS(e.x*T, e.y*T), dx = s[0] - W/2, dy = s[1] - H/2, kx = dx ? (W/2 - M0)/Math.abs(dx) : Infinity, ky = dy ? (H/2 - M0)/Math.abs(dy) : Infinity, k = Math.min(kx, ky);
       const x = Math.max(30, Math.min(W - 30, W/2 + dx*k)), y = Math.max(30, Math.min(H - 30, H/2 + dy*k)), a = Math.atan2(y - H/2, x - W/2);
@@ -6371,7 +6383,7 @@ function updateHud(){
   updateSkillBtn(); updateSortieBtn(); updateTacBtn(); layoutOverlays();
   renderPanel(false);
 }
-function updateSkillBtn(){
+function updateSkillBtn(){ { const hb = document.getElementById("herobtn"), on = !!(R && R.hero && R.m && R.m.fort && Cam.active && !R.over && !overlayMode); if (hb && hb.hidden === on) hb.hidden = !on; } // v18 장군 보기
   const b = skillBtn, h = R.hero, show = !!h && !R.over && !overlayMode;
   if (b.hidden === show) b.hidden = !show;
   if (!show) return;
@@ -6811,7 +6823,7 @@ let wipeStep = 0;
 function showSettings(){
   const sw = (k, label) => '<div class="set"><span>'+label+'</span><button class="btn'+(M.set[k] ? ' primary' : '')+'" data-act="toggle" data-k="'+k+'">'+(M.set[k] ? '켜짐' : '꺼짐')+'</button></div>';
   const wipeTxt = ["저장 지우기", "정말 지울까요? 한 번 더 누르세요", "마지막 확인: 별·옥·장수가 모두 지워져요"][wipeStep];
-  showOverlay('<h2>설정</h2>' + sw("easy", "쉬운 조작(추천)<small>수리·장병 보충·깃발·진 출격을 알아서 해요 · 끄면 직접 다 해요</small>") + sw("decide", "결정 순간 멈춤<small>대장·약탈꾼이 나오거나 문이 위험하면 잠깐 멈추고 고르게 해요</small>") + sw("sfx", "효과음") + sw("music", "배경음") + sw("vib", "진동 (성문이 맞을 때)")
+  showOverlay('<h2>설정</h2>' + sw("easy", "쉬운 조작(추천)<small>수리·장병 보충·깃발·진 출격을 알아서 해요 · 끄면 직접 다 해요</small>") + sw("follow", "장군 따라가기 자동<small>물결 중 장군이 화면 밖으로 나가면 화면이 따라가요</small>") + sw("decide", "결정 순간 멈춤<small>대장·약탈꾼이 나오거나 문이 위험하면 잠깐 멈추고 고르게 해요</small>") + sw("sfx", "효과음") + sw("music", "배경음") + sw("vib", "진동 (성문이 맞을 때)")
     + '<div class="set"><span>글자 크기</span><button class="btn primary" data-act="font">'+["보통","크게","아주 크게"][M.set.font]+'</button></div>'
     
     + '<div class="set"><span>위급한 곳 자동 이동<small>넓은 지도에서 성문이 뚫리면 화면이 그리로 가요</small></span><button class="btn'+(autoCamOn() ? ' primary' : '')+'" data-act="autocam">'+(M.set.autocam == null ? (autoCamOn() ? '자동 · 켜짐' : '자동 · 꺼짐') : M.set.autocam ? '켜짐' : '꺼짐')+'</button></div>'
@@ -6936,7 +6948,23 @@ function endlessEnd(){
     + '<div class="row"><button class="btn" data-act="menu">처음 화면</button><button class="btn primary" data-act="retry">다시 하기</button></div>', "result");
   R.resultFn();
 }
-function showBanner(title, text){ banner.innerHTML = "<b>"+title+"</b><span>"+text+"</span>"; banner.hidden = false; R.bannerT = 3.2; banner.style.bottom = skillBtn && !skillBtn.hidden ? "100px" : ""; } // 필살기 단추(아래 구석)를 가리지 않게 그 위로
+function showBanner(title, text){ if (R && (title === "박 노장" || /^쉬운 조작/.test(title))){ showTip(title, text); return; } banner.innerHTML = "<b>"+title+"</b><span>"+text+"</span>"; banner.hidden = false; R.bannerT = 2.5; topLayout(); } // v18: 큰 띠는 2.5초, 위쪽
+/* v18 요청 32: 박 노장 귀띔은 지도 위쪽 작은 띠(두 줄까지, 4초, 누르면 닫힘, 여러 개면 차례로) */
+const tipEl = () => document.getElementById("tip");
+function showTip(title, text){ if (!R) return; R.tipQ = R.tipQ || []; if (R.tipT > 0){ if (R.tipQ.length < 4) R.tipQ.push([title, text]); return; } tipShow(title, text); }
+function tipShow(title, text){ const el = tipEl(); if (!el) return; el.innerHTML = "<span class=\"tt\"><b>"+title+"</b>"+text+"</span>"; el.hidden = false; R.tipT = 4; topLayout(); }
+function tipNext(){ const el = tipEl(); R.tipT = 0; if (R.tipQ && R.tipQ.length){ const q = R.tipQ.shift(); tipShow(q[0], q[1]); } else if (el) el.hidden = true; }
+function topLayout(){ // 위쪽 띠 자리: 확대 단추·미니맵 아래에 큰 띠, 그 아래(또는 위 틈)에 박 노장 귀띔 — 서로 겹치지 않게
+  const sb = stagebox.getBoundingClientRect(), vt = parseFloat(stagebox.style.getPropertyValue("--vt")) || 52, vis = e => e && !e.hidden && e.offsetParent !== null ? e.getBoundingClientRect() : null;
+  const a = vis(document.getElementById("camui")), b = vis(document.getElementById("minimap")); let y = Math.max(a ? a.bottom - sb.top : 0, b ? b.bottom - sb.top : 0, vt) + 6;
+  if (!banner.hidden){ banner.style.top = Math.round(y) + "px"; y += banner.offsetHeight + 6; } else banner.style.top = "";
+  tipPlace(y); }
+function tipPlace(low0){ const el = tipEl(); if (!el || el.hidden) return; const sb = stagebox.getBoundingClientRect(), W0 = sb.width, vt = parseFloat(stagebox.style.getPropertyValue("--vt")) || 52;
+  const cu = document.getElementById("camui"), mm = document.getElementById("minimap"), vis = e => e && !e.hidden && e.offsetParent !== null ? e.getBoundingClientRect() : null, a = vis(cu), b = vis(mm);
+  const L = a ? a.right - sb.left + 6 : 8, Rr = b ? b.left - sb.left - 6 : W0 - 8, gap = Rr - L, maxW = Math.round(W0*.7);
+  const fits = () => { const s = el.querySelector(".tt"); return !s || s.scrollHeight <= s.clientHeight + 1; };
+  if (gap >= 210){ const w = Math.min(gap, maxW); el.style.width = w + "px"; el.style.left = Math.round(L + (gap - w)/2) + "px"; el.style.top = Math.round(vt + 6) + "px"; if (fits()) return; } // 두 줄에 안 들어가면 미니맵·확대 단추 아래로 넓게
+  { const w = maxW, low = low0 != null ? low0 - 6 : Math.max(a ? a.bottom - sb.top : 0, b ? b.bottom - sb.top : 0, vt); el.style.width = w + "px"; el.style.left = Math.round((W0 - w)/2) + "px"; el.style.top = Math.round(low + 6) + "px"; } } // 필살기 단추(아래 구석)를 가리지 않게 그 위로
 function setSpeed(v){ if (R) R.speed = v; const b = document.getElementById("b-speed"); b.textContent = v + "×"; b.classList.toggle("on", v === 2); }
 
 /* ---------- 입력 ---------- */
@@ -7037,6 +7065,8 @@ document.addEventListener("click", ev => {
   if (act === "tac"){ if (R){ tacUse(k); renderPanel(true); } return; } if (act === "sortie"){ toggleSortie(); renderPanel(true); return; } /* v14 지휘 판 */
   if (R && R.waveActive && !R.over && WAVE_LOCK.indexOf(act) >= 0){ waveLockMsg(); return; } /* v14: 물결 중엔 준비 동작 금지 */ if (PAYLEAVE_ACTS.indexOf(act) >= 0 && !payLeaveOk()) return; // 미지급 보상이 있는 결과 화면을 떠나기 전(검수 v11 2차)
   switch (act){
+    case "tipclose": if (R) tipNext(); break; // v18
+    case "herofollow": { if (heroLook()){ Cam.userT = performance.now(); Sound.play("button"); } break; } // v18 장군 보기
     case "dnext": dialogNext(false); break;
     case "dskip": dialogNext(true); break;
     case "autofill": { const t = R && R.sel && towerAt(R.sel.x, R.sel.y); if (t && t.type === "barracks"){ t.autoFill = t.autoFill === false; renderPanel(true); } break; }

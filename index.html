@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta name="app-version" content="20261126-05da12ec65">
+<meta name="app-version" content="20261126-b55c5d7c6b">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>산성</title>
@@ -870,7 +870,7 @@ const STAGES = [
    post:[["yeon","해냈어요! 구미호가 사라진 자리에 검은 뿔 조각이 떨어져 있어요."],
          ["old","두억시니가 깨운 귀신이었군. 다음엔 싸워 본 적 없는 성을 노릴 게요."],
          ["nar","검은 안개는 남쪽, 수원 화성으로 흘러갔다."]]},
-  {title:"2장 · 수원 화성 화홍문", place:"수원 화성 화홍문", map:2, tags:"골짜기 · 수문 성벽 · 개울", waves:WAVES, cm:1.25, mul:1.4, towers:["archer","cannon","caltrop","rocket"], boss:"mul", music:2, ch:["nohero","noup"], synopsis:"싸워 본 적 없는 성을 도깨비가 노려요. 신기전이 와요.",
+  {title:"2장 · 수원 화성 화홍문", place:"수원 화성 화홍문", map:2, tags:"골짜기 · 수문 성벽 · 개울", waves:WAVES, cm:1.25, mul:1.4, towers:["archer","cannon","caltrop","rocket"], boss:"mul", music:2, ch:["nohero","noup"], synopsis:"싸워 본 적 없는 새 성을 도깨비가 노려요. 길쭉한 성을 고르게 지켜요.",
    note:["수원 화성은 정조 때인 1794~1796년에 쌓았다.",
          "화홍문은 수원천이 성 안으로 흘러드는 북쪽 수문이다. 화성은 큰 전투를 치른 적이 없다."],
    pre:[["title","2장 · 수원 화성 화홍문"],["nar","개울이 성 안으로 흘러드는 북쪽 수문, 화홍문. 수문 위로 검은 안개가 깔린다."],
@@ -1000,7 +1000,10 @@ Object.assign(SPEAK, {ansi:"양만춘", parkseo:"박서", kimyunhu:"김윤후", 
   STAGES.length = 0; N.forEach(x => STAGES.push(x)); }
 /* v20 요청 35: 장 순서를 난이도순으로(같은 조건·보통 봇 10판 측정, 쉬운 순). 장 '내용'(장소·지도·장군·대장·이야기·역사 쪽지·위성 그림·장 그림)은 장을 따라가고,
    '자리' 값(장 번호·세기 mul·후반 값·적 레벨·망루 목록·물결 수·시작 엽전·문/행궁 체력·기능 공개 일정)은 자리에 남는다. 연도를 따로 보여 시대가 섞여도 알 수 있게 */
-const NEW_ORDER = [0, 6, 3, 1, 5, 9, 4, 8, 2, 7]; // 새 i장 ← 옛 장 번호(1 행주, 2 처인, 3 안시, 4 진주, 5 정족, 6 연안, 7 수원 화성, 8 귀주, 9 남한)
+/* 요청 43: 장 순서를 연대순으로(1 안시 645 · 2 귀주 1231 · 3 처인 1232 · 4 연안 1592.9 · 5 진주 1592.10 · 6 행주 1593 · 7 남한 1636 · 8 수원 화성 1796 · 9 정족 1866) = 원래 번호 그대로.
+   난이도는 세 구간: 1~3장 초장(쉬움) · 4~6장 중장 · 7~9장 종장(어려움) — 자리 값(mul·lateHp·시작 엽전)을 이 순서에 맞춰 다시 맞춤: 아래 POS_TUNE59(4~9장)·START_GOLD. 최종장은 9장 정족산성 → 10장 두억시니의 진 */
+const NEW_ORDER = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]; // 새 i장 ← 원래 장 번호(연대순이라 그대로)
+const NEW35 = [0, 6, 3, 1, 5, 9, 4, 8, 2, 7]; let MIG43 = false; /* 이번에 난이도순 진행 저장을 옮겼으면 원장(어려움 첫 승리)도 같이 옮긴다 */ // 요청 35 난이도순(i장 ← 원래 번호): 그 순서로 저장된 기록 옮기기, 성마다 배경음 짝(MUSIC 번호 = 이 순서 자리)
 const OLD2NEW = NEW_ORDER.reduce((a, o, i) => { a[o] = i; return a; }, {});
 const ST_YEAR = {1:"645년 안시성 싸움", 2:"1231년 귀주성 싸움", 3:"1232년 처인성 싸움", 4:"1592년 연안성 싸움", 5:"1592년 진주성 싸움", 6:"1593년 행주대첩", 7:"1636년 남한산성", 8:"1796년 수원 화성", 9:"1866년 정족산성 싸움"}; // 옛 번호 기준
 { const P = STAGES.slice(), POS = ["cm","mul","hardLv","lateHp","hardHp","bossHp","bossCd","bossLives","towers","elv"];
@@ -1044,12 +1047,12 @@ STAGES.forEach((st, i) => { if (STAGE_GATE_HP[i] != null) st.gateHp = STAGE_GATE
 /* v21 새 순서 1~4장 자리 값(서툰 봇 1~3장·보통 봇 4장 8판씩, docs/난이도표.md v21) */
 { const T14 = {1:{mul:.65, lateHp:.35}, 2:{mul:.62, lateHp:.42}, 3:{mul:.58, lateHp:.44}, 4:{mul:.87, lateHp:1.05}}; /* v21c: 행궁 수비병 뒤 다시(서툰 봇 1장 5/8·2장 4/8·3장 4/8, 보통 봇 4장 .86/1.0 5/8·.88/1.1 3/8) */ for (const i in T14) if (STAGES[i]) Object.assign(STAGES[i], T14[i]); }
 /* v21 새 순서 균형 5~9장(자리 값, 보통 봇 10~12판): 5 정족 4/10 · 6 연안 4/10 · 7 수원 3/10 · 8 귀주 3/10 · 9 남한 2/12 */
-{ const POS_TUNE59 = {5:{mul:.77, lateHp:3.1}, 6:{mul:1.0, lateHp:2.33}, 7:{mul:.74, lateHp:2.7}, 8:{mul:.88, lateHp:2.55}, 9:{mul:.7, lateHp:5.2}}; /* v21c: 행궁 수비병 들어간 뒤 다시(보통 봇) */ for (const i in POS_TUNE59) if (STAGES[i]) Object.assign(STAGES[i], POS_TUNE59[i]); }
+{ const POS_TUNE59 = {4:{mul:.73, lateHp:.85}, 5:{mul:.65, lateHp:2.1}, 6:{mul:1.04, lateHp:2.45}, 7:{mul:.62, lateHp:2.2}, 8:{mul:.67, lateHp:1.95}, 9:{mul:.75, lateHp:5.7}}; /* 요청 43 연대순 세 구간(보통 봇 6~8판): 초장 1~3 거의 이김 · 중장 4 연안 4/6·5 진주 3/6·6 행주 4/8 · 종장 7 남한 2/6·8 수원 5/16·9 정족 3/14 */ /* v21c: 행궁 수비병 들어간 뒤 다시(보통 봇) */ for (const i in POS_TUNE59) if (STAGES[i]) Object.assign(STAGES[i], POS_TUNE59[i]); }
 // 요괴 레벨 = 문 부수는 힘: 기본 × (1 + 0.15 × (레벨 − 1)), 대장 ×2(지난 장 요괴 ×1.5)
 const gatePowK = (lv, chief) => (1 + .15*Math.max(0, (lv || 1) - 1))*chief;
 const gatePow = e => { const E = ET[e.type]; return (E.lives > 1 ? GATE.big : 1)*gatePowK(e.lv, E.chief ? (e.elite ? 1.5 : 2) : 1); };
 const powTxt = v => { const r = Math.round(v*10)/10; return r % 1 ? r.toFixed(1) : String(r); };
-STAGES.forEach((s, i) => { if (s.elv === undefined) s.elv = Math.max(1, i); s.music = i; }); ENDLESS.elv = 2; ENDLESS.music = MUS_ENDLESS; // 배경음: 서장~9장 = MUSIC[0~9](v10)
+STAGES.forEach((s, i) => { if (s.elv === undefined) s.elv = Math.max(1, i); s.music = i >= 1 && i <= 9 ? NEW35.indexOf(s.oldIdx || i) : i; }); /* 요청 43: 곡은 성을 따라감 */ ENDLESS.elv = 2; ENDLESS.music = MUS_ENDLESS; // 배경음: 서장~9장 = MUSIC[0~9](v10)
 // v16 요청 29: 장마다 물결 수가 다름(5장부터 10물결 이상). 공통 10물결(WAVES)을 늘리거나 줄여 장별 목록을 만든다.
 // 줄일 때: 첫 물결은 두고 앞쪽 물결을 뺀다. 늘릴 때: 마지막(진) 물결 앞에 뒤쪽 물결(8·9번째)을 조금씩 키워 끼운다.
 // 물결 번호로 정한 대화(events)는 비율로 옮기고, 10번째(마지막) 대화는 마지막 물결로.
@@ -1087,7 +1090,7 @@ const FORT_SPECS = {
   8:{name:"화성 수원천", seed:251, theme:"valley", ground:"#5E8447", decor:.1, deco:["rock","reed","tree"], wall:"stone", riverOut:true, cols:21, rows:21, shape:"long", gates:["n","e","w"], gateNames:["장안문","팔달문","화서문"], river:{axis:"v", at:6, from:-1, to:6}, hills:3, dirW:{n:3, e:2, w:2, s:1}, tags:"길쭉한 큰 성 · 수원천 · 더 험난함"},
   9:{name:"정족산 밤 능선", seed:257, theme:"forest", ground:"#3E5E3A", decor:.14, deco:["tree","pine","rock"], wall:"stone", dusk:true, night:true, cols:19, rows:21, shape:"ridge", cw:7, ch:6, gates:["e","w","s"], gateNames:["동문","서문","남문"], ambush:9, hills:3, cliffs:2, dirW:{e:3, w:2, s:2, n:1}, tags:"밤 산성 · 덤불 매복 · 최후의 산성"}
 };
-Object.keys(FORT_SPECS).forEach(k => { const sp = FORT_SPECS[k], ni = OLD2NEW[+k] != null ? OLD2NEW[+k] : +k, st = STAGES[ni]; if (!st) return; MAPS.push(makeFortMap(Object.assign({chap:+k}, sp))); st.map = MAPS.length - 1; const HARDW = [null,null,null,null,null,"거세짐","결사 항전","험난함","더 험난함","최후의 산성"]; st.tags = String(sp.tags).replace(/ · (거세짐|결사 항전|더 험난함|험난함|최후의 산성)$/, "") + (HARDW[ni] ? " · " + HARDW[ni] : ""); }); /* 요청 35: FORT_SPECS·TERRAIN_H·위성 그림은 옛 번호(chap) 그대로, 장 자리는 OLD2NEW */ // 적 기본 레벨: 서장·1장 1, 2장 2 … (10장 재구성 때 장마다 다시 정함)
+Object.keys(FORT_SPECS).forEach(k => { const sp = FORT_SPECS[k], ni = OLD2NEW[+k] != null ? OLD2NEW[+k] : +k, st = STAGES[ni]; if (!st) return; MAPS.push(makeFortMap(Object.assign({chap:+k}, sp))); st.map = MAPS.length - 1; const HARDW = [null,"초장","초장","초장","중장","중장","중장","종장","종장","종장 · 최후의 산성"]; /* 요청 43 */ st.tags = String(sp.tags).replace(/ · (거세짐|결사 항전|더 험난함|험난함|최후의 산성)$/, "") + (HARDW[ni] ? " · " + HARDW[ni] : ""); }); /* 요청 35: FORT_SPECS·TERRAIN_H·위성 그림은 옛 번호(chap) 그대로, 장 자리는 OLD2NEW */ // 적 기본 레벨: 서장·1장 1, 2장 2 … (10장 재구성 때 장마다 다시 정함)
 // v10 서장(요청 6): 상태를 보고 넘어가는 단계. done(s) = 해야 넘어감, hl() = 반짝일 칸, gold() = 그 단계에 필요한 만큼 채워 주는 엽전(서장만),
 // btn:"go" = 물결 부르기, wait = 물결을 막을 때까지, time = 몇 초 뒤 저절로, at() = 단계 시작 때 숫자를 적어 두고 늘었는지 본다
 const TUT = [ // 요청 28: 첫걸음 8단계(나머지 기능은 1~3장 '새로 열렸어요' 카드가 맡음)
@@ -2294,7 +2297,7 @@ const sortieBtn = document.getElementById("sortie"); sortieBtn.addEventListener(
 
 function freshMeta(){
   const NS = STAGES.length; // 장 수가 늘어도(특별 장) 배열 길이를 맞춘다. 예전 저장(길이 5)은 normMeta 가 빈 칸을 0 으로 채운다
-  return {v:4, order:2, stars:Array(NS).fill(0), ch:Array.from({length:NS}, () => [0,0]), perks:{}, ads:0, jade:0, heroes:{gwon:1, yeon:0}, awake:{}, unlocked:{}, noAds:false, starter:false,
+  return {v:4, order:3, stars:Array(NS).fill(0), ch:Array.from({length:NS}, () => [0,0]), perks:{}, ads:0, jade:0, heroes:{gwon:1, yeon:0}, awake:{}, unlocked:{}, noAds:false, starter:false,
           starterOwned:false, starterJadeGranted:false, purchases:{},
           set:{sfx:true, music:true, vib:true, easy:true, easyTold:false /* v12 쉬운 조작 */, decide:true /* v16 결정 순간 */, follow:false /* v18 장군 따라가기 자동 */, font:0, notif:true, notifAsked:false, autocam:null /* 위급한 곳 자동 이동: null=난이도 따라(편하게면 켬), true/false=사용자가 고름 */}, daily:{login:"", idx:0, chest:"", done:""}, endless:{best:0, week:"", weekBest:0}, from:"new",
           // v4: 난이도, 장마다 어려움 별, 내 성, 오늘의 임무, 접속 시각(알림용), 같은 장 연패, 하루 첫 클라우드 저장 날짜
@@ -2320,13 +2323,13 @@ function normMeta(m){
     m = Object.assign({}, m, {stars:[], ch:[], hard:[], hardPaid:remapStageArr(oh, false)});
   }
   o.layout = 10;
-  if (m.order !== 2 && m.layout === 10 && Array.isArray(m.stars) && m.stars.length > 1){ // 요청 35: 장 순서를 바꾸기 전 저장 → 옛 번호를 새 번호로 한 번만 옮긴다
-    const re = (a, def) => { if (!Array.isArray(a)) return a; const out = a.slice(); for (let oi = 1; oi < NEW_ORDER.length; oi++) out[OLD2NEW[oi]] = oi < a.length ? a[oi] : def; return out; };
+  if (m.order === 2 && m.layout === 10 && Array.isArray(m.stars) && m.stars.length > 1){ MIG43 = true; // 요청 43: 난이도순(요청 35)으로 저장된 기록 → 연대순 자리로 한 번만 옮긴다(그 전 저장은 이미 연대순이라 그대로)
+    const re = (a, def) => { if (!Array.isArray(a)) return a; const out = a.slice(); for (let j = 1; j < NEW35.length; j++) out[NEW35[j]] = j < a.length ? a[j] : def; return out; };
     const st0 = m.stars.slice(); let c = 0; for (let i = 1; i < st0.length && st0[i] > 0; i++) c++;
     m = Object.assign({}, m, {stars:re(m.stars, 0), ch:re(m.ch, [0, 0]), hard:re(m.hard, 0), hardPaid:re(m.hardPaid, false)});
-    if (m.lose && typeof m.lose === "object" && typeof m.lose.s === "number" && OLD2NEW[m.lose.s] != null) m.lose = Object.assign({}, m.lose, {s:OLD2NEW[m.lose.s]});
-    for (let i = 1; i <= c && i < m.stars.length; i++) if (!(m.stars[i] > 0)) m.stars[i] = 1; } // 옛 순서에서 연속으로 깬 장 수만큼 새 1~c장을 열어 둔다(원래 별은 그 장에)
-  o.order = 2;
+    if (m.lose && typeof m.lose === "object" && typeof m.lose.s === "number" && NEW35[m.lose.s] != null) m.lose = Object.assign({}, m.lose, {s:NEW35[m.lose.s]});
+    for (let i = 1; i <= c && i < m.stars.length; i++) if (!(m.stars[i] > 0)) m.stars[i] = 1; } // 난이도순에서 연속으로 깬 장 수만큼 새 1~c장을 열어 둔다(원래 별은 그 성에)
+  o.order = 3;
   { const src = legacyIn || (m.legacy && typeof m.legacy === "object" && !Array.isArray(m.legacy) ? m.legacy : null);
     if (src) try { const n6 = v => typeof v === "number" && Number.isFinite(v) ? Math.max(0, Math.min(3, Math.floor(v))) : 0, L6 = a => Array.isArray(a) ? a.slice(0, 6) : [];
       o.legacy = {stars:L6(src.stars).map(n6), ch:L6(src.ch).map(c => [0, 1].map(j => Array.isArray(c) && (c[j] === true || c[j] === 1) ? 1 : 0)), hard:L6(src.hard).map(n6)}; } catch(e){ o.legacy = null; } }
@@ -2455,7 +2458,7 @@ const LEDGER_KEY = "fortress-defense-ledger", DEVICE_KEY = "fortress-defense-dev
 const validDay = v => { if (typeof v !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return false; const d = new Date(v + "T00:00:00Z"); return !isNaN(d) && d.toISOString().slice(0,10) === v; };
 const Ledger = {
   // mg: 날짜 → {got:{임무ID:1}, all} — 임무는 '받은 기록'만 원장에 둔다(임무 목록·진행은 진행 저장). claimAt: 내 성 옥을 실제로 받은 시각(생산 정산 시각과 따로).
-  fresh(){ return {layout:10, login:"", chest:"", done:"", mg:{}, hard:Array(STAGES.length).fill(false), claimAt:0, tx:{}, sj:false, raid:Array(RAID.levels).fill(false), fin:false, heroRefund:false}; },
+  fresh(){ return {layout:10, ord:3, login:"", chest:"", done:"", mg:{}, hard:Array(STAGES.length).fill(false), claimAt:0, tx:{}, sj:false, raid:Array(RAID.levels).fill(false), fin:false, heroRefund:false}; },
   load(){ // 메모리 사본을 믿지 않는다: 매번 기기 저장에서 새로 읽는다(같은 브라우저의 여러 탭이 한 원장을 같이 쓴다)
     const f = this.fresh(); let o = null;
     try { o = JSON.parse(localStorage.getItem(LEDGER_KEY)); } catch(e){}
@@ -2463,6 +2466,7 @@ const Ledger = {
       const hardIn = o.layout !== 10 && Array.isArray(o.hard) && o.hard.length <= 6 ? remapStageArr(o.hard, false) : o.hard; // 옛 원장의 어려움 첫 승리도 새 장 번호로
       const n = normMeta({layout:10, daily:{login:o.login, chest:o.chest, done:o.done}, hardPaid:hardIn, purchases:o.tx});
       f.login = n.daily.login; f.chest = n.daily.chest; f.done = n.daily.done; f.hard = n.hardPaid.slice(); f.tx = n.purchases; f.sj = o.sj === true;
+      if (o.ord !== 3 && MIG43 && o.layout === 10){ const h = f.hard.slice(); for (let j = 1; j < NEW35.length; j++) f.hard[NEW35[j]] = !!h[j]; } // 요청 43: 난이도순 자리 → 성(연대순) 자리. 다음 쓰기에 ord:3
       f.claimAt = typeof o.claimAt === "number" && Number.isFinite(o.claimAt) ? Math.max(0, Math.min(9e15, Math.floor(o.claimAt))) : 0;
       f.mg = this.normMg(o.mg);
       if (Array.isArray(o.raid)) f.raid = f.raid.map((_,i) => o.raid[i] === true); // 진지 치기 단계별 첫 승리 옥
@@ -2774,7 +2778,7 @@ const Raid = (function(){
 const heroOpen = k => k === "gwon" || (M.heroes[k] || 0) > 0 || STAGES.some((s, i) => s.hero === k && M.stars[i] > 0); // 깬 장의 장수는 다시 고를 수 있다
   // 진지 다시 치기(1~10단계): 최종장을 이기면 열림. 예전 저장에서 이미 진지 단계를 깼으면 그대로 열어 둔다(빼앗지 않기)
   const opened = () => !!M && (M.raid.final > 0 || M.raid.best.some(b => b > 0));
-  const finalOpen = () => !!M && isOpen(STAGES.length - 1) && M.stars[STAGES.length - 1] > 0; // 최종장: 특별 장(4대문)을 이기면 열림
+  const finalOpen = () => !!M && isOpen(STAGES.length - 1) && M.stars[STAGES.length - 1] > 0; // 최종장: 마지막 이야기 장(연대순 9장 정족산성)을 이기면 열림
   const minCost = () => G ? Math.min(...G.cards.map(k => RAID_UNITS[k].cost)) : 99;
 
   /* ----- 준비 화면 ----- */
@@ -4911,7 +4915,7 @@ function drawHut(c, type, lvl, px, py, T){
 /* ---------- 엽전: 판마다 기본금만 (v10 요청 9) ----------
    엽전은 그 판 안에서만 쓴다. 판이 끝나면 사라지고 다음 판·쉽게 다시 하기·진지전으로 넘어가지 않는다('이어서 하기'는 같은 판을 잇는 것이라 그대로).
    시작 엽전 = 장 기본금 + 메타 보너스(병법서 군량·내 성 봉수대, 합쳐 기본금의 30%까지) + 난이도 도움(편하게·쉽게 다시 하기) → 어려움은 HARD.gold 배. */
-const START_GOLD = [150, 200, 200, 200, 260, 400, 320, 420, 340, 560]; /* v21 새 순서 5~9장: 5 정족(문 3) 400, 6 연안(문 2) 320, 7 수원(문 3) 420, 8 귀주(문 2) 340, 9 남한(문 4) 560 — 문 많은 성은 첫 물결 전 망루가 부족해 일찍 무너지던 것 보정 */ /* v14 균형: 7~9장은 문이 셋 이상이라 첫 물결 전 망루를 넉넉히(8장 200이면 첫 물결에 문 둘이 깨짐) */ /* v10 S7a·S7b·균형79: 1~3장 200, 4~6장 220, 7~9장 200 */
+const START_GOLD = [150, 200, 200, 200, 260, 400, 320, 560, 460, 420]; /* 요청 43 연대순: 문 수 따라 1 안시·2 귀주·3 처인·4 연안(문 2) 200~260, 5 진주(문 3) 400, 6 행주(문 2) 320, 7 남한(문 4) 560, 8 수원(문 3·길쭉한 큰 성) 460, 9 정족(문 3) 420 */ /* v21 새 순서 5~9장: 5 정족(문 3) 400, 6 연안(문 2) 320, 7 수원(문 3) 420, 8 귀주(문 2) 340, 9 남한(문 4) 560 — 문 많은 성은 첫 물결 전 망루가 부족해 일찍 무너지던 것 보정 */ /* v14 균형: 7~9장은 문이 셋 이상이라 첫 물결 전 망루를 넉넉히(8장 200이면 첫 물결에 문 둘이 깨짐) */ /* v10 S7a·S7b·균형79: 1~3장 200, 4~6장 220, 7~9장 200 */
 const START_GOLD_META_CAP = .3; // 메타 보너스 상한: 기본금 × 0.3 (기본금+메타 합계 상한 = 기본금 × 1.3)
 function startGold(st, mode, o){
   o = o || {}; const tut = !!(o.tut || (st && st.tutorial));
@@ -6547,7 +6551,7 @@ const miniCv = (() => { const c = document.createElement("canvas"); c.id = "mini
    입체에서는 성벽·문루·행궁을 높이 있는 덩어리로 세우고, 깊이 순서로 그려 벽 뒤의 적은 가려진다. 터치는 Cam.toWorld 에서 거꾸로 풀어 칸을 맞춘다. */
 const VIEW = {
   on:false, iso:true, rot:0, a:1, b:0, c:0, d:1, e:0, f:0, det:1, cx:0, cy:0,
-  allowed(){ return !!(R && R.m && R.m.fort && R.s === 1 && !R.st.tutorial && !R.test); },
+  allowed(){ return !!(R && R.m && R.m.fort && (R.st.oldIdx || R.s) === 6 && !R.st.tutorial && !R.test); }, // 요청 43: 행주산성(연대순 6장)
   reset(){ this.rot = 0; this.iso = true; },
   refresh(){ this.on = this.allowed(); if (!this.on){ this.a = this.d = 1; this.b = this.c = this.e = this.f = 0; this.det = 1; return; }
     const k = R.m.castle; this.cx = k ? (k.x + k.w/2)*T : WW/2; this.cy = k ? (k.y + k.h/2)*T : WH/2;
@@ -6560,9 +6564,9 @@ const VIEW = {
   ang(a){ const v = this.vec(Math.cos(a), Math.sin(a)); return Math.atan2(v[1], v[0]); },
   wallH(T){ return this.on && this.iso ? T*.62 : 0; },
   // 요청 38: 손그림 바탕(장:돌린 단계:입체 1/위 0). x0·y0·w·h = 보기 공간 칸 단위 자리. 파일은 art/paint/ (웹판은 web/art/paint/)
-  PAINT:{"1:0:1":{src:"art/paint/ch1_iso0.webp",x0:-2.32231,y0:3.42906,w:26.47705,h:14.77789},"1:1:1":{src:"art/paint/ch1_iso1.webp",x0:-0.5,y0:2.80987,w:29.34626,h:16.37931},"1:2:1":{src:"art/paint/ch1_iso2.webp",x0:-2.55779,y0:3.88438,w:25.88463,h:14.44724},"1:3:1":{src:"art/paint/ch1_iso3.webp",x0:-6.29958,y0:1.68179,w:33.47287,h:18.68253},"1:4:1":{src:"art/paint/ch1_iso4.webp",x0:-3.32231,y0:3.42906,w:26.47705,h:14.77789},"1:5:1":{src:"art/paint/ch1_iso5.webp",x0:-6.29958,y0:1.27167,w:33.47287,h:18.68253},"1:6:1":{src:"art/paint/ch1_iso6.webp",x0:-2.55779,y0:3.30438,w:25.88463,h:14.44724},"1:7:1":{src:"art/paint/ch1_iso7.webp",x0:-5.59247,y0:1.27167,w:33.47287,h:18.68253}},
+  PAINT:{"c6:0:1":{src:"art/paint/ch1_iso0.webp",x0:-2.32231,y0:3.42906,w:26.47705,h:14.77789},"c6:1:1":{src:"art/paint/ch1_iso1.webp",x0:-0.5,y0:2.80987,w:29.34626,h:16.37931},"c6:2:1":{src:"art/paint/ch1_iso2.webp",x0:-2.55779,y0:3.88438,w:25.88463,h:14.44724},"c6:3:1":{src:"art/paint/ch1_iso3.webp",x0:-6.29958,y0:1.68179,w:33.47287,h:18.68253},"c6:4:1":{src:"art/paint/ch1_iso4.webp",x0:-3.32231,y0:3.42906,w:26.47705,h:14.77789},"c6:5:1":{src:"art/paint/ch1_iso5.webp",x0:-6.29958,y0:1.27167,w:33.47287,h:18.68253},"c6:6:1":{src:"art/paint/ch1_iso6.webp",x0:-2.55779,y0:3.30438,w:25.88463,h:14.44724},"c6:7:1":{src:"art/paint/ch1_iso7.webp",x0:-5.59247,y0:1.27167,w:33.47287,h:18.68253}},
   paintNow:false,
-  paintImg(){ if (!this.on || !R) return null; const P = this.PAINT[R.s + ":" + this.rot + ":" + (this.iso ? 1 : 0)]; if (!P) return null;
+  paintImg(){ if (!this.on || !R) return null; const P = this.PAINT["c" + (R.st.oldIdx || R.s) + ":" + this.rot + ":" + (this.iso ? 1 : 0)]; /* 성(원래 번호) 기준 */ if (!P) return null;
     if (!P.img){ P.img = new Image(); P.img.onload = () => { P.ok = true; needDraw = true; }; P.img.onerror = () => { P.bad = true; }; P.img.src = P.src; } return P.ok && !P.bad ? P : null; },
   gridBox(sx0, sy0, sx1, sy1){ let X0 = 1e9, Y0 = 1e9, X1 = -1e9, Y1 = -1e9; // 화면 사각형 → 칸 단위 둘레 상자
     [[sx0, sy0], [sx1, sy0], [sx1, sy1], [sx0, sy1]].forEach(q => { const w = this.inv(Cam.x + q[0]/Cam.z, Cam.y + q[1]/Cam.z); X0 = Math.min(X0, w[0]); Y0 = Math.min(Y0, w[1]); X1 = Math.max(X1, w[0]); Y1 = Math.max(Y1, w[1]); });
@@ -7138,10 +7142,10 @@ function runSnap(){
   const P = {}; for (const k in R){ if (RUN_SKIPR.has(k)) continue; const v = R[k]; if (v == null || typeof v === "number" || typeof v === "string" || typeof v === "boolean") P[k] = v; }
   const O = {}; RUN_OBJR.forEach(k => { if (R[k] != null) O[k] = runPlain(R[k], 0); });
   const gd = []; if (R.grid && R.base) for (let y = 0; y < R.grid.length; y++) for (let x = 0; x < R.grid[y].length; x++) if (R.grid[y][x] !== R.base[y][x]) gd.push([x, y, R.grid[y][x]]);
-  return {v:RUN_V, ord:2, sid:R.sid, s:R.s, mode:R.mode, ch:R.ch, title:R.st.title, wave:R.wave, total:isFinite(R.total) ? R.total : 0, prepT:R.prepT, at:Date.now(), P, O, gd,
+  return {v:RUN_V, ord:3, sid:R.sid, s:R.s, mode:R.mode, ch:R.ch, title:R.st.title, wave:R.wave, total:isFinite(R.total) ? R.total : 0, prepT:R.prepT, at:Date.now(), P, O, gd,
     towers:R.towers.filter(o => !o.virtual).map(o => runPlain(o, 0)), volB:(R.volB || []).map(o => runPlain(o, 0)), hero:R.hero ? runPlain(R.hero, 0) : null};
 }
-function runLoad(){ try { const sv = JSON.parse(localStorage.getItem(RUN_KEY) || "null"); if (!sv || sv.v !== RUN_V || !Array.isArray(sv.towers) || !sv.P) return null; if (typeof sv.s === "number" && sv.ord !== 2 && OLD2NEW[sv.s] != null){ sv.s = OLD2NEW[sv.s]; sv.ord = 2; if (STAGES[sv.s]) sv.title = STAGES[sv.s].title; } /* 요청 35: 순서 바꾸기 전 판 저장 */ if (typeof sv.s === "number" && !STAGES[sv.s]) return null; return sv; } catch(e){ return null; } }
+function runLoad(){ try { const sv = JSON.parse(localStorage.getItem(RUN_KEY) || "null"); if (!sv || sv.v !== RUN_V || !Array.isArray(sv.towers) || !sv.P) return null; if (typeof sv.s === "number" && sv.ord === 2 && NEW35[sv.s] != null){ sv.s = NEW35[sv.s]; if (STAGES[sv.s]) sv.title = STAGES[sv.s].title; } if (typeof sv.s === "number") sv.ord = 3; /* 요청 43: 난이도순 때 저장한 판 → 연대순 자리 */ if (typeof sv.s === "number" && !STAGES[sv.s]) return null; return sv; } catch(e){ return null; } }
 function runDel(){ try { localStorage.removeItem(RUN_KEY); } catch(e){} RUN_LAST = ""; if (typeof M !== "undefined" && M){ M.paidQ = {}; M.revUsed = {}; } } // 판이 끝나거나 버리면 그 판 결제 기록도 정리(다음 저장 때 반영)
 let RUN_LAST = "", RUN_T = 0, RUN_W = 0;
 function runSaveNow(){
@@ -7430,7 +7434,7 @@ function victory(){
   Track.event("stage_end", {stage:R.s, mode:R.mode, ch:R.ch || "", result:"win", stars, wave:R.wave, hero:R.hero ? R.hero.k : "none"});
   if (!R.payFail){ M.pendingJade = null; saveMeta(); CloudSave.auto(); }
   R.resultFn = () => {
-    const last = R.s === STAGES.length - 1, story = R.mode === "normal", ending = false; // 이야기는 4대문 뒤 최종장(두억시니의 진, 진지 치기 방식)에서 끝난다
+    const last = R.s === STAGES.length - 1, story = R.mode === "normal", ending = false; // 이야기는 9장(정족산성) 뒤 최종장(두억시니의 진, 진지 치기 방식)에서 끝난다
     const toFinal = story && last; // 4대문을 이기면 최종장으로
     const nextBtn = story && !last ? '<button class="btn primary" data-act="stage" data-k="'+(R.s+1)+'">'+STAGES[R.s+1].title+'</button>' : toFinal ? '<button class="btn primary" data-act="raid-final">10장 · 두억시니의 진</button>' : '<button class="btn primary" data-act="menu">처음 화면</button>';
     if (st.tutorial){ showOverlay('<img class="rface" src="'+FACES.old+'" alt="박 노장"><h2>훈련 완료</h2><p class="center">이제 진짜 싸움이 시작돼요.</p>'+'<div class="row one">'+nextBtn+'</div>', "result"); return; }
@@ -7833,7 +7837,7 @@ function start(){
   Shop.init();
   if (M.stars[0] && M.daily.login < kstDate()) showDaily(); // 하루 첫 접속이면 매일 보상부터
   if (!TabLock.pending && !TabLock.ok()) lockScreen(true); // 다른 창이 게임을 갖고 있으면 안내부터(Web Lock 은 잡히면/못 잡히면 그때 처리)
-  window.SanseongDebug = {VIEW, ACC, LVGAP, getT:() => T, musicDemo:(i, k, sec, from) => Sound.musicDemo(i, k, sec, from), unitVs, solDefMul, foeKindTxt, unitStrike, UNITS, evWatch, decideTest:k => { const d = k === "boss" ? {k, e:R.enemies.find(e => !e.dead) || {type:"grunt", x:9, y:9}} : k === "gate" ? {k, g:R.gates[0]} : k === "thief" ? {k, e:thiefSpawn()} : {k:"camp"}; if (!d.e && (k === "boss" || k === "thief")) return null; R.decSeen = R.decSeen || {}; R.decSeen[k] = true; R.decCur = d; decideShow(d); return d; }, decideOn:() => decideOn(), decideTick:dt => decideTick(dt), easy:{on:() => easyOn(), recs:() => easyRecs(), repair:() => easyRepair(), tick:dt => easyTick(dt)}, thiefSpawn, get T(){ return T; }, TUT, tutOk, tutCells, fortDbg:{unitTerrMul, cellTerr, fortMove, volDanger, fortWallHit, fortPlan, fortGateSafe, fortGatePts, fortFlagPos, fortVolunteers, flagBtnTap, toggleSortie, tapFlag:(x,y)=>{ R.flagMode = true; const ts = null; if (fortIn(x, y) && fortWalk(x, y)){ R.flag = {x:x + .5, y:y + .5}; } R.flagMode = false; }}, pickMusic, musicNow:() => Sound.musicNow(), MUSIC, WebApp, showStory, Raid, RAID, GATE, STAGES, TabLock, Cam, tapAt, reloadFromDisk, get M(){ return M; }, get R(){ return R; }, newRun, grantStarter, saveMeta, showMenu, castSkill, Track, update, victory, defeat, hideOverlay, Ads, Shop, contOk, loadMeta, CloudSave, SaveCode, Notify, castlePending, castleCollect, ensureMissions, mprog, dailyBoot, showCastle, normMeta, Ledger, castleSettle, claimMission, startWave, get saveGen(){ return saveGen; }, get castleBonus(){ return castleBonus; }, set castleBonus(v){ castleBonus = v; }, get overlayMode(){ return overlayMode; }, bot:{easyRepair:() => easyRepair(true), wavesOf, foeKinds, bossKind, tacUse, tacBlock, volGate, tacGate, buyUnit, UNITS, canBuildAt, cellBuildable, upLimit, rforgeUp, TT, ET, HEROES, TERRAIN, hit, toggleSortie, buildable, upCost, initBarracks, towerMaxHp, spawnHero, towerAt, repairCost, stat, get ROWS(){ return ROWS; }, get COLS(){ return COLS; }}}; // 점검용(bot: 자동 봇 균형 시험)
+  window.SanseongDebug = {VIEW, ACC, LVGAP, START_GOLD, getT:() => T, musicDemo:(i, k, sec, from) => Sound.musicDemo(i, k, sec, from), unitVs, solDefMul, foeKindTxt, unitStrike, UNITS, evWatch, decideTest:k => { const d = k === "boss" ? {k, e:R.enemies.find(e => !e.dead) || {type:"grunt", x:9, y:9}} : k === "gate" ? {k, g:R.gates[0]} : k === "thief" ? {k, e:thiefSpawn()} : {k:"camp"}; if (!d.e && (k === "boss" || k === "thief")) return null; R.decSeen = R.decSeen || {}; R.decSeen[k] = true; R.decCur = d; decideShow(d); return d; }, decideOn:() => decideOn(), decideTick:dt => decideTick(dt), easy:{on:() => easyOn(), recs:() => easyRecs(), repair:() => easyRepair(), tick:dt => easyTick(dt)}, thiefSpawn, get T(){ return T; }, TUT, tutOk, tutCells, fortDbg:{unitTerrMul, cellTerr, fortMove, volDanger, fortWallHit, fortPlan, fortGateSafe, fortGatePts, fortFlagPos, fortVolunteers, flagBtnTap, toggleSortie, tapFlag:(x,y)=>{ R.flagMode = true; const ts = null; if (fortIn(x, y) && fortWalk(x, y)){ R.flag = {x:x + .5, y:y + .5}; } R.flagMode = false; }}, pickMusic, musicNow:() => Sound.musicNow(), MUSIC, WebApp, showStory, Raid, RAID, GATE, STAGES, TabLock, Cam, tapAt, reloadFromDisk, get M(){ return M; }, get R(){ return R; }, newRun, grantStarter, saveMeta, showMenu, castSkill, Track, update, victory, defeat, hideOverlay, Ads, Shop, contOk, loadMeta, CloudSave, SaveCode, Notify, castlePending, castleCollect, ensureMissions, mprog, dailyBoot, showCastle, normMeta, Ledger, castleSettle, claimMission, startWave, get saveGen(){ return saveGen; }, get castleBonus(){ return castleBonus; }, set castleBonus(v){ castleBonus = v; }, get overlayMode(){ return overlayMode; }, bot:{easyRepair:() => easyRepair(true), wavesOf, foeKinds, bossKind, tacUse, tacBlock, volGate, tacGate, buyUnit, UNITS, canBuildAt, cellBuildable, upLimit, rforgeUp, TT, ET, HEROES, TERRAIN, hit, toggleSortie, buildable, upCost, initBarracks, towerMaxHp, spawnHero, towerAt, repairCost, stat, get ROWS(){ return ROWS; }, get COLS(){ return COLS; }}}; // 점검용(bot: 자동 봇 균형 시험)
   requestAnimationFrame(loop);
 }
 if (window.claude && window.claude.hot && window.claude.hot.snapshot) window.claude.hot.snapshot(() => ({}));

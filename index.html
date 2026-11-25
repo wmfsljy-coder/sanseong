@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta name="app-version" content="20261126-d696f39de5">
+<meta name="app-version" content="20261126-05da12ec65">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>산성</title>
@@ -4111,8 +4111,8 @@ const unitLv = (u, t) => { const U = UNITS[(u && u.k) || (t && t.unit)] || UNITS
 const gapMul = (ours, foe) => 1 + Math.max(LVGAP.min, Math.min(LVGAP.max, (ours - foe)*LVGAP.step));
 const lvCol = (ours, foe) => ours >= foe ? "#8BE07A" : ours === foe - 1 ? "#F2D27A" : "#FF7A6A";
 /* 요청 40: 원거리(궁수 배치·노대·큰 노대·포수·활병·행궁 수비병)는 레벨에 따라 명중률과 급소가 달라진다.
-   명중 = 기본(약 99%) + 레벨 차×5%(55~99%), 하늘 적 −3%. 빗나가면 적 곁 땅에 꽂히고 피해 없음. 급소: 내 레벨이 높을 때 차 1마다 6% 확률로 1.5배 */
-const ACC = {base:{archer:.99, crossbow:.99, bigbow:.99, musket:.97, unit:.98, guard:.99}, step:.05, min:.55, max:.99, fly:.03, crit:.06, critMul:1.5}; /* 같은 레벨이면 거의 다 맞고, 괴물보다 낮을수록 크게 빗나감 */
+   명중 = 80%(같은 레벨) + 레벨 차×5%(55~99%), 하늘 적 −3%. 빗나가면 적 곁 땅에 꽂히고 피해 없음. 급소: 내 레벨이 높을 때 차 1마다 6% 확률로 1.5배 */
+const ACC = {base:{archer:.8, crossbow:.8, bigbow:.8, musket:.8, unit:.8, guard:.8}, step:.05, min:.55, max:.99, fly:.03, crit:.06, critMul:1.5}; /* 요청 42: 레벨이 같으면 명중 80%, 괴물보다 높으면 1마다 +5%, 낮으면 −5% */
 const foeLvOf = e => (e && e.lv) || curFoeLv();
 const accOf = (kind, ours, e) => Math.max(ACC.min, Math.min(ACC.max, (ACC.base[kind] || .9) + (ours - foeLvOf(e))*ACC.step - (e && e.fly ? ACC.fly : 0)));
 function rangedRoll(kind, ours, e){ // → {hit, mul} : 빗나감 / 급소 배율

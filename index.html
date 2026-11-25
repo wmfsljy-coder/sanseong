@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta name="app-version" content="20261124-6bab23bbac">
+<meta name="app-version" content="20261125-292f0cbc8e">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>산성</title>
@@ -793,51 +793,49 @@ const CHAL = {
   nogate: {name:"문 지키기",   desc:"문이 하나라도 부서지면 져요"}
 };
 const ATTEND = [20,30,40,50,60,80,200], DAILY_REWARD = 80;
-/* 배경음(v10, 코드로 작곡 — 저작권 걱정 없음): 장마다 다른 곡. 장단(굿거리·자진모리·휘모리·세마치·엇모리·동살풀이·중중모리) 북 장단 + 거문고풍 반복 저음(오스티나토)
-   + 정해진 선율 동기(무작위 아님, form 순서로 변주: sh 만큼 음 올림, 9 = 쉼) + 긴장 층(낮은 지속음, 현 트레몰로).
-   bar = 한 마디 칸 수, spb = 한 박의 칸 수(빠르기 계산), scale = 5음(반음 수; [0,3,5,7,10] 계면조풍), dr = 장구 칸(K 쿵, D 덕, d 기, R 더러러, k 작은 쿵),
-   buk = 북(위급할 때 전부, 물결 중엔 마디 첫 칸), bass/mot = [칸, 음 번호, 길이] (음 번호 5 = 한 옥타브 위 으뜸음, 음수 = 아래).
-   세기(inten): 0 물결 사이(장구 덜, 선율 성기게) · 1 물결 중 · 2 진 깨기/대장/성문 30% 아래(빠르기 +10%, 북, 현 트레몰로). 번호: 0~9 = 서장~9장, 10 진지 치기, 11 처음·이야기 화면, 12 무한 물결 */
+/* 배경음(v23, 코드로 작곡 — 저작권 걱정 없음, 선율은 새로 지음): 삼국지5 전투곡(화룡진군 등) 같은 웅장한 관현악 행진곡 + 우리 전통 악기 색.
+   관현악: 현악 화음(str)·현악 16분 반복(ost)·호른(hn)·저음 현·팀파니·작은북(행진)·심벌 / 전통 악기: 해금(hg, 얼후 자리)·태평소(tps)·대금(dg)·가야금(하프 자리)·징.
+   주제 4개(MUS_THEME, 모두 4/4 · 한 마디 16칸 · 16마디 한 바퀴): A 진군(장조 영웅 행진, 가운데 어두워짐 — 화룡진군 느낌) · B 질풍(빠르고 휘몰아침) · C 비장(웅장하고 슬픔, 해금 선율) · D 서곡(처음 화면, 넓고 장엄).
+   ch = 마디마다 화음 [으뜸음에서 반음 수, "m" 단조/"M" 장조], mel = 마디마다 선율 [[반음 수, 칸 길이], ...](합 16칸, 반음 수 null = 쉼).
+   곡(MUSIC): theme, root(Hz, 낮은 으뜸음), bpm(4분음표), lead(물결 중 선율: hn 호른·tps 태평소·hg 해금·dg 대금), calm(물결 사이 선율), dbl(위급 때 겹치는 악기).
+   세기(inten): 0 물결 사이(현악 화음·가야금 분산화음·선율 조용히) · 1 물결 중(관현악 전부·행진 작은북·팀파니) · 2 진 깨기/대장/성문 30% 아래(빠르기 +8%, 팀파니 매 박·대북, 작은북 몰아치기, 선율 겹침).
+   번호: 0~9 = 첫걸음~9장, 10 진지 치기·10장 결전, 11 처음·이야기 화면, 12 무한 물결 */
+const MUS_THEME = {
+  A: {ch:[[0,"M"],[4,"m"],[5,"M"],[7,"M"],[0,"M"],[9,"m"],[5,"M"],[7,"M"], [5,"m"],[8,"M"],[3,"M"],[10,"M"],[5,"m"],[8,"M"],[7,"M"],[0,"M"]], // 장조 영웅 행진 → 뒤 악절은 버금딸림 단조 쪽으로 어두워졌다가(♭VI·♭III·♭VII) 돌아옴(화룡진군 분석: G장조, 가운데 C단조)
+      mel:[[[7,6],[4,2],[7,4],[12,4]], [[11,6],[9,2],[7,8]], [[9,4],[12,4],[14,4],[17,4]], [[14,12],[11,4]],
+           [[12,6],[11,2],[12,4],[16,4]], [[16,6],[14,2],[12,8]], [[9,4],[12,4],[17,6],[16,2]], [[14,16]],
+           [[12,4],[17,6],[15,2],[12,4]], [[15,8],[12,4],[8,4]], [[10,6],[12,2],[15,8]], [[17,8],[14,4],[10,4]],
+           [[12,6],[17,2],[20,8]], [[20,8],[15,4],[12,4]], [[19,6],[17,2],[14,8]], [[12,12],[7,4]]]},
+  B: {ch:[[0,"m"],[0,"m"],[-4,"M"],[-2,"M"],[0,"m"],[0,"m"],[5,"m"],[7,"M"], [-4,"M"],[-2,"M"],[0,"m"],[3,"M"],[-4,"M"],[5,"m"],[7,"M"],[7,"M"]],
+      mel:[[[0,8],[3,4],[7,4]], [[12,12],[10,4]], [[8,8],[7,4],[3,4]], [[5,8],[2,8]],
+           [[7,8],[12,4],[15,4]], [[15,6],[14,2],[12,8]], [[12,4],[8,4],[5,4],[8,4]], [[11,8],[7,8]],
+           [[15,8],[12,4],[8,4]], [[14,8],[17,8]], [[19,12],[17,4]], [[15,8],[14,4],[10,4]],
+           [[12,8],[15,8]], [[17,8],[15,4],[12,4]], [[14,8],[11,8]], [[7,8],[11,8]]]},
+  C: {ch:[[0,"m"],[-2,"M"],[-4,"M"],[-2,"M"],[0,"m"],[5,"m"],[7,"M"],[7,"M"], [-4,"M"],[3,"M"],[5,"m"],[0,"m"],[-4,"M"],[-2,"M"],[0,"m"],[0,"m"]],
+      mel:[[[12,6],[14,2],[15,8]], [[14,6],[12,2],[10,8]], [[8,6],[10,2],[12,4],[15,4]], [[14,12],[10,4]],
+           [[12,6],[15,2],[19,8]], [[17,6],[15,2],[17,8]], [[19,8],[14,4],[11,4]], [[14,16]],
+           [[20,6],[19,2],[17,8]], [[19,6],[17,2],[15,8]], [[17,6],[15,2],[14,4],[12,4]], [[12,8],[7,8]],
+           [[8,4],[12,4],[15,4],[20,4]], [[19,8],[22,8]], [[24,12],[22,2],[19,2]], [[24,16]]]},
+  D: {ch:[[0,"M"],[7,"M"],[9,"m"],[5,"M"],[0,"M"],[7,"M"],[5,"M"],[0,"M"], [9,"m"],[5,"M"],[0,"M"],[7,"M"],[9,"m"],[5,"M"],[7,"M"],[0,"M"]],
+      mel:[[[12,6],[11,2],[12,4],[14,4]], [[14,6],[12,2],[11,8]], [[16,8],[14,4],[12,4]], [[17,8],[16,4],[12,4]],
+           [[12,6],[14,2],[16,8]], [[14,8],[11,8]], [[12,6],[16,2],[17,8]], [[19,16]],
+           [[21,8],[19,4],[16,4]], [[17,8],[16,4],[12,4]], [[16,6],[19,2],[24,8]], [[23,8],[21,4],[19,4]],
+           [[21,6],[19,2],[16,8]], [[17,6],[19,2],[21,8]], [[19,8],[23,8]], [[24,16]]]}
+};
 const MUSIC = [
-  {name:"첫 부임", bpm:104, bar:9, spb:3, root:261.6, scale:[0,2,5,7,9], lead:"triangle", cut:2600, dr:"K.DK.D.dD", buk:"B..B..B..",
-   bass:[[[0,0,3],[3,2,3],[6,3,3]], [[0,-1,3],[3,1,3],[6,2,3]]], mb:2,
-   mot:[[[0,5,3],[3,6,2],[5,7,1],[6,6,3],[9,5,3],[12,4,6]], [[0,3,2],[2,4,1],[3,5,3],[6,4,3],[9,3,3],[12,2,3],[15,0,3]]]},
-  {name:"안시성 · 토산", bpm:112, bar:10, spb:2.5, root:246.9, scale:[0,3,5,7,10], lead:"sawtooth", cut:1600, bend:true, dr:"K.dD.K.D.d", buk:"B..B.B.B..",
-   bass:[[[0,0,3],[3,0,2],[5,2,2],[7,-1,3]], [[0,-2,3],[3,-2,2],[5,0,2],[7,1,3]]], mb:2,
-   mot:[[[0,7,3],[3,6,2],[5,5,2],[7,6,3],[10,8,5],[15,7,5]], [[0,5,3],[3,7,2],[5,6,2],[7,5,3],[10,3,3],[13,4,2],[15,5,5]]]},
-  {name:"귀주성 · 눈보라", bpm:132, bar:12, spb:3, root:293.7, scale:[0,3,5,7,10], lead:"square", cut:1800, soft:.85, dr:"K.DKD.K.DKD.", buk:"B.....B.....",
-   bass:[[[0,0,3],[3,0,3],[6,1,3],[9,2,3]], [[0,-1,3],[3,-1,3],[6,0,3],[9,-2,3]]], mb:2,
-   mot:[[[0,5,2],[2,6,1],[3,7,3],[6,6,3],[9,5,3],[12,3,6],[18,4,3],[21,5,3]], [[0,8,3],[3,7,3],[6,6,2],[8,7,1],[9,6,3],[12,5,9],[21,4,3]]]},
-  {name:"처인성 · 숨가쁜 흙성", bpm:144, bar:8, spb:2, root:277.2, scale:[0,3,5,7,10], lead:"triangle", cut:2600, bend:true, dr:"K.D.KdDR", buk:"B...B...",
-   bass:[[[0,0,1],[1,0,1],[2,2,1],[3,0,1],[4,3,1],[5,0,1],[6,2,1],[7,1,1]], [[0,-1,1],[1,-1,1],[2,1,1],[3,-1,1],[4,2,1],[5,-1,1],[6,1,1],[7,0,1]]], mb:2,
-   mot:[[[0,5,1],[1,5,1],[2,7,2],[4,6,2],[6,5,2],[8,3,2],[10,4,2],[12,5,4]], [[0,7,2],[2,8,2],[4,7,1],[5,6,1],[6,5,2],[8,4,2],[10,3,2],[12,2,4]]]},
-  {name:"연안성 · 숲속 매복", bpm:108, bar:12, spb:3, root:220, scale:[0,2,3,7,8], lead:"sine", cut:2200, bend:true, dr:"K.dK.DK.dK.D", buk:"B.....B.....", trem:4,
-   bass:[[[0,0,6],[6,3,3],[9,2,3]], [[0,-1,6],[6,1,3],[9,0,3]]], mb:2,
-   mot:[[[0,5,3],[3,4,3],[6,3,6],[12,4,3],[15,3,3],[18,2,6]], [[0,3,2],[2,4,1],[3,5,6],[9,6,3],[12,5,3],[15,4,3],[18,3,6]]]},
-  {name:"진주성 · 남강", bpm:120, bar:16, spb:4, root:261.6, scale:[0,3,5,7,10], lead:"sawtooth", cut:1500, bend:true, dr:"K...D.d.K.D...D.", buk:"B.......B.......",
-   bass:[[[0,0,4],[4,0,2],[6,1,2],[8,-1,4],[12,-2,4]], [[0,-3,4],[4,-3,2],[6,-2,2],[8,-1,4],[12,0,4]]], mb:2,
-   mot:[[[0,5,6],[6,6,2],[8,7,4],[12,6,4],[16,5,8],[24,3,4],[28,4,4]], [[0,8,4],[4,7,4],[8,6,2],[10,7,2],[12,5,4],[16,4,8],[24,5,8]]]},
-  {name:"행주산성 · 결사 항전", bpm:140, bar:12, spb:3, root:233.1, scale:[0,3,5,7,10], lead:"square", cut:2000, soft:.85, dr:"K.DK.DKdDK.D", buk:"B..B..B..B..",
-   bass:[[[0,0,2],[2,0,1],[3,2,2],[5,0,1],[6,3,2],[8,2,1],[9,1,3]], [[0,-1,2],[2,-1,1],[3,1,2],[5,-1,1],[6,2,2],[8,1,1],[9,0,3]]], mb:2,
-   mot:[[[0,7,3],[3,7,2],[5,8,1],[6,7,3],[9,5,3],[12,6,6],[18,5,3],[21,3,3]], [[0,5,3],[3,6,3],[6,7,2],[8,8,1],[9,9,3],[12,8,6],[18,7,6]]]},
-  {name:"남한산성 · 포위", bpm:116, bar:12, spb:3, root:196, scale:[0,3,5,7,10], lead:"triangle", cut:1800, bend:true, dr:"K..d.DK..D.d", buk:"B.....B.....", drone:.07,
-   bass:[[[0,0,9],[9,-1,3]], [[0,-2,9],[9,-1,3]]], mb:2,
-   mot:[[[0,5,6],[6,7,3],[9,6,3],[12,5,6],[18,3,6]], [[0,4,3],[3,5,3],[6,6,6],[12,5,3],[15,4,3],[18,3,3],[21,2,3]]]},
-  {name:"수원 화성 · 물길", bpm:150, bar:16, spb:4, root:293.7, scale:[0,3,5,7,10], lead:"triangle", cut:2600, bend:true, dr:"K.d.D.dK.dKD.dD.", buk:"B...B...B...B...",
-   bass:[[[0,0,2],[2,2,2],[4,3,2],[6,2,2],[8,0,2],[10,2,2],[12,4,2],[14,3,2]], [[0,-1,2],[2,1,2],[4,2,2],[6,1,2],[8,-1,2],[10,1,2],[12,3,2],[14,2,2]]], mb:2,
-   mot:[[[0,5,2],[2,7,2],[4,8,4],[8,7,2],[10,6,2],[12,5,4],[16,6,2],[18,7,2],[20,6,2],[22,5,2],[24,3,8]], [[0,8,4],[4,9,4],[8,8,2],[10,7,2],[12,6,4],[16,5,4],[20,6,4],[24,5,8]]]},
-  {name:"정족산성 · 밤", bpm:126, bar:10, spb:2.5, root:207.7, scale:[0,3,5,7,8], lead:"sine", cut:1800, bend:true, dr:"K..D.d.D..", buk:"B....B....", trem:6, drone:.06,
-   bass:[[[0,0,3],[3,0,2],[5,-1,2],[7,1,3]], [[0,-1,3],[3,-1,2],[5,-2,2],[7,0,3]]], mb:2,
-   mot:[[[0,5,3],[3,4,2],[5,5,2],[7,6,3],[10,4,5],[15,3,5]], [[0,7,3],[3,6,2],[5,5,2],[7,4,3],[10,5,10]]]},
-  {name:"두억시니의 진 · 결전", bpm:148, bar:8, spb:2, root:220, scale:[0,3,5,7,10], lead:"sawtooth", cut:1700, bend:true, dr:"KdDdKRD.", buk:"B.B.B.B.",
-   bass:[[[0,0,1],[1,0,1],[2,0,1],[3,1,1],[4,0,1],[5,0,1],[6,2,1],[7,1,1]], [[0,-1,1],[1,-1,1],[2,-1,1],[3,0,1],[4,-2,1],[5,-2,1],[6,-1,1],[7,0,1]]], mb:2,
-   mot:[[[0,5,2],[2,7,2],[4,6,1],[5,7,1],[6,8,2],[8,7,4],[12,5,4]], [[0,8,2],[2,9,2],[4,8,2],[6,7,2],[8,6,2],[10,7,2],[12,5,4]]]},
-  {name:"처음 화면 · 산성의 밤", bpm:96, bar:12, spb:3, root:220, scale:[0,3,5,7,10], lead:"sine", cut:2000, bend:true, soft:.9, dr:"K..d..D..d..", buk:"", drone:.03, droneType:"sine",
-   bass:[[[0,0,6],[6,-2,6]], [[0,-1,6],[6,-3,6]]], mb:2, form:[0,0,1,9, 0,1,1,9], sh:[0,1,0,0, -1,0,1,0],
-   mot:[[[0,5,6],[6,4,3],[9,3,3],[12,2,9],[21,3,3]], [[0,2,3],[3,3,3],[6,4,6],[12,3,3],[15,2,3],[18,0,6]]]},
-  {name:"무한 물결", bpm:136, bar:16, spb:4, root:246.9, scale:[0,3,5,7,10], lead:"square", cut:1900, soft:.85, dr:"K.D.K.DdK.D.KdD.", buk:"B.......B...B...",
-   bass:[[[0,0,3],[3,0,3],[6,2,2],[8,-1,3],[11,-1,3],[14,1,2]], [[0,-2,3],[3,-2,3],[6,0,2],[8,-1,3],[11,0,3],[14,1,2]]], mb:2,
-   mot:[[[0,5,4],[4,6,2],[6,7,2],[8,8,6],[14,7,2],[16,6,4],[20,5,4],[24,3,8]], [[0,7,4],[4,8,4],[8,9,4],[12,8,4],[16,7,4],[20,6,2],[22,5,2],[24,4,8]]]}
+  {name:"첫걸음 · 출정",            theme:"D", root:196,   bpm:96, lead:"hn",  calm:"dg", dbl:"tps"},
+  {name:"행주산성 · 화룡의 진군",   theme:"A", root:146.8, bpm:96, lead:"hn",  calm:"dg", dbl:"tps"},
+  {name:"처인성 · 질풍",            theme:"B", root:164.8, bpm:112, lead:"tps", calm:"hg", dbl:"hn"},
+  {name:"안시성 · 토산의 진군",     theme:"A", root:164.8, bpm:100, lead:"tps", calm:"dg", dbl:"hn"},
+  {name:"진주성 · 남강의 비장",     theme:"C", root:220,   bpm:88,  lead:"hg",  calm:"dg", dbl:"hn"},
+  {name:"정족산성 · 밤의 질풍",     theme:"B", root:146.8, bpm:112, lead:"hg",  calm:"hg", dbl:"tps"},
+  {name:"연안성 · 결사의 노래",     theme:"C", root:196,   bpm:92, lead:"hn",  calm:"hg", dbl:"hg"},
+  {name:"수원 화성 · 큰 진군",      theme:"A", root:174.6, bpm:104, lead:"hn",  calm:"dg", dbl:"tps"},
+  {name:"귀주성 · 눈보라 질풍",     theme:"B", root:185,   bpm:120, lead:"tps", calm:"hg", dbl:"hn"},
+  {name:"남한산성 · 최후의 비장",   theme:"C", root:130.8, bpm:92, lead:"hg",  calm:"dg", dbl:"tps"},
+  {name:"두억시니의 진 · 결전",     theme:"B", root:164.8, bpm:126, lead:"hn",  calm:"hg", dbl:"tps"},
+  {name:"처음 화면 · 서곡",         theme:"D", root:196,   bpm:84,  lead:"hn",  calm:"dg", dbl:"hg", soft:.95},
+  {name:"무한 물결 · 끝없는 진군",  theme:"A", root:155.6, bpm:104, lead:"hn",  calm:"hg", dbl:"tps"}
 ];
 const MUS_RAID = 10, MUS_MENU = 11, MUS_ENDLESS = 12;
 
@@ -3636,7 +3634,7 @@ const Sound = (function(){
     const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
     try { ac = new AC(); } catch(e){ return; }
     sfxG = ac.createGain(); sfxG.gain.value = .45; sfxG.connect(ac.destination);
-    musG = ac.createGain(); musG.gain.value = .0001; musG.connect(ac.destination);
+    buildMusGraph();
     noise = ac.createBuffer(1, Math.floor(ac.sampleRate*.6), ac.sampleRate); const d = noise.getChannelData(0); for (let i=0;i<d.length;i++) d[i] = Math.random()*2 - 1;
   }
   function env(g, t, a, peak, dec){ g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(peak, t+a); g.gain.exponentialRampToValueAtTime(.0001, t+a+dec); }
@@ -3647,7 +3645,7 @@ const Sound = (function(){
   }
   function hiss(t, dur, peak, type, f0, f1, q, out){
     const b = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
-    b.buffer = noise; f.type = type; f.frequency.setValueAtTime(f0, t); if (f1) f.frequency.exponentialRampToValueAtTime(f1, t+dur); f.Q.value = q || 1;
+    b.buffer = noise; if (dur > .55) b.loop = true; /* 긴 잡음(심벌)은 잡음 되풀이 — 검수 v23 A2 */ f.type = type; f.frequency.setValueAtTime(f0, t); if (f1) f.frequency.exponentialRampToValueAtTime(f1, t+dur); f.Q.value = q || 1;
     env(g, t, .005, peak, dur); b.connect(f); f.connect(g); g.connect(out || sfxG); b.start(t); b.stop(t+dur+.05);
   }
   const up = (f, k) => f*Math.pow(2, k/12);
@@ -3674,57 +3672,172 @@ const Sound = (function(){
       case "skill":  hiss(t, .55, .3, "bandpass", 400, 3200, 1.4); [0,4,7,12].forEach((k,i) => tone("sine", up(523,k), 0, t+.12+i*.07, .01, .2, .7)); break;
     }
   }
-  // 배경음(v10): MUSIC 표의 곡을 칸(step) 단위로 0.35초 앞까지 예약. 음 번호 → 주파수
-  const noteF = (S, deg, oct) => { const n = S.scale.length, o = Math.floor(deg/n), k = ((deg % n) + n) % n; return S.root*Math.pow(2, o + (oct || 0) + S.scale[k]/12); };
-  function lead(S, f, t, dur, pk){ // 피리·해금 느낌: 아래에서 밀어 올리는 꺾는 소리 + 늦게 들어오는 떨림(농현)
-    const o = ac.createOscillator(), g = ac.createGain(), fl = ac.createBiquadFilter(), v = ac.createOscillator(), vg = ac.createGain();
-    o.type = S.lead; fl.type = "lowpass"; fl.frequency.value = S.cut || 2400; fl.Q.value = .7;
-    o.frequency.setValueAtTime(S.bend ? f*.944 : f, t); if (S.bend) o.frequency.exponentialRampToValueAtTime(f, t + .07);
-    v.frequency.value = 5.5; vg.gain.setValueAtTime(0, t); vg.gain.linearRampToValueAtTime(f*.012, t + Math.min(dur*.6, .35)); v.connect(vg); vg.connect(o.frequency);
-    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(pk, t + .02); g.gain.setValueAtTime(pk, t + Math.max(.03, dur*.55)); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
-    o.connect(fl); fl.connect(g); g.connect(musG); o.start(t); v.start(t); o.stop(t + dur + .05); v.stop(t + dur + .05);
+  // 배경음(v23): 관현악 행진곡 + 전통 악기. MUSIC 곡을 칸(16분음표) 단위로 0.35초 앞까지 예약. 모든 소리는 코드로 만듦(녹음 파일 없음).
+  // 소리 길: 악기 → mIn → (그대로 + 울림 conv) → comp(너무 커지지 않게) → musG(곡 바뀔 때 서서히) → 스피커
+  let mIn = null, mMix = null, ksC = null;
+  function newTrackBus(){ mIn = ac.createGain(); mIn.gain.value = 1; mIn.connect(mMix); }
+  function buildMusGraph(){
+    musG = ac.createGain(); musG.gain.value = .0001; musG.connect(ac.destination);
+    const comp = ac.createDynamicsCompressor(); comp.threshold.value = -16; comp.knee.value = 8; comp.ratio.value = 4; comp.attack.value = .004; comp.release.value = .2; comp.connect(musG);
+    mMix = ac.createGain(); mMix.gain.value = 1; mMix.connect(comp);
+    try { // 울림(큰 홀 느낌): 잡음이 줄어드는 잔향
+      const sr = ac.sampleRate, L = Math.floor(sr*1.4), ir = ac.createBuffer(2, L, sr);
+      for (let c = 0; c < 2; c++){ const d = ir.getChannelData(c); for (let i = 0; i < L; i++) d[i] = (Math.random()*2 - 1)*Math.pow(1 - i/L, 3); }
+      const cv = ac.createConvolver(), wg = ac.createGain(); cv.buffer = ir; wg.gain.value = .28; mMix.connect(cv); cv.connect(wg); wg.connect(comp);
+    } catch(e){}
+    ksC = new Map(); newTrackBus();
   }
-  function drone(f, t, dur, pk, trem, type, cut){ // 낮은 지속음 / 현 트레몰로(trem = 떨림 빠르기)
-    const o = ac.createOscillator(), g = ac.createGain(), fl = ac.createBiquadFilter(); o.type = type || "sawtooth"; o.frequency.value = f; fl.type = "lowpass"; fl.frequency.value = cut || 500;
-    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(pk, t + dur*.3); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
-    o.connect(fl); fl.connect(g);
-    if (trem){ const tg = ac.createGain(), l = ac.createOscillator(), lg = ac.createGain(); l.frequency.value = trem; lg.gain.value = .5; tg.gain.value = .5; l.connect(lg); lg.connect(tg.gain); g.connect(tg); tg.connect(musG); l.start(t); l.stop(t + dur + .05); }
-    else g.connect(musG);
-    o.start(t); o.stop(t + dur + .05);
+  // 타악기(작은북·심벌·대북·징)는 처음 한 번 따로 녹음해 두고(소리 모음) 다시 틀기만 한다 → 휴대폰에서도 가볍게. 준비 전에는 바로 만들어 냄
+  let bank = null, bankP = null, jingQ = Promise.resolve(); const jingB = {};
+  const OCtor = () => window.OfflineAudioContext || window.webkitOfflineAudioContext;
+  function renderInto(oc, fn){ const k = {ac, mIn}; ac = oc; mIn = oc.createGain(); mIn.connect(oc.destination); try { fn(); } finally { ac = k.ac; mIn = k.mIn; }
+    return new Promise((res, rej) => { let done = false; oc.oncomplete = ev => { if (!done){ done = true; res(ev.renderedBuffer); } }; const p = oc.startRendering(); if (p && p.then) p.then(b => { if (!done){ done = true; res(b); } }, rej); }); } // 옛 webkit은 oncomplete로만 알려 줌
+  function makeBank(){
+    if (bankP) return bankP;
+    try {
+      const OC = OCtor(); if (!ac || !noise) return Promise.resolve(null); /* 소리 장치 전이면 다음에 다시(검수 v23 2차 N1) */ if (!OC) return (bankP = Promise.resolve(null));
+      const sr = 44100, IT = [["S", .3], ["C", 2.3], ["BB", .9]], tot = IT.reduce((s, x) => s + x[1], 0), oc = new OC(1, Math.ceil(sr*tot), sr); // 장치 하나에 이어 녹음(iOS 장치 수 제한)
+      let at = 0; const offs = IT.map(([k, d]) => { const o = [k, at, d]; at += d; return o; });
+      bankP = renderInto(oc, () => offs.forEach(([k, t0]) => drumLive(k, t0 + .001, 1))).then(buf => { const src = buf.getChannelData(0), o = {};
+        offs.forEach(([k, t0, d]) => { const n = Math.floor(sr*d), b = ac.createBuffer(1, n, sr); b.getChannelData(0).set(src.subarray(Math.floor(sr*t0), Math.floor(sr*t0) + n)); o[k] = b; }); bank = o; return o; }).catch(() => null);
+    } catch(err){ bankP = Promise.resolve(null); } // 실패하면 바로 만드는 소리로만(다시 시도 안 함)
+    return bankP;
   }
-  function drum(ch, t, sd, m){
+  function jingBuf(f){ const k = f.toFixed(1); if (jingB[k] !== undefined) return jingB[k]; jingB[k] = null; const OC = OCtor(); if (!OC) return null;
+    const ks = Object.keys(jingB); if (ks.length > 6) delete jingB[ks[0]]; // 오래된 징부터 비움
+    jingQ = jingQ.then(() => { try { return renderInto(new OC(1, Math.ceil(44100*3.4), 44100), () => jingLive(f, .001, 1)).then(b => { jingB[k] = b; }).catch(() => {}); } catch(err){} }); // 한 번에 하나씩
+    return null; }
+  function samp(b, t, gain, rate){ if (!b) return false; const s = ac.createBufferSource(), g = ac.createGain(); s.buffer = b; s.playbackRate.value = rate || 1; g.gain.value = gain; s.connect(g); g.connect(mIn); s.start(t); return true; }
+  // 악기 파형(한 음에 발진기 하나): 배음 크기를 미리 빚어 둔 파형 표
+  function pwave(kind, f){ const map = ac._pw || (ac._pw = new Map()), key = kind + Math.round(f); if (map.has(key)) return map.get(key);
+    const n = Math.max(2, Math.min(48, Math.floor(7000/f))), re = new Float32Array(n + 1), im = new Float32Array(n + 1);
+    for (let h = 1; h <= n; h++){ const fh = f*h; let a = 1/h;
+      if (kind === "tps") a *= (1 + 2.8*Math.exp(-Math.pow((fh - 1250)/420, 2)) + 2*Math.exp(-Math.pow((fh - 2700)/520, 2)))*(fh*fh/(fh*fh + 380*380))*(fh > 4800 ? .3 : 1)*(h % 2 ? 1.15 : .85); // 태평소 겹서
+      else if (kind === "hg") a *= 1/(1 + Math.pow((fh - 1500)/900, 2)); // 해금: 코맹맹이
+      else if (kind === "hn") a *= (1 + 1.6*Math.exp(-Math.pow((fh - 650)/380, 2)))/(1 + Math.pow(fh/1900, 3)); // 호른·금관: 둥글고 힘 있게
+      else if (kind === "str") a *= 1/(1 + Math.pow(fh/3600, 2)); // 현악
+      else a *= 1/(1 + Math.pow(fh/700, 4)); // 저음 현
+      im[h] = a; }
+    const w = ac.createPeriodicWave(re, im); map.set(key, w); return w; }
+  const sf = (S, semi, oct) => S.root*Math.pow(2, semi/12 + (oct || 0));
+  const jit = () => (Math.random() - .5)*.008, vel = () => .92 + Math.random()*.16; // 사람 손맛
+  function vib(o, t, f, rate, depth, delay){ // 늦게 들어오는 떨림(농음·비브라토)
+    const v = ac.createOscillator(), vg = ac.createGain(); v.frequency.value = rate; vg.gain.setValueAtTime(0, t); vg.gain.linearRampToValueAtTime(f*depth, t + delay);
+    v.connect(vg); vg.connect(o.frequency); v.start(t); return v; }
+  function envG(t, a, pk, hold, rel){ const g = ac.createGain(); g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(pk, t + a); g.gain.setValueAtTime(pk, t + Math.max(a + .005, hold)); g.gain.exponentialRampToValueAtTime(.0001, t + hold + rel); return g; }
+  // ---- 선율 악기 ----
+  function horn(f, t, dur, pk){ // 호른 무리: 살짝 어긋난 두 소리 + 여는 필터(부왁)
+    const o1 = ac.createOscillator(), o2 = ac.createOscillator(), lp = ac.createBiquadFilter(); o1.setPeriodicWave(pwave("hn", f)); o2.setPeriodicWave(pwave("hn", f));
+    o1.frequency.setValueAtTime(f, t); o2.frequency.setValueAtTime(f*1.005, t); lp.type = "lowpass"; lp.Q.value = .8;
+    lp.frequency.setValueAtTime(500, t); lp.frequency.exponentialRampToValueAtTime(2600, t + .1); lp.frequency.exponentialRampToValueAtTime(1600, t + .1 + Math.min(.5, dur*.5));
+    const g = envG(t, .06, pk, dur*.8, Math.max(.1, dur*.3)); o1.connect(lp); o2.connect(lp); lp.connect(g); g.connect(mIn);
+    const v = vib(o1, t, f, 5, .006, Math.min(.5, dur*.6)), en = t + dur + .15; [o1, o2].forEach(o => { o.start(t); o.stop(en); }); v.stop(en);
+  }
+  function taepyeongso(f, t, dur, pk){ // 태평소: 아래에서 꺾어 올리는 쨍한 소리 + 굵은 농음
+    const o = ac.createOscillator(); o.setPeriodicWave(pwave("tps", f)); o.frequency.setValueAtTime(f*.89, t); o.frequency.exponentialRampToValueAtTime(f, t + .09);
+    const g = envG(t, .025, pk*.55, dur*.7, Math.max(.06, dur*.35)); o.connect(g); g.connect(mIn);
+    const v = vib(o, t, f, 6.2, .02, Math.min(.3, dur*.5)), en = t + dur + .1; o.start(t); o.stop(en); v.stop(en);
+  }
+  function daegeum(f, t, dur, pk){ // 대금: 맑은 소리 + 입김 + 느린 농음
+    const o = ac.createOscillator(), o2 = ac.createOscillator(), g2 = ac.createGain(); o.type = "sine"; o2.type = "triangle"; g2.gain.value = .22;
+    o.frequency.setValueAtTime(f*.97, t); o.frequency.exponentialRampToValueAtTime(f, t + .08); o2.frequency.setValueAtTime(f*2, t);
+    const g = envG(t, .05, pk, dur*.75, Math.max(.08, dur*.3)); o.connect(g); o2.connect(g2); g2.connect(g); g.connect(mIn);
+    const v = vib(o, t, f, 4.8, .016, Math.min(.45, dur*.6)); hiss(t, Math.min(.5, dur), pk*.18, "bandpass", f*2.2, 0, 6, mIn);
+    const en = t + dur + .1; o.start(t); o2.start(t); [o, o2, v].forEach(x => x.stop(en));
+  }
+  function haegeum(f, t, dur, pk){ // 해금(얼후 자리): 미끄러지는 꺾임 + 빠른 농현
+    const o = ac.createOscillator(); o.setPeriodicWave(pwave("hg", f)); o.frequency.setValueAtTime(f*.93, t); o.frequency.exponentialRampToValueAtTime(f, t + .13);
+    const g = envG(t, .07, pk*1.1, dur*.8, Math.max(.1, dur*.3)); o.connect(g); g.connect(mIn);
+    const v = vib(o, t, f, 6.4, .024, Math.min(.3, dur*.5)), en = t + dur + .12; o.start(t); o.stop(en); v.stop(en);
+  }
+  function leadVoice(kind, f, t, dur, pk){ if (kind === "dg") daegeum(f, t, dur, pk*1.1); else if (kind === "hg") haegeum(f, t, dur, pk); else if (kind === "tps") taepyeongso(f, t, dur, pk*.7); else horn(f, t, dur, pk*.75); }
+  // ---- 현악·저음 ----
+  function strPad(fs, t, dur, pk){ // 현악 화음: 음마다 살짝 어긋난 두 소리, 천천히 차오름
+    const g = ac.createGain(); g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(pk, t + Math.min(.35, dur*.3)); g.gain.setValueAtTime(pk, t + dur*.8); g.gain.exponentialRampToValueAtTime(.0001, t + dur + .3); g.connect(mIn);
+    const en = t + dur + .35;
+    fs.forEach((f, i) => { const o = ac.createOscillator(); o.setPeriodicWave(pwave("str", f)); o.frequency.value = f*(i % 2 ? 1.004 : .997); o.connect(g); o.start(t); o.stop(en); });
+  }
+  function strHit(f, t, dur, pk){ // 현악 16분 반복(짧게 끊는 활)
+    const o = ac.createOscillator(); o.setPeriodicWave(pwave("str", f)); o.frequency.value = f;
+    const g = ac.createGain(); g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(pk, t + .012); g.gain.exponentialRampToValueAtTime(.0001, t + Math.max(.07, dur)); o.connect(g); g.connect(mIn); o.start(t); o.stop(t + dur + .05);
+  }
+  function violin(f, t, dur, pk){ // 바이올린 무리: 선율을 한 옥타브 위에서 겹쳐 반짝이게
+    const o = ac.createOscillator(); o.setPeriodicWave(pwave("str", f)); o.frequency.value = f; const g = envG(t, .08, pk, dur*.8, Math.max(.1, dur*.3)); o.connect(g); g.connect(mIn);
+    const v = vib(o, t, f, 5.6, .007, Math.min(.3, dur*.5)), en = t + dur + .12; o.start(t); o.stop(en); v.stop(en);
+  }
+  function lowStr(f, t, dur, pk){ const o = ac.createOscillator(); o.setPeriodicWave(pwave("lo", f)); o.frequency.value = f; const g = envG(t, .02, pk, dur*.7, Math.max(.08, dur*.3)); o.connect(g); g.connect(mIn); o.start(t); o.stop(t + dur + .1); }
+  function timp(f, t, pk){ // 팀파니: 조율된 큰북
+    const o = ac.createOscillator(), g = ac.createGain(); o.type = "sine"; o.frequency.setValueAtTime(f*1.08, t); o.frequency.exponentialRampToValueAtTime(f, t + .06);
+    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(pk, t + .005); g.gain.exponentialRampToValueAtTime(.0001, t + 1.1); o.connect(g); g.connect(mIn); o.start(t); o.stop(t + 1.15);
+    hiss(t, .09, pk*.5, "lowpass", 500, 150, .7, mIn);
+  }
+  // 가야금(하프 자리): 뜯는 줄 소리(카플러스-스트롱). 음마다 한 번 만들어 둠
+  function ksBuf(f, dur, bright, keep){
+    const k = Math.round(f*10) + ":" + bright; if (ksC.has(k)) return ksC.get(k);
+    const sr = ac.sampleRate, N = Math.max(2, Math.round(sr/f)), L = Math.floor(sr*dur), b = ac.createBuffer(1, L, sr), d = b.getChannelData(0), r = new Float32Array(N);
+    let p = 0; for (let i = 0; i < N; i++){ const w = Math.random()*2 - 1; p = p + bright*(w - p); r[i] = p; }
+    for (let i = 0; i < L; i++){ const j = i % N, nx = (j + 1) % N; d[i] = r[j]; r[j] = keep*.5*(r[j] + r[nx]); }
+    let mx = 0; for (let i = 0; i < Math.min(L, N*4); i++) mx = Math.max(mx, Math.abs(d[i])); if (mx > 0) for (let i = 0; i < L; i++) d[i] /= mx;
+    const o = {b, rate:f/(sr/N)}; ksC.set(k, o); return o;
+  }
+  function gayageum(f, t, pk){ const K = ksBuf(f, .9, .7, .996), s = ac.createBufferSource(), g = ac.createGain(); s.buffer = K.b; s.playbackRate.value = K.rate;
+    g.gain.setValueAtTime(pk, t); g.gain.setValueAtTime(pk, t + .7); g.gain.exponentialRampToValueAtTime(.0001, t + .9); s.connect(g); g.connect(mIn); s.start(t); s.stop(t + .92); }
+  // 징: 큰 놋쇠 징 — 낮은 배음이 길게 울리며 살짝 올라가는 '우웅'
+  function jingHit(f, t, m){ if (!samp(jingBuf(f), t, m, 1)) jingLive(f, t, m); }
+  function jingLive(f, t, m){
+    const g = ac.createGain(); g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.22*m, t + .03); g.gain.exponentialRampToValueAtTime(.0001, t + 3.2); g.connect(mIn);
+    [[1, 1], [1.51, .45], [2.02, .3], [2.76, .16], [3.48, .08]].forEach(([r, a], i) => { const o = ac.createOscillator(), og = ac.createGain(); o.type = "sine";
+      o.frequency.setValueAtTime(f*r*(1 + i*.002), t); o.frequency.linearRampToValueAtTime(f*r*1.018, t + 1.6); og.gain.value = a; o.connect(og); og.connect(g); o.start(t); o.stop(t + 3.3); });
+    hiss(t, .12, .12*m, "lowpass", 300, 0, .7, mIn);
+  }
+  function drum(ch, t, m){ if (!samp(bank && bank[ch], t, m, 1 + (Math.random() - .5)*.02)) drumLive(ch, t, m); }
+  function drumLive(ch, t, m){
     switch (ch){
-      case "K": tone("sine", 95, 48, t, .004, .42*m, .28, musG); hiss(t, .1, .12*m, "lowpass", 400, 120, .7, musG); break; // 쿵(궁편)
-      case "k": tone("sine", 105, 55, t, .004, .22*m, .2, musG); break;
-      case "D": hiss(t, .06, .22*m, "bandpass", 2200, 1500, 3, musG); tone("triangle", 420, 300, t, .002, .08*m, .05, musG); break; // 덕(채편)
-      case "d": hiss(t, .04, .1*m, "bandpass", 2600, 0, 3, musG); break; // 기
-      case "R": for (let k = 0; k < 3; k++) hiss(t + k*sd/3, .035, (.06 + k*.02)*m, "bandpass", 2400, 0, 3, musG); break; // 더러러
-      case "B": tone("sine", 70, 38, t, .005, .5*m, .45, musG); hiss(t, .18, .2*m, "lowpass", 250, 70, .7, musG); break; // 북
+      case "S": hiss(t, .15, .42*m, "highpass", 1700, 0, .7, mIn); hiss(t, .07, .3*m, "bandpass", 3600, 0, 1, mIn); tone("triangle", 220, 175, t, .001, .22*m, .06, mIn); break; // 작은북
+      case "C": hiss(t, 2.1, .3*m, "highpass", 4800, 0, .5, mIn); hiss(t, 1.2, .16*m, "bandpass", 8200, 0, .8, mIn); break; // 심벌
+      case "BB": tone("sine", 60, 32, t, .005, .6*m, .7, mIn); tone("sine", 92, 46, t, .003, .35*m, .3, mIn); hiss(t, .22, .26*m, "lowpass", 180, 60, .7, mIn); break; // 대북
     }
   }
+  const SN = "S..sS.s.S..sS.ss"; // 행진 작은북(S 세게, s 약하게)
   function musicStep(S, t, bs, bar, sd, inten){
-    const L = S.bar, m = inten ? 1 : .6;
-    // 장구: 물결 사이에는 쿵·덕만 작게
-    const dc = S.dr[bs]; if (dc && dc !== "." && (inten || dc === "K" || dc === "D")) drum(dc, t, sd, m);
-    const bc = S.buk && S.buk[bs]; if (bc === "B" && (inten >= 2 || (inten === 1 && bs === 0))) drum("B", t, sd, inten >= 2 ? 1 : .7);
-    // 거문고풍 반복 저음
-    const BL = S.bass[bar % S.bass.length];
-    for (const b of BL) if (b[0] === bs){ const f = noteF(S, b[1], -1); tone("triangle", f, 0, t, .01, .3*m, Math.max(.12, b[2]*sd*.95), musG); if (inten) tone("sine", f/2, 0, t, .01, .16, Math.max(.12, b[2]*sd), musG); }
-    // 긴장 층: 마디 첫 칸에 낮은 지속음, 위급하면 높은 현 트레몰로
+    if (!bankP) try { makeBank(); } catch(err){ bankP = Promise.resolve(null); } // 처음 한 번: 타악기 소리 모음 만들기(소리 장치가 준비된 뒤)
+    const T = MUS_THEME[S.theme] || MUS_THEME.A, nb = T.ch.length, bi = bar % nb, C = T.ch[bi], cr = C[0], third = C[1] === "m" ? 3 : 4;
+    const tones = [cr, cr + third, cr + 7], beat = bs % 4 === 0, m = inten ? 1 : .6, tt = t + jit();
+    const norm = s => ((s % 12) + 12) % 12;
     if (bs === 0){
-      const dl = L*sd*1.02;
-      drone(noteF(S, 0, -2), t, dl, (S.drone || .045)*(inten ? 1 : .6), inten >= 2 ? 7 : (S.trem || 0), S.droneType || "sawtooth", 380);
-      if (inten >= 2){ const fi = S.scale.indexOf(7); drone(noteF(S, fi >= 0 ? fi : 3, 1), t, dl, .03, 13, "sawtooth", 3000); }
+      const dl = 16*sd;
+      // 현악 화음(가운데 음역) + 저음 현
+      strPad(tones.map(s => sf(S, norm(s), 0)).concat([sf(S, norm(cr), 1)]), t, dl, inten ? .055 : .05); // 현악 화음: 첼로·비올라 음역 중심(원곡 분석: 120~500Hz가 가장 큼)
+      if (!inten) lowStr(sf(S, norm(cr), -1), t, dl, .11);
+      // 징·심벌: 8마디마다(악절 시작)
+      if (bi % 8 === 0){ jingHit(sf(S, norm(cr), -1), t, inten ? .9 : .55); if (inten) drum("C", t, .8); }
     }
-    // 선율: 정해진 동기를 form 순서대로(변주 = sh 만큼 음 올림, 9 = 쉼)
-    const PL = L*S.mb, ps = (bar % S.mb)*L + bs, ph = Math.floor(bar/S.mb), form = S.form || [0,0,1,0, 0,0,1,9], sh = S.sh || [0,2,0,-1, 0,3,0,0];
-    const c = ph % form.length, mi = form[c], mt = S.mot[mi]; if (!mt) return;
-    if (!S._m) S._m = S.mot.map(a => { const o = {}; a.forEach(n => { o[n[0]] = n; }); return o; });
-    const n = S._m[mi][ps]; if (!n || n[0] >= PL) return;
-    if (!inten && c % 2 === 1) return; // 물결 사이엔 성기게
-    const f = noteF(S, n[1] + sh[c % sh.length]), dur = Math.max(.1, n[2]*sd*.98);
-    lead(S, f, t, dur, inten ? .26 : .17);
-    if (inten >= 2) lead(S, f*2, t, dur, .07); // 위급: 한 옥타브 위 겡치기
+    if (inten){
+      // 저음 현: 4분음표 행진 / 위급하면 8분
+      if (beat || (inten >= 2 && bs % 2 === 0)) lowStr(sf(S, norm(bs === 8 ? cr + 7 : cr), -1), tt, sd*(inten >= 2 ? 1.6 : 3), .11*vel());
+      // 현악 16분 반복(물결 중엔 8분, 위급하면 16분)
+      if (inten >= 2 || bs % 2 === 0){ const pat = [0, 2, 1, 2], s = tones[pat[(bs >> (inten >= 2 ? 0 : 1)) % 4]]; strHit(sf(S, norm(s), 0), tt, sd*.9, .07*vel()); }
+      // 팀파니: 1·3박(으뜸·딸림), 위급하면 매 박 + 악절 끝 마디 마지막 박 굴림
+      const roll = bi % 4 === 3 && bs >= 12;
+      if (bs === 0 || bs === 8 || (inten >= 2 && beat) || (roll && (inten >= 2 || bi % 8 === 7))) timp(sf(S, norm(bs === 8 ? cr + 7 : cr), -1), tt, (roll && bs > 12 ? .2 : .32)*vel());
+      if (inten >= 2 && beat) drum("BB", tt, .7);
+      // 작은북 행진
+      if (S.march !== false){ let sc = SN[bs]; if (inten >= 2 && sc === "." ) sc = bs % 2 ? "s" : "."; if (roll && bs % 1 === 0) sc = "s";
+        if (sc === "S" || sc === "s") drum("S", t + jit(), (sc === "S" ? .5 : .24)*(inten >= 2 ? 1.15 : 1)*vel()); }
+    } else {
+      // 물결 사이: 가야금 분산화음(8분), 팀파니는 두 마디마다 살짝
+      if (bs % 2 === 0){ const ar = [0, 1, 2, 1, 0, 2, 1, 2], s = tones[ar[(bs >> 1) % 8]]; gayageum(sf(S, norm(s), bs >= 8 ? 2 : 1), t + jit(), .09*vel()); }
+      if (bs === 0 && bi % 2 === 0) timp(sf(S, norm(cr), -1), t, .16);
+    }
+    // 선율: 이 마디의 음표 시작 칸에서
+    let pos = 0; for (const n of T.mel[bi] || []){
+      if (pos === bs && n[0] !== null){ const dur = Math.max(.12, n[1]*sd*.97), oct = k => k === "tps" || k === "dg" ? 1 : 0; // 호른·해금은 실제 악기 음역(200~800Hz), 태평소·대금은 한 옥타브 위
+        const ld = inten ? S.lead : (S.calm || "dg"), d2 = S.dbl || "tps"; leadVoice(ld, sf(S, n[0], oct(ld)), t, dur, inten ? .3 : .2);
+        if (inten === 1) violin(sf(S, n[0], oct(ld) + 1), t, dur, inten >= 2 ? .06 : .045);
+        if (inten >= 2) leadVoice(d2, sf(S, n[0], oct(d2)), t, dur, .14); // 위급: 다른 악기 겹치기
+        else if (inten && bi >= 8 && d2 !== ld) leadVoice(d2, sf(S, n[0], oct(d2)), t, dur, .07); // 뒤 악절: 다른 악기가 받쳐 줌
+        break; }
+      pos += n[1]; if (pos > bs) break; }
   }
   let musI = 0, musErr = "";
   function music(style, inten){ // 매 화면마다 부름. style이 null이면 배경음을 줄여 멈춤. inten: 0 물결 사이, 1 물결 중, 2 위급
@@ -3733,21 +3846,38 @@ const Sound = (function(){
     musI = inten | 0;
     if (want !== mus){
       musG.gain.cancelScheduledValues(now); musG.gain.setValueAtTime(Math.max(.0001, musG.gain.value), now);
-      musG.gain.exponentialRampToValueAtTime(want ? .14*(want.soft || 1) : .0001, now + .6);
+      musG.gain.exponentialRampToValueAtTime(want ? MUS_VOL*(want.soft || 1) : .0001, now + .6);
       if (want && !mus) nextT = now + .1;
+      if (mus && mIn){ const old = mIn; try { old.gain.cancelScheduledValues(now); old.gain.setValueAtTime(old.gain.value || 1, now); old.gain.exponentialRampToValueAtTime(.0001, now + .5); } catch(err){} setTimeout(() => { try { old.disconnect(); } catch(err){} }, 900); newTrackBus(); }
+      if (ksC && ksC.size > 48) ksC.clear(); // 곡이 여럿 바뀌면 줄 소리 캐시 비움
       mus = want; step = 0;
     }
     if (!mus) return;
     if (nextT < now) nextT = now + .05;
-    const S = mus, sd = 60/(S.bpm*(musI >= 2 ? 1.1 : 1))/S.spb;
+    const S = mus, sd = 60/(S.bpm*(musI >= 2 ? 1.08 : 1))/4;
     while (nextT < now + .35){
-      try { musicStep(S, nextT, step % S.bar, Math.floor(step/S.bar), sd, musI); } catch(e){ musErr = String(e && e.message || e); }
+      try { musicStep(S, nextT, step % 16, Math.floor(step/16), sd, musI); } catch(e){ musErr = String(e && e.message || e); }
       step++; nextT += sd;
     }
   }
+  const MUS_VOL = .15; // 곡 전체 크기(효과음과 어울리게)
+  // 시험용: 곡 idx를 세기 inten으로 secs초 동안 소리 파일처럼 만들어 돌려줌(실제 소리 장치 안 씀). from = 시작 마디 → {sr, ch:[Float32Array, Float32Array], err}
+  async function musicDemo(idx, inten, secs, from){
+    const OC = window.OfflineAudioContext || window.webkitOfflineAudioContext, S = MUSIC[idx]; if (!OC || !S) return null;
+    if (!noise){ const nb = new OC(1, 1, 44100); noise = nb.createBuffer(1, 26460, 44100); const d0 = noise.getChannelData(0); for (let i = 0; i < d0.length; i++) d0[i] = Math.random()*2 - 1; }
+    await makeBank(); MUS_THEME[S.theme].ch.forEach(c => jingBuf(sf(S, ((c[0] % 12) + 12) % 12, -1))); await jingQ;
+    const sr = 44100, oc = new OC(2, Math.ceil(sr*secs), sr), keep = {ac, musG, mIn, mMix, noise, ksC}; let err = "";
+    try {
+      ac = oc; buildMusGraph(); musG.gain.value = MUS_VOL*(S.soft || 1);
+      const sd = 60/(S.bpm*(inten >= 2 ? 1.08 : 1))/4; let tt = .05, st = (from || 0)*16;
+      while (tt < secs - .4){ musicStep(S, tt, st % 16, Math.floor(st/16), sd, inten); st++; tt += sd; }
+    } catch(e){ err = String(e && e.message || e); }
+    ac = keep.ac; musG = keep.musG; mIn = keep.mIn; mMix = keep.mMix; noise = keep.noise; ksC = keep.ksC;
+    const buf = await oc.startRendering(); return {sr, ch:[buf.getChannelData(0), buf.getChannelData(1)], err};
+  }
   const musicNow = () => mus ? {name:mus.name, bpm:mus.bpm, inten:musI, err:musErr, step} : {err:musErr}; // 시험용
   function hide(h){ if (!ac) return; try { if (h) ac.suspend(); else ac.resume(); } catch(e){} }
-  return {init, play, music, hide, musicNow};
+  return {init, play, music, hide, musicNow, musicDemo};
 })();
 
 /* ---------- 광고·결제 연결부 (강제 전면 광고 없음) ---------- */
@@ -7506,7 +7636,7 @@ function start(){
   Shop.init();
   if (M.stars[0] && M.daily.login < kstDate()) showDaily(); // 하루 첫 접속이면 매일 보상부터
   if (!TabLock.pending && !TabLock.ok()) lockScreen(true); // 다른 창이 게임을 갖고 있으면 안내부터(Web Lock 은 잡히면/못 잡히면 그때 처리)
-  window.SanseongDebug = {unitVs, solDefMul, foeKindTxt, unitStrike, UNITS, evWatch, decideTest:k => { const d = k === "boss" ? {k, e:R.enemies.find(e => !e.dead) || {type:"grunt", x:9, y:9}} : k === "gate" ? {k, g:R.gates[0]} : k === "thief" ? {k, e:thiefSpawn()} : {k:"camp"}; if (!d.e && (k === "boss" || k === "thief")) return null; R.decSeen = R.decSeen || {}; R.decSeen[k] = true; R.decCur = d; decideShow(d); return d; }, decideOn:() => decideOn(), decideTick:dt => decideTick(dt), easy:{on:() => easyOn(), recs:() => easyRecs(), repair:() => easyRepair(), tick:dt => easyTick(dt)}, thiefSpawn, get T(){ return T; }, TUT, tutOk, tutCells, fortDbg:{unitTerrMul, cellTerr, fortMove, volDanger, fortWallHit, fortPlan, fortGateSafe, fortGatePts, fortFlagPos, fortVolunteers, flagBtnTap, toggleSortie, tapFlag:(x,y)=>{ R.flagMode = true; const ts = null; if (fortIn(x, y) && fortWalk(x, y)){ R.flag = {x:x + .5, y:y + .5}; } R.flagMode = false; }}, pickMusic, musicNow:() => Sound.musicNow(), MUSIC, WebApp, showStory, Raid, RAID, GATE, STAGES, TabLock, Cam, tapAt, reloadFromDisk, get M(){ return M; }, get R(){ return R; }, newRun, grantStarter, saveMeta, showMenu, castSkill, Track, update, victory, defeat, hideOverlay, Ads, Shop, contOk, loadMeta, CloudSave, SaveCode, Notify, castlePending, castleCollect, ensureMissions, mprog, dailyBoot, showCastle, normMeta, Ledger, castleSettle, claimMission, startWave, get saveGen(){ return saveGen; }, get castleBonus(){ return castleBonus; }, set castleBonus(v){ castleBonus = v; }, get overlayMode(){ return overlayMode; }, bot:{easyRepair:() => easyRepair(true), wavesOf, foeKinds, bossKind, tacUse, tacBlock, volGate, tacGate, buyUnit, UNITS, canBuildAt, cellBuildable, upLimit, rforgeUp, TT, ET, HEROES, TERRAIN, hit, toggleSortie, buildable, upCost, initBarracks, towerMaxHp, spawnHero, towerAt, repairCost, stat, get ROWS(){ return ROWS; }, get COLS(){ return COLS; }}}; // 점검용(bot: 자동 봇 균형 시험)
+  window.SanseongDebug = {musicDemo:(i, k, sec, from) => Sound.musicDemo(i, k, sec, from), unitVs, solDefMul, foeKindTxt, unitStrike, UNITS, evWatch, decideTest:k => { const d = k === "boss" ? {k, e:R.enemies.find(e => !e.dead) || {type:"grunt", x:9, y:9}} : k === "gate" ? {k, g:R.gates[0]} : k === "thief" ? {k, e:thiefSpawn()} : {k:"camp"}; if (!d.e && (k === "boss" || k === "thief")) return null; R.decSeen = R.decSeen || {}; R.decSeen[k] = true; R.decCur = d; decideShow(d); return d; }, decideOn:() => decideOn(), decideTick:dt => decideTick(dt), easy:{on:() => easyOn(), recs:() => easyRecs(), repair:() => easyRepair(), tick:dt => easyTick(dt)}, thiefSpawn, get T(){ return T; }, TUT, tutOk, tutCells, fortDbg:{unitTerrMul, cellTerr, fortMove, volDanger, fortWallHit, fortPlan, fortGateSafe, fortGatePts, fortFlagPos, fortVolunteers, flagBtnTap, toggleSortie, tapFlag:(x,y)=>{ R.flagMode = true; const ts = null; if (fortIn(x, y) && fortWalk(x, y)){ R.flag = {x:x + .5, y:y + .5}; } R.flagMode = false; }}, pickMusic, musicNow:() => Sound.musicNow(), MUSIC, WebApp, showStory, Raid, RAID, GATE, STAGES, TabLock, Cam, tapAt, reloadFromDisk, get M(){ return M; }, get R(){ return R; }, newRun, grantStarter, saveMeta, showMenu, castSkill, Track, update, victory, defeat, hideOverlay, Ads, Shop, contOk, loadMeta, CloudSave, SaveCode, Notify, castlePending, castleCollect, ensureMissions, mprog, dailyBoot, showCastle, normMeta, Ledger, castleSettle, claimMission, startWave, get saveGen(){ return saveGen; }, get castleBonus(){ return castleBonus; }, set castleBonus(v){ castleBonus = v; }, get overlayMode(){ return overlayMode; }, bot:{easyRepair:() => easyRepair(true), wavesOf, foeKinds, bossKind, tacUse, tacBlock, volGate, tacGate, buyUnit, UNITS, canBuildAt, cellBuildable, upLimit, rforgeUp, TT, ET, HEROES, TERRAIN, hit, toggleSortie, buildable, upCost, initBarracks, towerMaxHp, spawnHero, towerAt, repairCost, stat, get ROWS(){ return ROWS; }, get COLS(){ return COLS; }}}; // 점검용(bot: 자동 봇 균형 시험)
   requestAnimationFrame(loop);
 }
 if (window.claude && window.claude.hot && window.claude.hot.snapshot) window.claude.hot.snapshot(() => ({}));

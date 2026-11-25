@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta name="app-version" content="20261126-a53d3569aa">
+<meta name="app-version" content="20261126-d696f39de5">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>산성</title>
@@ -1425,8 +1425,9 @@ function fortReroute(){
 // 날기 적: 나온 곳에서 가장 가까운 문으로 곧장
 function fortFlyPi(pi){ const P = R.paths[pi]; if (!P || !P.segs.length) return pi; const a = P.segs[0].a; let gi = 0, bd = Infinity;
   R.m.gates.forEach((g, i) => { const d = dist(a[0], a[1], g.x + .5, g.y + .5); if (d < bd){ bd = d; gi = i; } });
-  const kk = "fly:" + a[0] + "," + a[1] + ":" + gi; if (R.fcache[kk] != null) return R.fcache[kk];
-  const g = R.m.gates[gi], Q = pathOf([[a[0] - .5, a[1] - .5], [g.x, g.y]], false, true); Q.gate = gi; Q.fort = true; Q.side = P.side; R.paths.push(Q); return R.fcache[kk] = R.paths.length - 1; }
+  const pp = R.m.castle ? palaceSpot() : null; // 요청 39: 하늘 적은 문을 칠 일이 없으니 문으로 돌지 않고 행궁으로 곧장 날아간다(가는 길에 장병을 만나면 멈춰 싸움 — foeTick의 e.hold)
+  const kk = "fly" + (pp ? "P" : "") + ":" + a[0] + "," + a[1] + ":" + gi; if (R.fcache[kk] != null) return R.fcache[kk];
+  const g = R.m.gates[gi], Q = pathOf([[a[0] - .5, a[1] - .5], pp ? [pp[0] - .5, pp[1] - .5] : [g.x, g.y]], false, true); Q.gate = gi; Q.fort = true; Q.side = P.side; Q.flyPal = !!pp; R.paths.push(Q); return R.fcache[kk] = R.paths.length - 1; }
 // 건물 공격: 앞길을 막은 건물은 누구나 부수고, 곁(0.9칸)을 지나는 성 밖 건물·장수는 성향 따라 멈춰 친다
 const fortOutside = t => { const b = (R.base || R.grid)[t.y][t.x]; return b !== 8 && b !== 9; };
 function fortAggr(e){ const E = ET[e.type]; if (e.fly || e.thief || moveOf(e) === "run") return 0; if (E.chief || e.type === "shield" || e.type === "boss" || (E.lives || 1) > 1 || (E.r || 0) >= .42) return .9; return .35; }
@@ -3840,6 +3841,31 @@ const Sound = (function(){
         break; }
       pos += n[1]; if (pos > bs) break; }
   }
+  /* 요청 41: 배경음 곡 파일(스테이블 오디오 무료 요금제로 만든 곡 — 무료도 상업 이용 허락. art/bgm/*.m4a, 웹판은 web/art/bgm/).
+     MUSIC 번호 → 파일. 받아서 풀어 둔 곡이 있으면 그것을 틀고(끝 6초를 겹쳐 이어 틀기), 없으면 코드로 만든 음악을 그대로 튼다.
+     세기: 물결 사이 = 높은 소리를 깎고 작게, 물결 중 = 그대로, 위급 = 조금 크게. 메모리 때문에 풀어 둔 곡은 지금 곡과 처음 화면 곡만 남긴다 */
+  const BGM = {files:{0:"ch1", 1:"ch1", 2:"ch2", 3:"ch3", 4:"ch4", 5:"ch5", 6:"ch6", 7:"ch7", 8:"ch8", 9:"ch9", 10:"ch10", 11:"title", 12:"ch7"}, buf:{}, loading:{}, fail:{}, cur:null, inG:null, lp:null, vol:null, ctx:null, VOL:1.3};
+  function bgmGraph(){ if (BGM.ctx === ac && BGM.vol) return; BGM.ctx = ac; BGM.cur = null; BGM.inG = ac.createGain(); BGM.lp = ac.createBiquadFilter(); BGM.lp.type = "lowpass"; BGM.lp.frequency.value = 18000; BGM.vol = ac.createGain(); BGM.vol.gain.value = BGM.VOL;
+    BGM.inG.connect(BGM.lp); BGM.lp.connect(BGM.vol); BGM.vol.connect(musG); }
+  function bgmLoad(name){ if (!name || BGM.buf[name] || BGM.loading[name] || (BGM.fail[name] && performance.now() - BGM.fail[name] < 30000) || typeof fetch !== "function") return;
+    BGM.loading[name] = fetch("art/bgm/" + name + ".m4a").then(r => r.ok ? r.arrayBuffer() : Promise.reject(new Error(r.status))).then(ab => new Promise((res, rej) => { const p = ac.decodeAudioData(ab, res, rej); if (p && p.then) p.then(res, rej); }))
+      .then(b => { BGM.buf[name] = b; delete BGM.fail[name]; }).catch(() => { BGM.fail[name] = performance.now(); }).then(() => { delete BGM.loading[name]; }); }
+  function bgmStart(buf, at){ const src = ac.createBufferSource(), g = ac.createGain(); src.buffer = buf; src.connect(g); g.connect(BGM.inG);
+    g.gain.setValueAtTime(.0001, at); g.gain.exponentialRampToValueAtTime(1, at + 2.5); src.start(at); return {src, g, t0:at, dur:buf.duration}; }
+  function bgmFade(inst, at, len){ if (!inst) return; try { inst.g.gain.cancelScheduledValues(at); inst.g.gain.setValueAtTime(Math.max(.0001, inst.g.gain.value), at); inst.g.gain.exponentialRampToValueAtTime(.0001, at + len); inst.src.stop(at + len + .1); } catch(e){} }
+  function bgmStop(){ if (!BGM.cur) return; const now = ac.currentTime; bgmFade(BGM.cur.inst, now, .6); bgmFade(BGM.cur.next, now, .6); BGM.cur = null; }
+  function bgmTick(style, inten){ // 곡 파일을 틀고 있으면 true(코드 음악은 쉼)
+    if (!ac || !musG || (typeof OfflineAudioContext !== "undefined" && ac instanceof OfflineAudioContext)) return false; const name = style ? BGM.files[MUSIC.indexOf(style)] : null; if (!name){ bgmStop(); BGM.buf = {}; return false; } /* 음악을 끄면 곡 메모리도 비움(검수 2차) */
+    bgmGraph(); bgmLoad(name); for (const k in BGM.buf) if (k !== name && !(BGM.cur && BGM.cur.name === k)) delete BGM.buf[k]; // 메모리: 지금 곡(바꾸는 중이면 옛 곡까지)만 남긴다
+    const buf = BGM.buf[name], now = ac.currentTime;
+    if (!buf){ bgmStop(); return false; }
+    if (!BGM.cur || BGM.cur.name !== name){ bgmStop(); BGM.cur = {name, inst:bgmStart(buf, now + .05), next:null}; }
+    const C = BGM.cur, I = C.inst;
+    if (!C.next && now > I.t0 + I.dur - 9){ const at = Math.max(now + .05, I.t0 + I.dur - 6); C.next = bgmStart(buf, at); bgmFade(I, at, 5.5); } // 끝 6초를 겹쳐 이어 틀기
+    if (C.next && now >= C.next.t0){ C.inst = C.next; C.next = null; }
+    const f = inten >= 2 ? 20000 : inten === 1 ? 16000 : 1500, v = BGM.VOL*(inten >= 2 ? 1.15 : inten === 1 ? 1 : .62);
+    BGM.lp.frequency.setTargetAtTime(f, now, .6); BGM.vol.gain.setTargetAtTime(v, now, .6);
+    return true; }
   let musI = 0, musErr = "";
   function music(style, inten){ // 매 화면마다 부름. style이 null이면 배경음을 줄여 멈춤. inten: 0 물결 사이, 1 물결 중, 2 위급
     if (!ac || ac.state !== "running") return;
@@ -3853,7 +3879,8 @@ const Sound = (function(){
       if (ksC && ksC.size > 48) ksC.clear(); // 곡이 여럿 바뀌면 줄 소리 캐시 비움
       mus = want; step = 0;
     }
-    if (!mus) return;
+    if (!mus){ bgmTick(null, 0); return; }
+    if (bgmTick(mus, musI)){ nextT = now + .1; step = 0; return; } // 요청 41: 곡 파일 재생 중
     if (nextT < now) nextT = now + .05;
     const S = mus, sd = 60/(S.bpm*(musI >= 2 ? 1.08 : 1))/4;
     while (nextT < now + .35){
@@ -3876,7 +3903,7 @@ const Sound = (function(){
     ac = keep.ac; musG = keep.musG; mIn = keep.mIn; mMix = keep.mMix; noise = keep.noise; ksC = keep.ksC;
     const buf = await oc.startRendering(); return {sr, ch:[buf.getChannelData(0), buf.getChannelData(1)], err};
   }
-  const musicNow = () => mus ? {name:mus.name, bpm:mus.bpm, inten:musI, err:musErr, step} : {err:musErr}; // 시험용
+  const musicNow = () => mus ? {name:mus.name, bpm:mus.bpm, inten:musI, err:musErr, step, bgm:BGM.cur ? BGM.cur.name : null, loaded:Object.keys(BGM.buf), fail:Object.keys(BGM.fail)} : {err:musErr, bgm:BGM.cur ? BGM.cur.name : null}; // 시험용
   function hide(h){ if (!ac) return; try { if (h) ac.suspend(); else ac.resume(); } catch(e){} }
   return {init, play, music, hide, musicNow, musicDemo};
 })();
@@ -4083,6 +4110,18 @@ const towerLv = t => { const k = TLINE[t.type]; return 1 + (t.lvl || 0) + (k ? f
 const unitLv = (u, t) => { const U = UNITS[(u && u.k) || (t && t.unit)] || UNITS.spear; return 1 + (u && u.rank != null ? u.rank : (t && t.lvl) || 0) + forgeLv(U.forge) + rfLv(U.forge); };
 const gapMul = (ours, foe) => 1 + Math.max(LVGAP.min, Math.min(LVGAP.max, (ours - foe)*LVGAP.step));
 const lvCol = (ours, foe) => ours >= foe ? "#8BE07A" : ours === foe - 1 ? "#F2D27A" : "#FF7A6A";
+/* 요청 40: 원거리(궁수 배치·노대·큰 노대·포수·활병·행궁 수비병)는 레벨에 따라 명중률과 급소가 달라진다.
+   명중 = 기본(약 99%) + 레벨 차×5%(55~99%), 하늘 적 −3%. 빗나가면 적 곁 땅에 꽂히고 피해 없음. 급소: 내 레벨이 높을 때 차 1마다 6% 확률로 1.5배 */
+const ACC = {base:{archer:.99, crossbow:.99, bigbow:.99, musket:.97, unit:.98, guard:.99}, step:.05, min:.55, max:.99, fly:.03, crit:.06, critMul:1.5}; /* 같은 레벨이면 거의 다 맞고, 괴물보다 낮을수록 크게 빗나감 */
+const foeLvOf = e => (e && e.lv) || curFoeLv();
+const accOf = (kind, ours, e) => Math.max(ACC.min, Math.min(ACC.max, (ACC.base[kind] || .9) + (ours - foeLvOf(e))*ACC.step - (e && e.fly ? ACC.fly : 0)));
+function rangedRoll(kind, ours, e){ // → {hit, mul} : 빗나감 / 급소 배율
+  if (!e || e.dead || e === R.camp) return {hit:true, mul:1};
+  const txOk = !(e.txT > R.time), tx = () => { e.txT = R.time + .6; }; // 글자를 실제로 낼 때만 간격을 잡는다(검수 2차)
+  if (Math.random() > accOf(kind, ours, e)){ if (txOk && Math.random() < .5 && (tx(), true)) addText(e.x + (Math.random() - .5)*.4, e.y - .55, "빗나감", "#C8C8C8", .55); return {hit:false, mul:0}; }
+  const gap = ours - foeLvOf(e); if (gap > 0 && Math.random() < gap*ACC.crit){ if (txOk){ tx(); addText(e.x, e.y - .7, "급소!", "#FFB84A", .7); } return {hit:true, mul:ACC.critMul}; }
+  return {hit:true, mul:1}; }
+const missPt = e => { const a = Math.random()*Math.PI*2, r = .45 + Math.random()*.45; return {x:e.x + Math.cos(a)*r, y:e.y + Math.sin(a)*r*.7}; };
 function drawLvBadge(c, x, y, s, n, col){ // 우리 편 머리 위 레벨 숫자(괴물 숫자와 같은 모양, 색으로 강약)
   c.fillStyle = "rgba(16,14,10,.82)"; circle(c, x, y, s*.78); c.fill(); c.strokeStyle = col; c.lineWidth = Math.max(1.2, s*.14); circle(c, x, y, s*.78); c.stroke();
   c.fillStyle = col; c.font = "800 " + Math.round(s) + "px sans-serif"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(String(n), x, y + 1); }
@@ -4338,7 +4377,7 @@ function fortUnit(t, u, dt, s, U){
       if (pl.camp && dist(u.x, u.y, pl.x, pl.y) <= U.ranged){ if (u.cd <= 0){ u.cd = 1/s.rate; campHit(R.camp, s.dmg); } }
       else step(pl.x, pl.y); }
     u.aim = !!shoot;
-    if (shoot && u.cd <= 0){ u.cd = 1/s.rate; unitStrike(u, "archer", shoot, s.dmg); u.face = shoot.x >= u.x ? 1 : -1; burst(shoot.x, shoot.y - .1, 3, "#E8D9A8", .8, .2, .04); Sound.play("arrow"); ufxArrow(u, shoot); u.atk = 1; u.sideT = .45; u.sdir = -(u.sdir || 1); }
+    if (shoot && u.cd <= 0){ u.cd = 1/s.rate; const RR = rangedRoll("unit", unitLv(u, t), shoot); /* 요청 40 */ if (RR.hit){ unitStrike(u, "archer", shoot, s.dmg*RR.mul); burst(shoot.x, shoot.y - .1, 3, "#E8D9A8", .8, .2, .04); } u.face = shoot.x >= u.x ? 1 : -1; Sound.play("arrow"); ufxArrow(u, RR.hit ? shoot : missPt(shoot)); u.atk = 1; u.sideT = .45; u.sdir = -(u.sdir || 1); }
     return;
   }
   if (foe && U.charge){ ufxCav(u, foe, s, U, spd, dt, pl); return; } // 기마병: 곡선으로 돌아 들어가 돌격 → 지나쳐 다시 돌아옴
@@ -5097,6 +5136,7 @@ function moveEnemy(e, dt, slow){
     if (k >= 1){ e.d = D.to; e.dash = null; }
     return;
   }
+  if (e.fly && e.hold > 0){ e.hold -= dt; e.phase += dt*6*slow; return; } // 요청 39: 싸우는 동안 공중에 머문다
   if (R.m.hgt && !e.fly) spd *= slopeMul(e); // v10 실제 지형: 비탈
   e.d += spd*dt;
   if (e.sc) for (const sc of e.sc){ if (!sc.done && e.d >= sc.from){ sc.done = true; if (Math.random() < .3){ const q = epos(e, sc.to), L = dist(e.x, e.y, q.x, q.y);
@@ -5800,16 +5840,17 @@ function fire(t, s, e){
   const tx = t.x+.5, ty = t.y+.5;
   if (t.amb) t.amb = 0;
   t.shot1 = true;
-  if (t.type === "archer"){ Sound.play("arrow"); R.projs.push({k:"arrow", x:tx, y:ty-.35, tg:e, lx:e.x, ly:e.y, dmg:s.dmg*(e.fly ? 1.3 : 1)}); }
+  const RR = TLINE[t.type] && (t.type === "archer" || t.type === "crossbow" || t.type === "musket" || t.type === "bigbow") ? rangedRoll(t.type, towerLv(t), e) : {hit:true, mul:1}, mp = RR.hit ? null : missPt(e); // 요청 40
+  if (t.type === "archer"){ Sound.play("arrow"); R.projs.push(mp ? {k:"arrow", x:tx, y:ty-.35, tg:e, lx:mp.x, ly:mp.y, dmg:0, miss:true} : {k:"arrow", x:tx, y:ty-.35, tg:e, lx:e.x, ly:e.y, dmg:s.dmg*(e.fly ? 1.3 : 1)*RR.mul}); }
   else if (t.type === "bigbow"){ // 차대전: 표적 방향 한 줄 위 땅 적을 가까운 순으로 pierceN마리까지 꿰뚫는다
     Sound.play("arrow"); const ax = e.x - tx, ay = e.y - ty, AL = Math.hypot(ax, ay) || 1, ux = ax/AL, uy = ay/AL, reach = s.range + .4, N = TT.bigbow.pierceN || 3;
     const line = []; for (const o of R.enemies){ if (o.dead || o.fly || o.under > 0 || o === e) continue; const px = o.x - tx, py = o.y - ty, along = px*ux + py*uy; if (along < 0 || along > reach) continue; if (Math.abs(px*uy - py*ux) > .45) continue; if (!visE(o)) continue; line.push({o, along}); }
     line.sort((a, b) => a.along - b.along);
-    R.projs.push({k:"arrow", x:tx, y:ty-.3, tg:e, lx:e.x, ly:e.y, dmg:s.dmg, pierce:true, src:"bolt"});
-    line.slice(0, N - 1).forEach((q, i) => { HIT_SRC = "bolt"; hit(q.o, s.dmg*(.85 - .1*i) + (q.o.armor || 0)*.5); HIT_SRC = ""; burst(q.o.x, q.o.y - .2, 4, "#CFE6FF", 1, .25, .05); });
+    R.projs.push(mp ? {k:"arrow", x:tx, y:ty-.3, tg:e, lx:mp.x, ly:mp.y, dmg:0, miss:true, src:"bolt"} : {k:"arrow", x:tx, y:ty-.3, tg:e, lx:e.x, ly:e.y, dmg:s.dmg*RR.mul, pierce:true, src:"bolt"});
+    if (RR.hit) line.slice(0, N - 1).forEach((q, i) => { HIT_SRC = "bolt"; hit(q.o, s.dmg*(.85 - .1*i) + (q.o.armor || 0)*.5); HIT_SRC = ""; burst(q.o.x, q.o.y - .2, 4, "#CFE6FF", 1, .25, .05); });
     t.ang = Math.atan2(ay, ax); }
-  else if (t.type === "crossbow"){ Sound.play("arrow"); R.projs.push({k:"arrow", x:tx, y:ty-.3, tg:e, lx:e.x, ly:e.y, dmg:s.dmg, pierce:true, src:"bolt"}); }
-  else if (t.type === "musket"){ Sound.play("cannon"); R.projs.push({k:"arrow", x:tx, y:ty-.3, tg:e, lx:e.x, ly:e.y, dmg:s.dmg, src:"shot", fast:true}); burst(tx, ty-.3, 5, "#D8D2C4", 1, .4, .07, "smoke"); }
+  else if (t.type === "crossbow"){ Sound.play("arrow"); R.projs.push(mp ? {k:"arrow", x:tx, y:ty-.3, tg:e, lx:mp.x, ly:mp.y, dmg:0, miss:true, src:"bolt"} : {k:"arrow", x:tx, y:ty-.3, tg:e, lx:e.x, ly:e.y, dmg:s.dmg*RR.mul, pierce:true, src:"bolt"}); }
+  else if (t.type === "musket"){ Sound.play("cannon"); R.projs.push(mp ? {k:"arrow", x:tx, y:ty-.3, tg:e, lx:mp.x, ly:mp.y, dmg:0, miss:true, src:"shot", fast:true} : {k:"arrow", x:tx, y:ty-.3, tg:e, lx:e.x, ly:e.y, dmg:s.dmg*RR.mul, src:"shot", fast:true}); burst(tx, ty-.3, 5, "#D8D2C4", 1, .4, .07, "smoke"); }
   else if (t.type === "catapult"){
     Sound.play("cannon");
     const d = dist(tx,ty,e.x,e.y), lead = d/5, p = e.inside || e.atGate >= 0 ? {x:e.x, y:e.y} : epos(e, e.d + e.spd*e.slowMul*lead);
@@ -5836,7 +5877,7 @@ function atEnd(e, dt){
   if (R.ch === "gate1" && !R.over){ R.gate1Fail = true; defeat(); return; } // 문 여러 개 장의 성문 체력 1 도전: 땅 적이 문에 닿거나 하늘 적이 성 안으로 들면 바로 실패(v9B 2차). 약탈꾼도 먼저 이 판정(검수 v12)
   if (e.thief && !e.loot){ const P0 = R.paths[e.pi], g0 = P0 && R.gates[P0.gate]; if (g0 && !g0.broken){ thiefSteal(e, .2, .15, false); return; } } // 요청 24: 약탈꾼은 문을 치지 않고 약탈(부서진 문이면 성 안으로)
   const P = R.paths[e.pi], g = R.gates[P.gate];
-  if (!g || g.broken || e.fly){ e.atGate = -1; e.inside = {gate:P.gate, jx:(Math.random() - .5)*1.6, jy:(Math.random() - .5)*.9, route:(R.innerRoutes && R.innerRoutes[P.gate]) || [], ri:0}; if (e.under > 0) moleSurface(e); return; }
+  if (!g || g.broken || e.fly){ e.atGate = -1; e.hold = 0; e.inside = {gate:P.gate, jx:(Math.random() - .5)*1.6, jy:(Math.random() - .5)*.9, route:e.fly && P.flyPal ? [] : (R.innerRoutes && R.innerRoutes[P.gate]) || [], ri:0}; if (e.under > 0) moleSurface(e); return; }
   e.d = P.total; if (e.under > 0) moleSurface(e); // 문 앞에 서서 친다(망루·장수가 때릴 수 있다)
   if (e.atGate === undefined || e.atGate < 0){ e.atGate = GATE.rate*.5; // 문 앞 한 걸음에 서고, 여럿이면 옆으로 흩어진다
     const sg = P.segs[P.segs.length-1], ux = (sg.b[0]-sg.a[0])/sg.l, uy = (sg.b[1]-sg.a[1])/sg.l, j = (Math.random() - .5)*.8, back = .7 + Math.random()*.35;
@@ -5901,7 +5942,7 @@ function fortInsideSmash(e, dt){
 function gateUrgent(){ // 가장 위급한 문: 성 안에 적이 있으면 행궁, 아니면 (가까운 적 수·3 − 문 체력)이 가장 큰 문
   if (R.enemies.some(e => !e.dead && e.inside)) return {pt:palaceSpot(), gi:-1};
   let best = -1, bs = -Infinity;
-  R.gates.forEach((g, i) => { let n = 0; for (const e of R.enemies){ if (e.dead) continue; const P = R.paths[e.pi]; if (P && P.gate === i && P.total - e.d < 6) n++; }
+  R.gates.forEach((g, i) => { let n = 0; for (const e of R.enemies){ if (e.dead) continue; const P = R.paths[e.pi]; if (P && P.gate === i && !P.flyPal && P.total - e.d < 6) n++; }
     if (!n) return; const s = n*3 - g.hp + (g.broken ? 20 : 0); if (s > bs){ bs = s; best = i; } });
   if (best < 0) return null; const g = R.gates[best]; return {pt:[g.x + .5, g.y + .5], gi:best};
 }
@@ -5923,7 +5964,7 @@ function palaceGuardTick(dt){
     let best = null, bd = Infinity; for (const e of R.enemies){ if (e.dead || e.under > 0) continue; const qx = e.x - pp[0], qy = e.y - pp[1], d2 = qx*qx + qy*qy; if (d2 > r2) continue; const d = dist(g.x, g.y, e.x, e.y); if (d < bd){ bd = d; best = e; } }
     if (!best){ R.pgCd[i] = .15; return; }
     R.pgCd[i] = PAL_GUARD.rate; R.pgAim = R.pgAim || [0, 0]; R.pgAim[i] = .25;
-    hit(best, PAL_GUARD.dmg*forgeMul("bow")); ufxArrow(g, best); Sound.play("arrow");
+    { const RR = rangedRoll("guard", 1 + forgeLv("bow"), best); if (RR.hit) hit(best, PAL_GUARD.dmg*forgeMul("bow")*RR.mul); ufxArrow(g, RR.hit ? best : missPt(best)); } Sound.play("arrow"); /* 요청 40 */
     if (low && !R.palLowTold){ R.palLowTold = true; addText(pp[0], pp[1] - 1.4, "최후의 수비!", "#FFB0A0", 1.6); } });
   if (R.pgAim) R.pgAim = R.pgAim.map(v => Math.max(0, v - dt));
 }
@@ -5982,14 +6023,14 @@ function foeTick(dt){
       if (h && !h.dead && inCone(h.x, h.y)){ heroHurt(h, dmg); any = true; }
       R.towers.forEach(t => { if (!t.ruin && !t.virtual && inCone(t.x + .5, t.y + .5)){ damageTower(t, dmg*.5); t.burn = Math.max(t.burn || 0, 2); any = true; } });
       if (any) for (let i = 0; i < 10; i++){ const k = Math.random()*A.reach; R.parts.push({x:e.x + fx*k + (Math.random() - .5)*.4, y:e.y + fy*k + (Math.random() - .5)*.4, vx:fx*.6, vy:fy*.6, life:.45, max:.45, size:.08, color:"#FF8A3A", kind:"fire"}); }
-      e.fcd = any ? A.rate : .6; continue;
+      e.fcd = any ? A.rate : .6; if (any) e.hold = A.rate + .2; continue;
     }
     let best = null, bd = A.reach, kind = null; // 할퀴기: 가장 가까운 장병·장수·성벽 위 궁수
     foeUnits(u => { if (u.dead) return; const d = dist(u.x, u.y, e.x, e.y); if (d < bd){ bd = d; best = u; kind = "u"; } });
     if (h && !h.dead){ const d = dist(h.x, h.y, e.x, e.y); if (d < bd){ bd = d; best = h; kind = "h"; } }
     R.towers.forEach(t => { if (t.ruin || t.virtual || t.type !== "archer" || !G[t.y] || G[t.y][t.x] !== 8) return; const d = dist(t.x + .5, t.y + .5, e.x, e.y); if (d < bd){ bd = d; best = t; kind = "t"; } });
     if (!best){ e.fcd = .4; continue; }
-    e.fcd = A.rate;
+    e.fcd = A.rate; e.hold = A.rate + .2; // 요청 39: 상대 곁에 머물며 계속 친다
     if (kind === "u") foeHurtUnit(best, dmg, e); else if (kind === "h") heroHurt(best, dmg); else damageTower(best, dmg*.6);
     burst(kind === "t" ? best.x + .5 : best.x, kind === "t" ? best.y + .3 : best.y - .2, 4, "#D8C8E8", .9, .25, .05);
   }
@@ -6321,10 +6362,11 @@ function update(dt){
   skillTick(dt); // 요청 31
   for (const p of R.projs){
     if (p.k === "arrow"){
-      if (!p.tg.dead){ p.lx = p.tg.x; p.ly = p.tg.y - (p.tg.fly ? .32 : 0); }
+      if (!p.tg.dead && !p.miss){ p.lx = p.tg.x; p.ly = p.tg.y - (p.tg.fly ? .32 : 0); }
       const d = dist(p.x,p.y,p.lx,p.ly), v = (p.fast ? 18 : 11)*dt;
       p.a = Math.atan2(p.ly-p.y, p.lx-p.x);
-      if (d <= v + .05){ if (!p.tg.dead){ HIT_SRC = p.src || (p.charm ? "magic" : "arrow"); hit(p.tg, p.dmg + (p.pierce ? (p.tg.armor || 0)*.5 : 0), false, formIntact(p.tg) ? .8 : 1); HIT_SRC = ""; } p.done = true; }
+      if (d <= v + .05 && p.miss){ burst(p.lx, p.ly, 3, "#B8A888", .6, .2, .04); p.done = true; } // 요청 40: 빗나감
+      else if (d <= v + .05){ if (!p.tg.dead){ HIT_SRC = p.src || (p.charm ? "magic" : "arrow"); hit(p.tg, p.dmg + (p.pierce ? (p.tg.armor || 0)*.5 : 0), false, formIntact(p.tg) ? .8 : 1); HIT_SRC = ""; } p.done = true; }
       else { p.x += (p.lx-p.x)/d*v; p.y += (p.ly-p.y)/d*v; }
     } else if (p.k === "ball"){
       p.t += dt/p.dur;
@@ -6748,7 +6790,8 @@ const towerAt = (x,y) => R.towers.find(t => t.x === x && t.y === y);
 const upCost = t => t.lvl < 2 ? Math.round(TT[t.type].up[t.lvl]*(R.upMul || 1)) : Infinity; // 내 성 대장간
 function lvLine(t){ // 요청 36: 내 레벨과 괴물 레벨 비교
   const a = TLINE[t.type] ? towerLv(t) : t.type === "barracks" ? unitLv({rank:t.lvl, k:t.unit}, t) : 0; if (!a || !R || !R.m) return ""; const b = curFoeLv(), g = Math.round(gapMul(a, b)*100);
-  return '<br><b style="color:'+lvCol(a, b)+'">'+(t.type === "barracks" ? "장병" : "내")+' 레벨 '+a+'</b> · 괴물 레벨 '+b+' · 피해 '+g+'%'+(a < b ? ' · 강화하거나 대장간(쇠)에서 벼리면 세져요' : ''); }
+  const rk = t.type === "barracks" ? (t.unit === "archer" ? "unit" : null) : (t.type === "archer" || t.type === "crossbow" || t.type === "musket" || t.type === "bigbow") ? t.type : null, ac = rk ? ' · 명중 ' + Math.round(accOf(rk, a, null)*100) + '%' : ''; // 요청 40
+  return '<br><b style="color:'+lvCol(a, b)+'">'+(t.type === "barracks" ? "장병" : "내")+' 레벨 '+a+'</b> · 괴물 레벨 '+b+' · 피해 '+g+'%'+ac+(a < b ? ' · 강화하거나 대장간(쇠)에서 벼리면 세져요' : (a > b ? ' · 급소 ' + Math.round((a - b)*ACC.crit*100) + '%' : '')); }
 function coinTag(n){ return '<span class="cost"><span class="coin"></span>'+n+'</span>'; }
 /* ---------- v14 요청 26: 물결 중에는 장군 지휘 판만(짓기·강화·장병·수리·깃발은 물결 전에만) ---------- */
 const WAVE_LOCK = ["build", "easybuild", "sell", "upgrade", "repair", "rushu", "buyu", "trepair", "rforge", "autofill"];
@@ -7790,7 +7833,7 @@ function start(){
   Shop.init();
   if (M.stars[0] && M.daily.login < kstDate()) showDaily(); // 하루 첫 접속이면 매일 보상부터
   if (!TabLock.pending && !TabLock.ok()) lockScreen(true); // 다른 창이 게임을 갖고 있으면 안내부터(Web Lock 은 잡히면/못 잡히면 그때 처리)
-  window.SanseongDebug = {VIEW, getT:() => T, musicDemo:(i, k, sec, from) => Sound.musicDemo(i, k, sec, from), unitVs, solDefMul, foeKindTxt, unitStrike, UNITS, evWatch, decideTest:k => { const d = k === "boss" ? {k, e:R.enemies.find(e => !e.dead) || {type:"grunt", x:9, y:9}} : k === "gate" ? {k, g:R.gates[0]} : k === "thief" ? {k, e:thiefSpawn()} : {k:"camp"}; if (!d.e && (k === "boss" || k === "thief")) return null; R.decSeen = R.decSeen || {}; R.decSeen[k] = true; R.decCur = d; decideShow(d); return d; }, decideOn:() => decideOn(), decideTick:dt => decideTick(dt), easy:{on:() => easyOn(), recs:() => easyRecs(), repair:() => easyRepair(), tick:dt => easyTick(dt)}, thiefSpawn, get T(){ return T; }, TUT, tutOk, tutCells, fortDbg:{unitTerrMul, cellTerr, fortMove, volDanger, fortWallHit, fortPlan, fortGateSafe, fortGatePts, fortFlagPos, fortVolunteers, flagBtnTap, toggleSortie, tapFlag:(x,y)=>{ R.flagMode = true; const ts = null; if (fortIn(x, y) && fortWalk(x, y)){ R.flag = {x:x + .5, y:y + .5}; } R.flagMode = false; }}, pickMusic, musicNow:() => Sound.musicNow(), MUSIC, WebApp, showStory, Raid, RAID, GATE, STAGES, TabLock, Cam, tapAt, reloadFromDisk, get M(){ return M; }, get R(){ return R; }, newRun, grantStarter, saveMeta, showMenu, castSkill, Track, update, victory, defeat, hideOverlay, Ads, Shop, contOk, loadMeta, CloudSave, SaveCode, Notify, castlePending, castleCollect, ensureMissions, mprog, dailyBoot, showCastle, normMeta, Ledger, castleSettle, claimMission, startWave, get saveGen(){ return saveGen; }, get castleBonus(){ return castleBonus; }, set castleBonus(v){ castleBonus = v; }, get overlayMode(){ return overlayMode; }, bot:{easyRepair:() => easyRepair(true), wavesOf, foeKinds, bossKind, tacUse, tacBlock, volGate, tacGate, buyUnit, UNITS, canBuildAt, cellBuildable, upLimit, rforgeUp, TT, ET, HEROES, TERRAIN, hit, toggleSortie, buildable, upCost, initBarracks, towerMaxHp, spawnHero, towerAt, repairCost, stat, get ROWS(){ return ROWS; }, get COLS(){ return COLS; }}}; // 점검용(bot: 자동 봇 균형 시험)
+  window.SanseongDebug = {VIEW, ACC, LVGAP, getT:() => T, musicDemo:(i, k, sec, from) => Sound.musicDemo(i, k, sec, from), unitVs, solDefMul, foeKindTxt, unitStrike, UNITS, evWatch, decideTest:k => { const d = k === "boss" ? {k, e:R.enemies.find(e => !e.dead) || {type:"grunt", x:9, y:9}} : k === "gate" ? {k, g:R.gates[0]} : k === "thief" ? {k, e:thiefSpawn()} : {k:"camp"}; if (!d.e && (k === "boss" || k === "thief")) return null; R.decSeen = R.decSeen || {}; R.decSeen[k] = true; R.decCur = d; decideShow(d); return d; }, decideOn:() => decideOn(), decideTick:dt => decideTick(dt), easy:{on:() => easyOn(), recs:() => easyRecs(), repair:() => easyRepair(), tick:dt => easyTick(dt)}, thiefSpawn, get T(){ return T; }, TUT, tutOk, tutCells, fortDbg:{unitTerrMul, cellTerr, fortMove, volDanger, fortWallHit, fortPlan, fortGateSafe, fortGatePts, fortFlagPos, fortVolunteers, flagBtnTap, toggleSortie, tapFlag:(x,y)=>{ R.flagMode = true; const ts = null; if (fortIn(x, y) && fortWalk(x, y)){ R.flag = {x:x + .5, y:y + .5}; } R.flagMode = false; }}, pickMusic, musicNow:() => Sound.musicNow(), MUSIC, WebApp, showStory, Raid, RAID, GATE, STAGES, TabLock, Cam, tapAt, reloadFromDisk, get M(){ return M; }, get R(){ return R; }, newRun, grantStarter, saveMeta, showMenu, castSkill, Track, update, victory, defeat, hideOverlay, Ads, Shop, contOk, loadMeta, CloudSave, SaveCode, Notify, castlePending, castleCollect, ensureMissions, mprog, dailyBoot, showCastle, normMeta, Ledger, castleSettle, claimMission, startWave, get saveGen(){ return saveGen; }, get castleBonus(){ return castleBonus; }, set castleBonus(v){ castleBonus = v; }, get overlayMode(){ return overlayMode; }, bot:{easyRepair:() => easyRepair(true), wavesOf, foeKinds, bossKind, tacUse, tacBlock, volGate, tacGate, buyUnit, UNITS, canBuildAt, cellBuildable, upLimit, rforgeUp, TT, ET, HEROES, TERRAIN, hit, toggleSortie, buildable, upCost, initBarracks, towerMaxHp, spawnHero, towerAt, repairCost, stat, get ROWS(){ return ROWS; }, get COLS(){ return COLS; }}}; // 점검용(bot: 자동 봇 균형 시험)
   requestAnimationFrame(loop);
 }
 if (window.claude && window.claude.hot && window.claude.hot.snapshot) window.claude.hot.snapshot(() => ({}));

@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta name="app-version" content="20261125-8624652e34">
+<meta name="app-version" content="20261126-b825e0572c">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>산성</title>
@@ -2141,6 +2141,7 @@ function drawGates(c, T, lifeFrac, m){
 function drawGateTags(c, T){ if (!R || !R.gates || !R.m.gates) return; R.m.gates.forEach((g, gi) => { const S = R.gates[gi]; if (S) gateTag(c, T, g, S); }); drawPalaceGuards(c, T); palaceTag(c, T); }
 // 문 이름과 체력 막대(문 바깥쪽에). 부서지면 빨간 '부서짐'
 function tagClamp(cx, cy, bw, T){ // v10 다듬기: 지금 보이는 화면(카메라) 안쪽으로 이름표를 민다
+  if (VIEW.on) return [cx, cy]; // 요청 37: 돌린 보기에서는 제자리
   const z = Cam.active ? (Cam.z || 1) : 1, x0 = Cam.active ? Cam.x : 0, y0 = Cam.active ? Cam.y : 0, x1 = x0 + W/z, y1 = y0 + H/z, m = 3/z;
   return [Math.max(x0 + bw/2 + m, Math.min(x1 - bw/2 - m, cx)), Math.max(y0 + T*.28 + m, Math.min(y1 - T*.44 - m, cy))];
 }
@@ -4450,7 +4451,7 @@ function ufxFormPos(u, t){ // 깃발 앞 진형 자리: 창병 맨 앞 줄, 칼�
         const ux = u.x + dx*p, uy = u.y + dy*p; if (u.fs === "in" || fortWalk(Math.floor(ux), Math.floor(uy))){ u.x = ux; u.y = uy; } } } }
 }
 function ufxDrawExtra(c, T, items){ // 쓰러진 장병, 날아가는 화살
-  (R.uDead || []).forEach(o => items.push({y:o.y + .05, draw:() => { const k = Math.min(1, o.t/.3), al = 1 - Math.max(0, (o.t - .6)/1); if (al <= 0) return;
+  (R.uDead || []).forEach(o => items.push({x:o.x, y:o.y + .05, draw:() => { const k = Math.min(1, o.t/.3), al = 1 - Math.max(0, (o.t - .6)/1); if (al <= 0) return;
     c.save(); c.globalAlpha = al; c.translate(o.x*T, (o.y + .2)*T); c.rotate(o.f*k*Math.PI/2*.9);
     if (o.img) ART.drawAt(c, o.img, 0, 0, T*.62, o.f < 0, false, dpr); else { c.fillStyle = "#2C4A7A"; circle(c, 0, -T*.2, T*.14); c.fill(); }
     c.restore(); }}));
@@ -4576,11 +4577,11 @@ function drawFortExtra(c, T, items){
   if (!R.m || !R.m.fort) return;
   easyDraw(c, T, items); // v12 추천 자리 ★
   (R.gates || []).forEach(g => { if (g.openT > 0) items.push({y:g.y + .55, draw:() => { c.fillStyle = "rgba(24,14,6,.8)"; c.fillRect((g.x + .18)*T, (g.y + .14)*T, T*.64, T*.72); c.strokeStyle = "#FFD27A"; c.lineWidth = Math.max(1.5, T*.05); c.strokeRect((g.x + .18)*T, (g.y + .14)*T, T*.64, T*.72); }}); });
-  (R.volB || []).forEach(vt => items.push({y:vt.rally.y + .1, draw:() => drawSoldiers(c, vt, T)}));
+  (R.volB || []).forEach(vt => items.push({raw:true, x:vt.rally.x, y:vt.rally.y + .1, draw:() => drawSoldiers(c, vt, T)})); // 요청 37: 장병은 스스로 세워 그림
   const has = R.towers.some(t => t.type === "barracks" && !t.ruin && t.units && t.units.some(u => !u.dead)) || (R.volB && R.volB.length) || (R.hero && !R.hero.dead);
   if (!has || !R.gates || !R.gates.length) return;
   const b = R.towers.find(t => t.type === "barracks" && !t.ruin), gi = b && b.gi != null ? b.gi : b ? fortNearGate(b.x + .5, b.y + .5) : R.hero ? fortNearGate(heroHome().x, heroHome().y) : 0, F = fortFlagPos(gi);
-  items.push({y:F.y + .3, draw:() => { const px = F.x*T, py = F.y*T; c.strokeStyle = "#5A3A1E"; c.lineWidth = Math.max(2, T*.06); c.beginPath(); c.moveTo(px, py + T*.3); c.lineTo(px, py - T*.55); c.stroke();
+  items.push({x:F.x, y:F.y + .3, ay:F.y, draw:() => { const px = F.x*T, py = F.y*T; c.strokeStyle = "#5A3A1E"; c.lineWidth = Math.max(2, T*.06); c.beginPath(); c.moveTo(px, py + T*.3); c.lineTo(px, py - T*.55); c.stroke();
     c.fillStyle = R.flag || F.camp ? "#E04A2E" : "rgba(224,74,46,.7)"; c.beginPath(); c.moveTo(px, py - T*.55); c.lineTo(px + T*.42, py - T*.42); c.lineTo(px, py - T*.28); c.closePath(); c.fill(); }});
 }
 function updateFlagBtn(){
@@ -4736,7 +4737,7 @@ function enemyHold(e, dt){
 function drawSoldiers(c, t, T){ // v10 요청 19: 종류마다 걸음, 숨쉬기·두리번, 찌르기·베기·시위, 기마 돌격 기울임, 맞으면 하얗게 번쩍
   if (!t.units) return;
   for (const u of t.units){ if (u.dead) continue;
-    c.save(); { const sx = u.x*T, sy = u.y*T + T*.18; c.translate(sx, sy); c.scale(USCALE, USCALE); c.translate(-sx, -sy); } // 요청 33: 장병 크게(발밑 기준)
+    c.save(); if (VIEW.on){ const vp = VIEW.fwd(u.x*T, u.y*T); c.translate(vp[0] - u.x*T, vp[1] - u.y*T); } { const sx = u.x*T, sy = u.y*T + T*.18; c.translate(sx, sy); c.scale(USCALE, USCALE); c.translate(-sx, -sy); } // 요청 33: 장병 크게(발밑 기준)
     if (u.runT > 0 && Math.random() < .3) R.parts.push({x:u.x + (Math.random() - .5)*.2, y:u.y + .15, vx:(Math.random() - .5)*.3, vy:-.2, life:.4, max:.4, size:.07, color:"#B89A6A", kind:"smoke"}); // 달려오는 먼지
     const kind = u.k || t.unit, U = UNITS[kind] || UNITS.spear, W = UFX.walk[kind] || UFX.walk.spear, rk = u.rank | 0, k = ART.img[U.img] ? U.img : ART.img.u_spear ? "u_spear" : null;
     const f = (u.lookT > 0 ? -u.face : u.face) < 0 ? -1 : 1, mv = u.mv || 0, ph = (u.walk || 0)*W[0], a = u.atk || 0, ap = Math.sin(Math.PI*(1 - a)), h = T*.62;
@@ -6351,7 +6352,7 @@ function update(dt){
   R.shake = Math.max(0, R.shake - dt*30);
   if (R.bannerT > 0){ R.bannerT -= dt; if (R.bannerT <= 0){ if (R.bannerNext){ const bn = R.bannerNext; R.bannerNext = null; showBanner(bn[0], bn[1]); } else { banner.hidden = true; topLayout(); } } }
   if (R.tipT > 0){ R.tipT -= dt; if (R.tipT <= 0) tipNext(); }
-  if (M.set.follow && R.waveActive && R.hero && !R.hero.dead && Cam.active){ R.followT = (R.followT || 0) - dt; if (R.followT <= 0){ R.followT = .5; const v = Cam.vis(-.6), h = R.hero; if ((h.x < v.x0 || h.x > v.x1 || h.y < v.y0 || h.y > v.y1) && performance.now() - Cam.userT > 2500) heroLook(); } } // v18: 장군 따라가기 자동(설정)
+  if (M.set.follow && R.waveActive && R.hero && !R.hero.dead && Cam.active){ R.followT = (R.followT || 0) - dt; if (R.followT <= 0){ R.followT = .5; const v = Cam.vis(-.6), h = R.hero; if ((VIEW.on ? !Cam.seen(h.x, h.y, -.6) : (h.x < v.x0 || h.x > v.x1 || h.y < v.y0 || h.y > v.y1)) && performance.now() - Cam.userT > 2500) heroLook(); } } // v18: 장군 따라가기 자동(설정)
 }
 function heroLook(){ const h = R && R.hero; if (!h || !Cam.active || !isFinite(h.x) || !isFinite(h.y)) return false; Cam.aim(h.x*T, h.y*T); return isFinite(Cam.tx) && isFinite(Cam.ty); } // v18: 카메라를 장군에게(부드럽게, clampXY 거침)
 
@@ -6363,6 +6364,10 @@ function draw(){
   if (R.shake > 0) c.translate((Math.random()-.5)*R.shake, (Math.random()-.5)*R.shake);
   const cam = Cam.active; // 지도가 창보다 클 때만: 세계 좌표 → 화면 좌표
   if (cam){ c.fillStyle = "#1a2420"; c.fillRect(0, 0, W, H); c.scale(Cam.z, Cam.z); c.translate(-Cam.x, -Cam.y); }
+  const VV = VIEW.on, VI = VV && VIEW.iso; // 요청 37: 보기 변환(땅은 행렬로, 서 있는 것은 제자리에 똑바로)
+  const gw = fn => { if (!VV){ fn(); return; } c.save(); c.transform(VIEW.a, VIEW.b, VIEW.c, VIEW.d, VIEW.e, VIEW.f); try { fn(); } finally { c.restore(); } };
+  const bw = (x, y, fn, lift) => { if (!VV){ fn(); return; } const p = VIEW.fwd(x*T, y*T); c.save(); c.translate(p[0] - x*T, p[1] - y*T - (lift ? (typeof lift === "number" ? lift : VIEW.wallH(T)) : 0)); try { fn(); } finally { c.restore(); } };
+  if (VV){ c.save(); c.transform(VIEW.a, VIEW.b, VIEW.c, VIEW.d, VIEW.e, VIEW.f); }
   c.drawImage(staticCv, 0, 0, WW, WH);
   if (R.bound) drawBound(c);
   const vis = cam ? Cam.view(1.2) : null, inV = (x, y) => !vis || (x >= vis.x0 && x <= vis.x1 && y >= vis.y0 && y <= vis.y1); // 화면에 보이는 것만 그린다
@@ -6380,33 +6385,39 @@ function draw(){
   const FS = new Map(); for (const e of R.enemies){ if (e.dead || !formIntact(e)) continue; let a = FS.get(e.fid); if (!a) FS.set(e.fid, a = []); a.push(e); }
   for (const fs of FS.values()){ if (fs.length !== 3) continue;
     c.strokeStyle = "rgba(170,200,255,.45)"; c.lineWidth = Math.max(1.5, T*.04); c.beginPath(); fs.forEach((e, i) => { const x = e.x*T, y = (e.y + .25)*T; if (i) c.lineTo(x, y); else c.moveTo(x, y); }); c.closePath(); c.stroke(); }
+  if (VV) c.restore();
   const items = [];
-  R.towers.forEach(t => { if (inV(t.x+.5, t.y+.5)) items.push({y:t.y+.5, draw:() => drawTowerFull(c, t, T)}); if (t.units && !t.ruin) items.push({y:t.rally ? t.rally.y + .1 : t.y + .6, draw:() => drawSoldiers(c, t, T)}); });
-  (R.tempB || []).forEach(vt => items.push({y:vt.rally.y + .1, draw:() => drawSoldiers(c, vt, T)}));
+  R.towers.forEach(t => { if (inV(t.x+.5, t.y+.5)) items.push({x:t.x+.5, y:t.y+.5, lift:VI && isWallCell(t.x, t.y), draw:() => drawTowerFull(c, t, T)}); if (t.units && !t.ruin) items.push({raw:true, x:t.rally ? t.rally.x : t.x + .5, y:t.rally ? t.rally.y + .1 : t.y + .6, draw:() => drawSoldiers(c, t, T)}); });
+  (R.tempB || []).forEach(vt => items.push({raw:true, x:vt.rally.x, y:vt.rally.y + .1, draw:() => drawSoldiers(c, vt, T)}));
   drawFortExtra(c, T, items);
   const dimE = e => { if (!R.m.night || visE(e)) { drawEnemy(c, e, T); return; } c.save(); c.globalAlpha = .38; try { drawEnemy(c, e, T); } finally { c.restore(); } };
-  R.enemies.forEach(e => { if (!e.fly && inV(e.x, e.y)) items.push({y:e.y, draw:() => dimE(e)}); });
-  if (R.hero && !R.hero.dead) items.push({y:R.hero.y, draw:() => drawHero(c, R.hero, T)});
-  if (R.camp && (!R.camp.dead || R.camp.fade > 0)) items.push({y:R.camp.y + .3, draw:() => drawCamp(c, T)});
-  items.sort((a,b) => a.y - b.y).forEach(it => it.draw());
-  drawGate(c, T, R.lives/R.maxLives, R.m);
-  R.enemies.forEach(e => { if (e.fly && inV(e.x, e.y)) dimE(e); });
-  drawFog(c);
-  drawFx(c, T); drawTac(c, T); drawStrikes(c, T);
-  drawBossFx(c, T);
-  drawGateTags(c, T);
-  for (const p of R.projs){
+  R.enemies.forEach(e => { if (!e.fly && inV(e.x, e.y)) items.push({x:e.x, y:e.y, draw:() => dimE(e)}); });
+  if (R.hero && !R.hero.dead) items.push({x:R.hero.x, y:R.hero.y, draw:() => drawHero(c, R.hero, T)});
+  if (R.camp && (!R.camp.dead || R.camp.fade > 0)) items.push({x:R.camp.x, y:R.camp.y + .3, ay:R.camp.y, draw:() => drawCamp(c, T)});
+  if (VI) wallBlocks(c, T, items);
+  items.forEach(it => { it.k = it.dk != null ? it.dk : VV && it.x != null ? VIEW.fwd(it.x*T, it.y*T)[1]/T + (it.lift ? .05 : 0) : it.y; });
+  items.sort((a,b) => a.k - b.k).forEach(it => { if (!VV || it.raw) it.draw(); else if (it.x != null) bw(it.x, it.ay != null ? it.ay : it.y, it.draw, it.lift); else gw(it.draw); });
+  if (!VI) gw(() => drawGate(c, T, R.lives/R.maxLives, R.m));
+  R.enemies.forEach(e => { if (e.fly && inV(e.x, e.y)) bw(e.x, e.y, () => dimE(e)); });
+  gw(() => drawFog(c));
+  gw(() => { drawFx(c, T); drawTac(c, T); drawStrikes(c, T); });
+  gw(() => drawBossFx(c, T));
+  if (!VV) drawGateTags(c, T);
+  else if (R.gates && R.m.gates){ R.m.gates.forEach((g, gi) => { const S = R.gates[gi]; if (S) bw(g.x + .5, g.y + .5, () => gateTag(c, T, g, S), VI ? VIEW.wallH(T)*1.9 : 0); }); if (R.m.castle){ const pp = palaceSpot(); bw(pp[0], pp[1], () => { drawPalaceGuards(c, T); palaceTag(c, T); }, VI ? VIEW.wallH(T)*1.8 : 0); } }
+  const bwP = (p, fn) => { if (!VV){ fn(); return; } const bx = p.k === "ball" ? p.sx + (p.tx - p.sx)*p.t : p.x, by = p.k === "ball" ? p.sy + (p.ty - p.sy)*p.t : p.y, sa = p.a, svx = p.vx, svy = p.vy;
+    if (p.a != null) p.a = VIEW.ang(p.a); if (p.vx != null && p.vy != null){ const v = VIEW.vec(p.vx, p.vy); p.vx = v[0]; p.vy = v[1]; } try { bw(bx, by, fn); } finally { p.a = sa; p.vx = svx; p.vy = svy; } };
+  for (const p of R.projs) bwP(p, () => {
     if (p.k === "arrow" && p.charm){ c.save(); c.translate(p.x*T, p.y*T); c.rotate(p.a || 0); c.fillStyle = "#F6E7A8"; c.fillRect(-T*.1,-T*.07,T*.2,T*.14); c.fillStyle = "#C8452F"; c.fillRect(-T*.03,-T*.05,T*.06,T*.1); c.restore(); }
     else if (p.k === "arrow"){ c.save(); c.translate(p.x*T, p.y*T); c.rotate(p.a || 0); c.strokeStyle = "rgba(255,240,200,.35)"; c.lineWidth = Math.max(2,T*.05); c.beginPath(); c.moveTo(-T*.45,0); c.lineTo(-T*.15,0); c.stroke(); c.strokeStyle = "#2A1A0C"; c.lineWidth = Math.max(2,T*.05); c.beginPath(); c.moveTo(-T*.2,0); c.lineTo(T*.12,0); c.stroke(); c.fillStyle = "#D9D9D9"; c.beginPath(); c.moveTo(T*.16,0); c.lineTo(T*.08,-T*.04); c.lineTo(T*.08,T*.04); c.fill(); c.fillStyle = "#C8452F"; c.fillRect(-T*.2,-T*.035,T*.07,T*.07); c.restore(); }
     else if (p.k === "ball"){ const x = (p.sx + (p.tx-p.sx)*p.t)*T, y = (p.sy + (p.ty-p.sy)*p.t)*T - Math.sin(p.t*Math.PI)*T*.9; c.fillStyle = "rgba(255,160,60,.35)"; circle(c, x, y, T*.15); c.fill(); c.fillStyle = "#1E1E1E"; circle(c, x, y, T*.1); c.fill(); c.fillStyle = "rgba(255,255,255,.35)"; circle(c, x-T*.025, y-T*.025, T*.03); c.fill(); }
     else if (p.k === "rocket" && !(p.delay > 0)){ c.save(); c.translate(p.x*T, p.y*T); c.rotate(Math.atan2(p.vy,p.vx)); c.fillStyle = "rgba(255,190,80,.4)"; ellipse(c, -T*.22, 0, T*.2, T*.09); c.fill(); c.fillStyle = "#FFB13B"; c.beginPath(); c.moveTo(-T*.12,0); c.lineTo(-T*.28,-T*.05); c.lineTo(-T*.24,0); c.lineTo(-T*.28,T*.05); c.fill(); c.fillStyle = "#8C2A1E"; c.fillRect(-T*.12,-T*.03,T*.22,T*.06); c.fillStyle = "#E8E2D0"; c.fillRect(T*.08,-T*.03,T*.05,T*.06); c.restore(); }
-  }
-  for (const p of R.parts){
+  });
+  for (const p of R.parts) bw(p.x, p.y, () => {
     const a = Math.max(0, p.life/p.max), x = p.x*T, y = p.y*T;
     if (p.kind === "smoke"){ c.globalAlpha = a*.5; c.fillStyle = p.color; circle(c, x, y, p.size*T*(2 - a)); c.fill(); }
     else if (p.kind === "fire"){ c.globalAlpha = a; c.fillStyle = a > .5 ? "#FFE08A" : p.color; circle(c, x, y, p.size*T*(.6 + a*.6)); c.fill(); }
     else { c.globalAlpha = a; c.fillStyle = p.color; circle(c, x, y, p.size*T); c.fill(); }
-  }
+  });
   c.globalAlpha = 1;
   const s = tutStep();
   if (s && s.hl && !overlayMode){ // v10 서장: 반짝이는 칸들(0.5초마다 다시 고름)
@@ -6425,12 +6436,13 @@ function draw(){
     c.beginPath(); c.moveTo(cx, ay + T*.38); c.lineTo(cx - T*.22, ay + T*.1); c.lineTo(cx - T*.08, ay + T*.1); c.lineTo(cx - T*.08, ay - T*.15); c.lineTo(cx + T*.08, ay - T*.15); c.lineTo(cx + T*.08, ay + T*.1); c.lineTo(cx + T*.22, ay + T*.1); c.closePath(); c.fill(); c.stroke();
   }
   c.textAlign = "center"; c.textBaseline = "middle";
-  for (const t of R.texts){
+  for (const t of R.texts) bw(t.x, t.y, () => {
     c.globalAlpha = Math.min(1, t.life/t.max*2); c.font = "700 " + Math.round(T*.36) + "px 'Gowun Dodum', sans-serif";
     c.lineWidth = 3; c.strokeStyle = "rgba(0,0,0,.6)"; c.strokeText(t.s, t.x*T, t.y*T); c.fillStyle = t.color; c.fillText(t.s, t.x*T, t.y*T);
-  }
+  });
   c.globalAlpha = 1;
   c.restore();
+  if (VV) VIEW.grade(c); // 요청 37: 밤 색감·불빛
   if (Cam.active) Cam.overlay(c); // 화면 밖 적 경고 화살표(화면 좌표)
   if (campAlive()) drawCampBar(c);
   if (R.bossE || R.downT > 0) drawBossBar(c); // 대장 체력 막대·격파 띠(화면 좌표)
@@ -6450,7 +6462,7 @@ function resize(){
   if (!R) return;
   useMap(R.m);
   // 창 크기가 바뀌면 칸 크기 T 가 바뀐다: 카메라 중심과 이동 목표를 칸 단위로 기억했다가 새 T 로 되살린다
-  const kx0 = (W - VR)/(2*Cam.z), ky0 = (VT + (H - VT - VB)/2)/Cam.z, keep = Cam.active && Cam.runId === R.runId && T > 0 ? {cx:(Cam.x + kx0)/T, cy:(Cam.y + ky0)/T, tx:Cam.tx != null ? (Cam.tx + kx0)/T : null, ty:Cam.ty != null ? (Cam.ty + ky0)/T : null} : null;
+  const kx0 = (W - VR)/(2*Cam.z), ky0 = (VT + (H - VT - VB)/2)/Cam.z, keep = Cam.active && Cam.runId === R.runId && T > 0 ? (() => { const cw = VIEW.inv(Cam.x + kx0, Cam.y + ky0), tw = Cam.tx != null ? VIEW.inv(Cam.tx + kx0, Cam.ty + ky0) : null; return {cx:cw[0]/T, cy:cw[1]/T, tx:tw ? tw[0]/T : null, ty:tw ? tw[1]/T : null}; })() : null;
   const box = stagebox.getBoundingClientRect();
   // 칸 크기 T 와 보이는 창(W×H)은 지도와 상관없이 늘 기본 9×13+성벽 기준. 지도(WW×WH)가 더 크면 카메라로 옮겨 본다
   W = Math.max(1, Math.round(box.width)); H = Math.max(1, Math.round(box.height)); dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -6484,6 +6496,100 @@ const camUI = (() => { const d = document.createElement("div"); d.id = "camui"; 
   d.innerHTML = '<button type="button" data-cam="in" aria-label="크게 보기">+</button><button type="button" data-cam="out" aria-label="전체 보기">−</button>';
   stagebox.appendChild(d); return d; })();
 const miniCv = (() => { const c = document.createElement("canvas"); c.id = "minimap"; c.hidden = true; c.setAttribute("aria-label", "미니맵"); stagebox.appendChild(c); return c; })();
+/* 요청 37(시험, 1장만): 보기 방식 — 바로 위 / 입체(비스듬히 내려다보기), 45도씩 돌리기.
+   땅(지형 그림·범위·효과)은 행렬로 돌리고 눕히고, 망루·장병·괴물·장군·글자는 그 자리에 똑바로 세워 그린다(빌보드).
+   입체에서는 성벽·문루·행궁을 높이 있는 덩어리로 세우고, 깊이 순서로 그려 벽 뒤의 적은 가려진다. 터치는 Cam.toWorld 에서 거꾸로 풀어 칸을 맞춘다. */
+const VIEW = {
+  on:false, iso:true, rot:0, a:1, b:0, c:0, d:1, e:0, f:0, det:1, cx:0, cy:0,
+  allowed(){ return !!(R && R.m && R.m.fort && R.s === 1 && !R.st.tutorial && !R.test); },
+  reset(){ this.rot = 0; this.iso = true; },
+  refresh(){ this.on = this.allowed(); if (!this.on){ this.a = this.d = 1; this.b = this.c = this.e = this.f = 0; this.det = 1; return; }
+    const k = R.m.castle; this.cx = k ? (k.x + k.w/2)*T : WW/2; this.cy = k ? (k.y + k.h/2)*T : WH/2;
+    const th = this.rot*Math.PI/4, co = Math.cos(th), si = Math.sin(th), sq = this.iso ? .58 : 1;
+    this.a = co; this.b = sq*si; this.c = -si; this.d = sq*co; this.det = this.a*this.d - this.b*this.c;
+    this.e = this.cx - (this.a*this.cx + this.c*this.cy); this.f = this.cy - (this.b*this.cx + this.d*this.cy); },
+  fwd(x, y){ return this.on ? [this.a*x + this.c*y + this.e, this.b*x + this.d*y + this.f] : [x, y]; },
+  inv(x, y){ if (!this.on) return [x, y]; const X = x - this.e, Y = y - this.f; return [(this.d*X - this.c*Y)/this.det, (-this.b*X + this.a*Y)/this.det]; },
+  vec(x, y){ return this.on ? [this.a*x + this.c*y, this.b*x + this.d*y] : [x, y]; },
+  ang(a){ const v = this.vec(Math.cos(a), Math.sin(a)); return Math.atan2(v[1], v[0]); },
+  wallH(T){ return this.on && this.iso ? T*.62 : 0; },
+  gridBox(sx0, sy0, sx1, sy1){ let X0 = 1e9, Y0 = 1e9, X1 = -1e9, Y1 = -1e9; // 화면 사각형 → 칸 단위 둘레 상자
+    [[sx0, sy0], [sx1, sy0], [sx1, sy1], [sx0, sy1]].forEach(q => { const w = this.inv(Cam.x + q[0]/Cam.z, Cam.y + q[1]/Cam.z); X0 = Math.min(X0, w[0]); Y0 = Math.min(Y0, w[1]); X1 = Math.max(X1, w[0]); Y1 = Math.max(Y1, w[1]); });
+    return {x0:X0/T, y0:Y0/T, x1:X1/T, y1:Y1/T}; },
+  turn(dr, iso){ if (!this.allowed() || !Cam.active) return; const w = Cam.toWorld(VW/2, VT + VH/2); if (dr) this.rot = (this.rot + dr + 8) % 8; if (iso != null) this.iso = iso;
+    this.refresh(); Cam.vx = Cam.vy = 0; Cam.tx = Cam.ty = null; Cam.center(w[0], w[1]); viewBtns(); needDraw = true; },
+  grade(c){ // 밤 색감 + 횃불·망루 불빛 + 가장자리 어둡게(화면 좌표)
+    if (!R || !Cam.active) return; c.save();
+    c.globalCompositeOperation = "multiply"; c.fillStyle = "rgb(150,158,205)"; c.fillRect(0, 0, W, H);
+    c.globalCompositeOperation = "lighter"; const z = Cam.z, hw = this.wallH(T)*z, lights = [];
+    (R.m.gates || []).forEach(g => { lights.push([g.x + .5, g.y + .5, hw*1.3, 2.2]); });
+    R.towers.forEach(t => { if (!t.ruin && TT[t.type] && !TT[t.type].noFire) lights.push([t.x + .5, t.y + .5, isWallCell(t.x, t.y) ? hw : 0, 1.3]); });
+    if (R.m.castle && R.gates){ const pp = palaceSpot(); lights.push([pp[0], pp[1], hw*1.2, 2.4]); }
+    if (!this.glow){ const gc = document.createElement("canvas"); gc.width = gc.height = 128; const gg = gc.getContext("2d"), g = gg.createRadialGradient(64, 64, 0, 64, 64, 64);
+      g.addColorStop(0, "rgba(255,170,80,.34)"); g.addColorStop(.45, "rgba(255,120,40,.12)"); g.addColorStop(1, "rgba(255,100,30,0)"); gg.fillStyle = g; gg.fillRect(0, 0, 128, 128); this.glow = gc; }
+    for (const L of lights){ const p = Cam.toScreen(L[0]*T, L[1]*T), r = T*z*L[3], x = p[0], y = p[1] - L[2]; if (!isFinite(x) || !isFinite(y) || !(r > 0) || x < -r || x > W + r || y < -r || y > H + r) continue; c.drawImage(this.glow, x - r, y - r, r*2, r*2); }
+    c.globalCompositeOperation = "source-over";
+    if (!this.vig || this.vig.w !== W || this.vig.h !== H || this.vig.vt !== VT || this.vig.vh !== VH){ const vc = document.createElement("canvas"); vc.width = Math.max(1, Math.round(W)); vc.height = Math.max(1, Math.round(H)); const vx = vc.getContext("2d"), vg = vx.createRadialGradient(W/2, VT + VH/2, Math.min(W, H)*.35, W/2, VT + VH/2, Math.max(W, H)*.75);
+      vg.addColorStop(0, "rgba(5,8,25,0)"); vg.addColorStop(1, "rgba(5,8,25,.5)"); vx.fillStyle = vg; vx.fillRect(0, 0, W, H); this.vig = {cv:vc, w:W, h:H, vt:VT, vh:VH}; }
+    c.drawImage(this.vig.cv, 0, 0, W, H); c.restore(); }
+};
+const isWallCell = (x, y) => !!(R && R.base && R.base[y] && R.base[y][x] === 8);
+let stonePat = null;
+function stonePattern(c){ if (stonePat) return stonePat; const p = document.createElement("canvas"); p.width = 48; p.height = 32; const g = p.getContext("2d");
+  g.fillStyle = "#3E4046"; g.fillRect(0, 0, 48, 32);
+  for (let r = 0; r < 4; r++) for (let k = -1; k < 4; k++){ const w = 16, x = k*w + (r % 2 ? 8 : 0), y = r*8, v = 128 + ((r*7 + k*13 + 40) % 5)*10; g.fillStyle = "rgb(" + v + "," + (v + 3) + "," + (v + 9) + ")"; g.fillRect(x + 1, y + 1, w - 2, 6); g.fillStyle = "rgba(255,255,255,.12)"; g.fillRect(x + 1, y + 1, w - 2, 1); }
+  g.fillStyle = "rgba(70,105,60,.4)"; for (let i = 0; i < 12; i++) g.fillRect((i*29) % 48, (i*17) % 32, 3 + i % 3, 2);
+  stonePat = c.createPattern(p, "repeat"); return stonePat; }
+let wallCache = null;
+function wallBlocks(c, T, items){ // 입체 보기: 성벽·문루·행궁 덩어리(보기·칸 크기·전장이 바뀔 때만 다시 만듦, 화면 밖은 건너뜀)
+  if (!R.base) return; const B1 = R.bound || {}, key = [R.runId, VIEW.rot, VIEW.iso, T, B1.x0, B1.y0, B1.x1, B1.y1].join(",");
+  if (!wallCache || wallCache.key !== key){ const list = []; wallBlocksBuild(c, T, list); wallCache = {key, list}; }
+  const z = Cam.z, mg = T*z*2.5;
+  for (const it of wallCache.list){ const sx = (it.sx - Cam.x)*z, sy = (it.sy - Cam.y)*z; if (sx < -mg || sx > W + mg || sy < -mg || sy > H + mg*1.6) continue; items.push(it); } }
+function wallBlocksBuild(c, T, items){
+  const H = VIEW.wallH(T), gates = new Map(); (R.m.gates || []).forEach((g, i) => gates.set(g.x + "," + g.y, i));
+  const isW = (x, y) => isWallCell(x, y) || gates.has(x + "," + y), P = (x, y) => VIEW.fwd(x*T, y*T);
+  const block = (x0, y0, w, d, h, kind, gi) => { const B = [P(x0, y0), P(x0 + w, y0), P(x0 + w, y0 + d), P(x0, y0 + d)], cx = (B[0][0] + B[2][0])/2, cy = (B[0][1] + B[2][1])/2;
+    items.push({dk:cy/T + (kind === "palace" ? .3 : .02), sx:cx, sy:cy, raw:true, draw:() => { c.save(); c.lineJoin = "round";
+      const gd = kind === "gate" ? R.m.gates[gi] : null, S = kind === "gate" && R.gates ? R.gates[gi] : null, broken = !!(S && S.broken), hh = broken ? h*.45 : h;
+      for (let i = 0; i < 4; i++){ const A = B[i], Q = B[(i + 1) % 4];
+        if (kind === "wall"){ const ex = [[x0, y0 - 1], [x0 + 1, y0], [x0, y0 + 1], [x0 - 1, y0]][i]; if (isW(ex[0], ex[1])) continue; }
+        let nx = -(Q[1] - A[1]), ny = Q[0] - A[0]; if (nx*(cx - A[0]) + ny*(cy - A[1]) > 0){ nx = -nx; ny = -ny; } if (ny <= 0) continue; // 화면 아래(보는 쪽)를 향한 면만
+        const lit = .62 + .22*(-nx/Math.hypot(nx, ny));
+        c.beginPath(); c.moveTo(A[0], A[1]); c.lineTo(Q[0], Q[1]); c.lineTo(Q[0], Q[1] - hh); c.lineTo(A[0], A[1] - hh); c.closePath();
+        c.fillStyle = kind === "palace" ? "#6B3324" : stonePattern(c); c.fill(); c.fillStyle = "rgba(8,8,20," + Math.max(0, 1 - lit).toFixed(3) + ")"; c.fill(); c.strokeStyle = "rgba(18,16,20,.55)"; c.lineWidth = 1; c.stroke();
+        if (kind === "palace"){ c.strokeStyle = "#B8322A"; c.lineWidth = Math.max(2, T*.07); for (let k = 1; k < 5; k++){ const t = k/5, x = A[0] + (Q[0] - A[0])*t, y = A[1] + (Q[1] - A[1])*t; c.beginPath(); c.moveTo(x, y); c.lineTo(x, y - hh*.92); c.stroke(); } }
+        if (gd && (((gd.dir === "n" || gd.dir === "s") && (i === 0 || i === 2)) || ((gd.dir === "e" || gd.dir === "w") && (i === 1 || i === 3)))){ // 문 구멍(무지개 모양)
+          const mx = (A[0] + Q[0])/2, my = (A[1] + Q[1])/2, hwid = Math.hypot(Q[0] - A[0], Q[1] - A[1])*.22, dh = hh*.6;
+          c.beginPath(); c.moveTo(mx - hwid, my); c.lineTo(mx - hwid, my - dh*.6); c.quadraticCurveTo(mx, my - dh*1.15, mx + hwid, my - dh*.6); c.lineTo(mx + hwid, my); c.closePath(); c.fillStyle = broken ? "#1A1410" : "#24160C"; c.fill();
+          if (!broken){ c.fillStyle = "rgba(150,90,40,.85)"; c.fillRect(mx - hwid*.85, my - dh*.55, hwid*1.7, dh*.55); c.strokeStyle = "rgba(40,24,10,.8)"; c.lineWidth = 1; c.beginPath(); c.moveTo(mx, my); c.lineTo(mx, my - dh*.55); c.stroke(); } } }
+      const top = B.map(q => [q[0], q[1] - hh]);
+      if (kind === "wall" || broken){ c.beginPath(); top.forEach((q, i) => i ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1])); c.closePath(); c.fillStyle = stonePattern(c); c.fill(); c.fillStyle = "rgba(255,236,200,.16)"; c.fill(); c.strokeStyle = "rgba(25,22,26,.5)"; c.stroke(); }
+      else { // 기와 지붕(추녀 + 용마루)
+        const tx = (top[0][0] + top[2][0])/2, ty = (top[0][1] + top[2][1])/2, rh = h*(kind === "palace" ? .9 : .75), E = top.map(q => [tx + (q[0] - tx)*1.18, ty + (q[1] - ty)*1.18]), Rg = top.map(q => [tx + (q[0] - tx)*.32, ty + (q[1] - ty)*.32 - rh]);
+        const quads = [0, 1, 2, 3].map(i => { const j = (i + 1) % 4; return {i, j, y:(E[i][1] + E[j][1] + Rg[i][1] + Rg[j][1])/4}; }).sort((p, q) => p.y - q.y);
+        for (const qd of quads){ const {i, j} = qd; let nx = -(E[j][1] - E[i][1]), ny = E[j][0] - E[i][0]; if (nx*(tx - E[i][0]) + ny*(ty - E[i][1]) > 0){ nx = -nx; ny = -ny; }
+          const lit = .55 + .3*(-nx/Math.hypot(nx, ny || 1e-6)) + (ny > 0 ? .1 : -.15);
+          c.beginPath(); c.moveTo(E[i][0], E[i][1]); c.lineTo(E[j][0], E[j][1]); c.lineTo(Rg[j][0], Rg[j][1]); c.lineTo(Rg[i][0], Rg[i][1]); c.closePath();
+          c.fillStyle = "#3A4452"; c.fill(); c.fillStyle = "rgba(6,8,18," + Math.max(0, Math.min(.8, 1 - lit)).toFixed(3) + ")"; c.fill();
+          c.strokeStyle = "rgba(180,190,205,.18)"; c.lineWidth = 1; for (let k = 1; k < 6; k++){ const t = k/6; c.beginPath(); c.moveTo(E[i][0] + (E[j][0] - E[i][0])*t, E[i][1] + (E[j][1] - E[i][1])*t); c.lineTo(Rg[i][0] + (Rg[j][0] - Rg[i][0])*t, Rg[i][1] + (Rg[j][1] - Rg[i][1])*t); c.stroke(); }
+          c.strokeStyle = "#1C222B"; c.lineWidth = Math.max(1.5, T*.04); c.beginPath(); c.moveTo(E[i][0], E[i][1]); c.lineTo(E[j][0], E[j][1]); c.stroke(); }
+        c.beginPath(); Rg.forEach((q, i) => i ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1])); c.closePath(); c.fillStyle = "#262D37"; c.fill(); c.strokeStyle = "#151A21"; c.lineWidth = Math.max(2, T*.06); c.stroke(); }
+      c.restore(); }}); };
+  const B0 = R.bound || {x0:0, y0:0, x1:COLS - 1, y1:ROWS - 1};
+  for (let y = Math.max(0, B0.y0 - 2); y <= Math.min(ROWS - 1, B0.y1 + 2); y++) for (let x = Math.max(0, B0.x0 - 2); x <= Math.min(COLS - 1, B0.x1 + 2); x++){
+    if (gates.has(x + "," + y)) block(x, y, 1, 1, H*1.25, "gate", gates.get(x + "," + y)); else if (isWallCell(x, y)) block(x, y, 1, 1, H, "wall"); }
+  if (R.m.castle && R.gates){ const pp = palaceSpot(); block(pp[0] - 1.1, pp[1] - 1.05, 2.2, 1.25, H*1.05, "palace"); }
+}
+const viewUI = (() => { const d = document.createElement("div"); d.id = "viewui"; d.hidden = true; d.style.cssText = "position:absolute;z-index:6;display:none;flex-direction:column;gap:6px";
+  d.innerHTML = '<button type="button" data-v="l" aria-label="왼쪽으로 45도 돌리기">↺</button><button type="button" data-v="r" aria-label="오른쪽으로 45도 돌리기">↻</button><button type="button" data-v="m" aria-label="보기 바꾸기">위</button>';
+  d.querySelectorAll("button").forEach(b => { b.style.cssText = "width:60px;height:52px;border-radius:12px;border:2px solid #D9A441;background:rgba(20,16,12,.82);color:#FFE7A8;font:800 20px 'Gowun Dodum',sans-serif;cursor:pointer"; });
+  d.addEventListener("click", ev => { const b = ev.target.closest("button"); if (!b) return; ev.stopPropagation(); if (b.dataset.v === "l") VIEW.turn(-1); else if (b.dataset.v === "r") VIEW.turn(1); else VIEW.turn(0, !VIEW.iso); });
+  d.addEventListener("pointerdown", ev => ev.stopPropagation());
+  stagebox.appendChild(d); return d; })();
+function viewBtns(){ const show = VIEW.allowed() && Cam.active; if (viewUI.hidden === show) viewUI.hidden = !show; viewUI.style.display = show ? "flex" : "none"; /* 인라인 display가 hidden을 이기므로 직접 끔 */ if (!show) return;
+  const ch = camUI.getBoundingClientRect().height || 130; viewUI.style.left = (cv.offsetLeft + 8) + "px"; viewUI.style.top = (cv.offsetTop + VT + 16 + ch) + "px";
+  const m = viewUI.querySelector('[data-v="m"]'), t = VIEW.iso ? "위" : "입체"; if (m.textContent !== t) m.textContent = t; m.setAttribute("aria-label", VIEW.iso ? "바로 위에서 보기" : "입체로 보기"); }
 const Cam = {
   active:false, x:0, y:0, z:1, fit:1, tx:null, ty:null, tz:null, vx:0, vy:0, userT:-1e9, runId:null, arrows:[], small:null, ms:1, lastTap:null, holding:false,
   setup(){
@@ -6492,25 +6598,34 @@ const Cam = {
     this.fit = Math.max(.5, Math.min(1, f));
     camUI.hidden = miniCv.hidden = !this.active;
     cv.style.touchAction = this.active ? "none" : "";
-    if (!this.active){ this.x = this.y = 0; this.z = 1; this.tx = this.ty = this.tz = null; this.vx = this.vy = 0; this.arrows = []; return; }
+    if (!this.active){ VIEW.refresh(); viewBtns(); this.x = this.y = 0; this.z = 1; this.tx = this.ty = this.tz = null; this.vx = this.vy = 0; this.arrows = []; return; }
+    if (this.runId !== R.runId) VIEW.reset(); VIEW.refresh(); viewBtns(); // 요청 37
     if (this.runId !== R.runId){ this.runId = R.runId; this.z = 1; this.vx = this.vy = 0; this.tx = this.ty = this.tz = null; this.userT = -1e9; const h = this.home(); this.center(h[0]*T, h[1]*T); }
     this.z = Math.max(this.fit, Math.min(1, this.z)); this.clamp(); this.place(); this.makeMini(); this.buttons();
   },
   home(){ const k = R.m.castle; if (R.m.gates && k) return palaceSpot(); return [gateCol(R.m) + .5, ROWS]; }, // 성문(또는 성 한가운데)
-  clampXY(x, y, z){ const vw = VW/z, vh = Math.max(20, VH - cmdOcc())/z, oy = VT/z; /* 이동 한계도 Cam.vis와 같은 보이는 높이 */ let xv = x, yv = y + oy; // v13: 보이는 영역(상태 줄 아래·판 위) 기준
+  clampXY(x, y, z){ const vw = VW/z, vh = Math.max(20, VH - cmdOcc())/z, oy = VT/z; /* 이동 한계도 Cam.vis와 같은 보이는 높이 */ let xv = x, yv = y + oy;
+    if (VIEW.on){ const B = R && R.bound, r0 = B ? [(B.x0 - .6)*T, (B.y0 - .6)*T, (B.x1 + 1.6)*T, (B.y1 + 1.6)*T] : [0, 0, WW, WH]; let X0 = 1e9, Y0 = 1e9, X1 = -1e9, Y1 = -1e9; // 요청 37: 돌리고 눕힌 전장의 둘레 상자 안에서
+      [[r0[0], r0[1]], [r0[2], r0[1]], [r0[2], r0[3]], [r0[0], r0[3]]].forEach(q => { const p = VIEW.fwd(q[0], q[1]); X0 = Math.min(X0, p[0]); Y0 = Math.min(Y0, p[1]); X1 = Math.max(X1, p[0]); Y1 = Math.max(Y1, p[1]); }); Y0 -= VIEW.wallH(T)*2;
+      xv = X1 - X0 <= vw ? X0 + (X1 - X0 - vw)/2 : Math.max(X0, Math.min(X1 - vw, xv)); yv = Y1 - Y0 <= vh ? Y0 + (Y1 - Y0 - vh)/2 : Math.max(Y0, Math.min(Y1 - vh, yv)); return [xv, yv - oy]; } // v13: 보이는 영역(상태 줄 아래·판 위) 기준
     if (R && R.bound){ const B = R.bound, bx0 = (B.x0 - .6)*T, by0 = (B.y0 - .6)*T, bw = (B.x1 - B.x0 + 2.2)*T, bh = (B.y1 - B.y0 + 2.2)*T; // v10: 열린 전장(+여백) 안에서만
       xv = bw <= vw ? bx0 + (bw - vw)/2 : Math.max(bx0, Math.min(bx0 + bw - vw, xv)); yv = bh <= vh ? by0 + (bh - vh)/2 : Math.max(by0, Math.min(by0 + bh - vh, yv)); }
     xv = WW <= vw ? (WW - vw)/2 : Math.max(0, Math.min(WW - vw, xv)); yv = WH <= vh ? (WH - vh)/2 : Math.max(0, Math.min(WH - vh, yv)); // 지도 밖(빈 배경)은 보이는 영역에 안 들어오게
     return [xv, yv - oy]; },
   clamp(){ const p = this.clampXY(this.x, this.y, this.z); this.x = p[0]; this.y = p[1]; },
-  center(wx, wy){ this.x = wx - VW/(2*this.z); this.y = wy - (VT + VH/2)/this.z; this.clamp(); },
-  aim(wx, wy){ const p = this.clampXY(wx - VW/(2*this.z), wy - (VT + VH/2)/this.z, this.z); this.tx = p[0]; this.ty = p[1]; this.vx = this.vy = 0; }, // 부드럽게 그리로
-  toWorld(sx, sy){ return [this.x + sx/this.z, this.y + sy/this.z]; },
-  toScreen(wx, wy){ return [(wx - this.x)*this.z, (wy - this.y)*this.z]; },
-  view(m){ m = m || 0; return {x0:this.x/T - m, y0:this.y/T - m, x1:(this.x + W/this.z)/T + m, y1:(this.y + H/this.z)/T + m}; }, // 칸 단위(캔버스 전체: 그리기용)
-  vis(m){ m = m || 0; const r = visRect(); return {x0:(this.x + r.x/this.z)/T - m, y0:(this.y + r.y/this.z)/T - m, x1:(this.x + (r.x + r.w)/this.z)/T + m, y1:(this.y + (r.y + r.h)/this.z)/T + m}; }, // 칸 단위(사람이 실제로 보는 영역: 화면 안 판정·자동 이동·화살표·미니맵, 검수 v12 1차)
+  center(wx, wy){ [wx, wy] = VIEW.fwd(wx, wy); this.x = wx - VW/(2*this.z); this.y = wy - (VT + VH/2)/this.z; this.clamp(); },
+  aim(wx, wy){ [wx, wy] = VIEW.fwd(wx, wy); const p = this.clampXY(wx - VW/(2*this.z), wy - (VT + VH/2)/this.z, this.z); this.tx = p[0]; this.ty = p[1]; this.vx = this.vy = 0; }, // 부드럽게 그리로
+  toWorld(sx, sy){ return VIEW.inv(this.x + sx/this.z, this.y + sy/this.z); }, // 요청 37: 보기 변환을 거꾸로 풀어 칸 좌표로
+  toWorldTap(sx, sy){ const w = this.toWorld(sx, sy); if (!(VIEW.on && VIEW.iso)) return w; // 입체: 성벽 위에 서 있는 그림을 누르면 그 성벽 칸으로
+    const w2 = this.toWorld(sx, sy + VIEW.wallH(T)*this.z), cx = Math.floor(w2[0]/T), cy = Math.floor(w2[1]/T); if (isWallCell(cx, cy)) return w2;
+    const w3 = this.toWorld(sx, sy + VIEW.wallH(T)*this.z*.5), c3x = Math.floor(w3[0]/T), c3y = Math.floor(w3[1]/T); return isWallCell(c3x, c3y) ? w3 : w; },
+  toScreen(wx, wy){ [wx, wy] = VIEW.fwd(wx, wy); return [(wx - this.x)*this.z, (wy - this.y)*this.z]; },
+  view(m){ m = m || 0; if (VIEW.on){ const b = VIEW.gridBox(0, 0, W, H); return {x0:b.x0 - m, y0:b.y0 - m, x1:b.x1 + m, y1:b.y1 + m}; } return {x0:this.x/T - m, y0:this.y/T - m, x1:(this.x + W/this.z)/T + m, y1:(this.y + H/this.z)/T + m}; }, // 칸 단위(캔버스 전체: 그리기용)
+  viewSim(){ if (!VIEW.on) return this.view(0); const w = this.toWorld(W/2, H/2), hx = W/(2*this.z), hy = H/(2*this.z); return {x0:(w[0] - hx)/T, y0:(w[1] - hy)/T, x1:(w[0] + hx)/T, y1:(w[1] + hy)/T}; }, // 요청 37: 게임 규칙용 화면 넓이(돌려도 같음)
+  seen(x, y, m){ const p = this.toScreen(x*T, y*T), r = visRect(), mm = (m || 0)*T*this.z; return p[0] >= r.x - mm && p[0] <= r.x + r.w + mm && p[1] >= r.y - mm && p[1] <= r.y + r.h + mm; }, // 요청 37
+  vis(m){ m = m || 0; const r = visRect(); if (VIEW.on){ const b = VIEW.gridBox(r.x, r.y, r.x + r.w, r.y + r.h); return {x0:b.x0 - m, y0:b.y0 - m, x1:b.x1 + m, y1:b.y1 + m}; } return {x0:(this.x + r.x/this.z)/T - m, y0:(this.y + r.y/this.z)/T - m, x1:(this.x + (r.x + r.w)/this.z)/T + m, y1:(this.y + (r.y + r.h)/this.z)/T + m}; }, // 칸 단위(사람이 실제로 보는 영역: 화면 안 판정·자동 이동·화살표·미니맵, 검수 v12 1차)
   panBy(dx, dy){ this.x += dx; this.y += dy; this.clamp(); this.tx = this.ty = null; },
-  zoomTo(nz, sx, sy){ const w = this.toWorld(sx, sy); this.z = Math.max(this.fit, Math.min(1, nz)); this.x = w[0] - sx/this.z; this.y = w[1] - sy/this.z; this.clamp(); this.tx = this.ty = null; this.buttons(); },
+  zoomTo(nz, sx, sy){ const w = [this.x + sx/this.z, this.y + sy/this.z]; this.z = Math.max(this.fit, Math.min(1, nz)); this.x = w[0] - sx/this.z; this.y = w[1] - sy/this.z; this.clamp(); this.tx = this.ty = null; this.buttons(); },
   buttons(){ const b = camUI.querySelectorAll("button"); if (b.length < 2) return; b[0].disabled = this.z >= .999; b[1].disabled = this.z <= this.fit + .001; },
   step(dt){ if (!this.active) return false; let moved = false;
     if (this.tz != null){ const k = Math.min(1, dt*7), nz = this.z + (this.tz - this.z)*k; if (Math.abs(this.tz - nz) < .004){ this.zoomTo(this.tz, VW/2, VT + VH/2); this.tz = null; } else this.zoomTo(nz, VW/2, VT + VH/2); moved = true; }
@@ -6523,7 +6638,7 @@ const Cam = {
     return moved; },
   alert(cx, cy){ // 성문이 뚫리면: 설정이 켜져 있고, 사용자가 3초 안에 직접 끌지 않았고, 화면 밖이면 그리로
     if (!this.active || !autoCamOn() || performance.now() - this.userT < 3000) return;
-    const v = this.vis(-.6); if (v.x1 > v.x0 && v.y1 > v.y0 && cx >= v.x0 && cx <= v.x1 && cy >= v.y0 && cy <= v.y1) return;
+    const v = this.vis(-.6); if (VIEW.on ? this.seen(cx, cy, -.6) : (v.x1 > v.x0 && v.y1 > v.y0 && cx >= v.x0 && cx <= v.x1 && cy >= v.y0 && cy <= v.y1)) return;
     this.aim(cx*T, cy*T); },
   urgent(){ // 가장 위급한 문: 남은 길이 가장 짧은 적이 향하는 문(적이 없으면 성문/성 한가운데)
     if (R && R.sortie && campAlive()) return sortieCenter(); // 출격 중: 병사 무리
@@ -6536,9 +6651,9 @@ const Cam = {
     this.arrows = []; if (!R || R.over) return;
     c.save(); c.translate(0, VT); try { this.overlayV(c); } finally { c.restore(); this.arrows.forEach(a => { a.y += VT; }); } },
   overlayV(c){ const W = VW, H = VH - VC, toS = (wx, wy) => { const p = this.toScreen(wx, wy); return [p[0], p[1] - VT]; }; // v13: 보이는 영역(상태 줄 아래·판 위) 안에서 그린다
-    const v = this.vis(0), groups = {}, M0 = 34;
+    const v = this.vis(0), groups = {}, M0 = 34; const VIS = (x, y) => VIEW.on ? this.seen(x, y, 0) : (x >= v.x0 && x <= v.x1 && y >= v.y0 && y <= v.y1); // 요청 37
     for (const e of R.enemies){ if (e.dead) continue; const P = R.paths[e.pi]; if (!P || P.total - e.d > 10) continue;
-      if (e.x >= v.x0 && e.x <= v.x1 && e.y >= v.y0 && e.y <= v.y1) continue;
+      if (VIS(e.x, e.y)) continue;
       const s = toS(e.x*T, e.y*T), cx = W/2, cy = H/2, dx = s[0] - cx, dy = s[1] - cy;
       const kx = dx ? (W/2 - M0)/Math.abs(dx) : Infinity, ky = dy ? (H/2 - M0)/Math.abs(dy) : Infinity, k = Math.min(kx, ky);
       const side = kx < ky ? (dx > 0 ? "e" : "w") : (dy > 0 ? "s" : "n");
@@ -6555,7 +6670,7 @@ const Cam = {
       for (const [x0, y0, x1, y1] of avoid) if (!(x + 30 < x0 || x - 30 > x1 || y + 30 < y0 || y - 30 > y1)) y = Math.min(H - 30, y1 + 32); // 그래도 겹치면 아래로
       g.dx2 = x; g.dy2 = y; }
     for (const side in groups){ const g = groups[side], x = g.dx2, y = g.dy2, a = Math.atan2(y - H/2, x - W/2), pulse = .85 + .15*Math.sin(performance.now()/180);
-      const gv = R.gates && R.gates.find(q => q.dir === side); if (gv && gv.x + .5 >= v.x0 && gv.x + .5 <= v.x1 && gv.y + .5 >= v.y0 && gv.y + .5 <= v.y1) continue; // 그 문이 화면 안에 보이면 화살표를 생략(문 이름표와 겹치지 않게)
+      const gv = R.gates && R.gates.find(q => q.dir === side); if (gv && VIS(gv.x + .5, gv.y + .5)) continue; // 그 문이 화면 안에 보이면 화살표를 생략(문 이름표와 겹치지 않게)
       c.fillStyle = "rgba(150,30,25," + (.82*pulse) + ")"; c.strokeStyle = "#FFD27A"; c.lineWidth = 3; circle(c, x, y, 24); c.fill(); c.stroke();
       c.fillStyle = "#FFD27A"; c.beginPath(); c.moveTo(x + Math.cos(a)*34, y + Math.sin(a)*34); c.lineTo(x + Math.cos(a+.45)*24, y + Math.sin(a+.45)*24); c.lineTo(x + Math.cos(a-.45)*24, y + Math.sin(a-.45)*24); c.closePath(); c.fill();
       c.fillStyle = "#fff"; c.font = "700 20px 'Gowun Dodum', sans-serif"; c.fillText(String(g.n), x, y + 1);
@@ -6566,7 +6681,7 @@ const Cam = {
       this.arrows.push({x, y, r:30, wx:g.wx/g.n, wy:g.wy/g.n}); }
     if (campAlive()){ // 화면 밖의 진(출격 중이면 병사 무리)을 가리키는 화살표
       const tp = R.sortie ? sortieCenter() : [R.camp.x, R.camp.y];
-      if (!(tp[0] >= v.x0 && tp[0] <= v.x1 && tp[1] >= v.y0 && tp[1] <= v.y1)){
+      if (!(VIS(tp[0], tp[1]))){
         const s = toS(tp[0]*T, tp[1]*T), dx = s[0] - W/2, dy = s[1] - H/2, kx = dx ? (W/2 - M0)/Math.abs(dx) : Infinity, ky = dy ? (H/2 - M0)/Math.abs(dy) : Infinity, k = Math.min(kx, ky);
         let x = Math.max(30, Math.min(W - 30, W/2 + dx*k)), y = Math.max(30, Math.min(H - 30, H/2 + dy*k));
         for (const [x0, y0, x1, y1] of avoid) if (!(x + 30 < x0 || x - 30 > x1 || y + 30 < y0 || y - 30 > y1)) y = Math.min(H - 30, y1 + 32);
@@ -6575,14 +6690,14 @@ const Cam = {
         c.fillStyle = "#FFD27A"; c.beginPath(); c.moveTo(x + Math.cos(a)*34, y + Math.sin(a)*34); c.lineTo(x + Math.cos(a+.45)*24, y + Math.sin(a+.45)*24); c.lineTo(x + Math.cos(a-.45)*24, y + Math.sin(a-.45)*24); c.closePath(); c.fill();
         c.fillStyle = "#fff"; c.font = "700 17px 'Gowun Dodum', sans-serif"; c.fillText(R.sortie ? "병사" : "진", x, y + 1);
         this.arrows.push({x, y, r:30, wx:tp[0], wy:tp[1]}); } }
-    { const h = R.hero; if (h && !h.dead && isFinite(h.x) && isFinite(h.y) && !(h.x >= v.x0 && h.x <= v.x1 && h.y >= v.y0 && h.y <= v.y1)){ // v18: 화면 밖 장군(얼굴 화살표, 누르면 그리로)
+    { const h = R.hero; if (h && !h.dead && isFinite(h.x) && isFinite(h.y) && !(VIS(h.x, h.y))){ // v18: 화면 밖 장군(얼굴 화살표, 누르면 그리로)
       const s = toS(h.x*T, h.y*T), dx = s[0] - W/2, dy = s[1] - H/2, kx = dx ? (W/2 - M0)/Math.abs(dx) : Infinity, ky = dy ? (H/2 - M0)/Math.abs(dy) : Infinity, k = Math.min(kx, ky);
       let x = Math.max(30, Math.min(W - 30, W/2 + dx*k)), y = Math.max(30, Math.min(H - 30, H/2 + dy*k)); for (const [x0, y0, x1, y1] of avoid) if (!(x + 30 < x0 || x - 30 > x1 || y + 30 < y0 || y - 30 > y1)) y = Math.min(H - 30, y1 + 32);
       const a = Math.atan2(y - H/2, x - W/2); c.fillStyle = "#F4D06F"; c.beginPath(); c.moveTo(x + Math.cos(a)*33, y + Math.sin(a)*33); c.lineTo(x + Math.cos(a+.5)*22, y + Math.sin(a+.5)*22); c.lineTo(x + Math.cos(a-.5)*22, y + Math.sin(a-.5)*22); c.closePath(); c.fill();
       c.fillStyle = "rgba(30,60,40,.92)"; c.strokeStyle = "#F4D06F"; c.lineWidth = 3; circle(c, x, y, 22); c.fill(); c.stroke();
       const pc = skillBtn && skillBtn.querySelector("canvas"); if (pc && pc.width){ c.save(); c.beginPath(); c.arc(x, y, 19, 0, Math.PI*2); c.clip(); try { c.drawImage(pc, x - 19, y - 19, 38, 38); } catch(err){} c.restore(); } else { c.fillStyle = "#fff"; c.font = "700 14px 'Gowun Dodum', sans-serif"; c.fillText("장군", x, y + 1); }
       this.arrows.push({x, y, r:30, wx:h.x, wy:h.y}); } }
-    for (const e of R.enemies){ if (e.dead || !e.thief || (e.x >= v.x0 && e.x <= v.x1 && e.y >= v.y0 && e.y <= v.y1)) continue; // 요청 24: 화면 밖 약탈꾼
+    for (const e of R.enemies){ if (e.dead || !e.thief || (VIS(e.x, e.y))) continue; // 요청 24: 화면 밖 약탈꾼
       const s = toS(e.x*T, e.y*T), dx = s[0] - W/2, dy = s[1] - H/2, kx = dx ? (W/2 - M0)/Math.abs(dx) : Infinity, ky = dy ? (H/2 - M0)/Math.abs(dy) : Infinity, k = Math.min(kx, ky);
       const x = Math.max(30, Math.min(W - 30, W/2 + dx*k)), y = Math.max(30, Math.min(H - 30, H/2 + dy*k)), a = Math.atan2(y - H/2, x - W/2);
       c.fillStyle = "rgba(190,70,20,.9)"; c.strokeStyle = "#FFD27A"; c.lineWidth = 3; circle(c, x, y, 22); c.fill(); c.stroke();
@@ -6597,7 +6712,7 @@ const Cam = {
     const w = this.toWorld(sx, sy), cx = Math.floor(w[0]/T), cy = Math.floor(w[1]/T), lt = this.lastTap; // 두 번 톡: 같은 칸을 두 번 눌렀을 때만(다른 칸을 빨리 누르면 각각 누르기)
     if (lt && now - lt.t < 320 && lt.cx === cx && lt.cy === cy && !(R && (R.aim || R.heroSel))){ this.lastTap = null; if (R){ R.sel = null; renderPanel(true); } this.focusUrgent(); return; } // 장수 이동 명령이 먼저
     this.lastTap = {t:now, cx, cy}; tapAt(clientX, clientY); },
-  place(){ camUI.style.left = (cv.offsetLeft + 8) + "px"; camUI.style.top = (cv.offsetTop + VT + 8) + "px"; },
+  place(){ camUI.style.left = (cv.offsetLeft + 8) + "px"; camUI.style.top = (cv.offsetTop + VT + 8) + "px"; viewBtns(); },
   makeMini(){ // 미니맵: 가로 최대 86px, 세로 최대 130px
     const mxw = Math.max(56, Math.min(86, Math.round(VW*.3))), mxh = Math.round(mxw*1.5), s = Math.min(mxw/WW, mxh/WH), mw = Math.max(20, Math.round(WW*s)), mh = Math.max(20, Math.round(WH*s)), d = Math.min(2, window.devicePixelRatio || 1);
     this.ms = s; miniCv.style.width = mw + "px"; miniCv.style.height = mh + "px"; miniCv.width = Math.round(mw*d); miniCv.height = Math.round(mh*d);
@@ -6613,7 +6728,7 @@ const Cam = {
     for (const e of R.enemies){ if (e.dead || !e.thief) continue; c.fillStyle = (performance.now()/250|0) % 2 ? "#FFD27A" : "#FF2A1A"; c.beginPath(); c.arc(e.x*T*k, e.y*T*k, 3.6, 0, Math.PI*2); c.fill(); } // 약탈꾼: 깜박이는 큰 점
     const h = R.hero; if (h && !h.dead){ c.fillStyle = "#FFD27A"; c.beginPath(); c.arc(h.x*T*k, h.y*T*k, 3.5, 0, Math.PI*2); c.fill(); }
     if (campAlive()){ const cx = R.camp.x*T*k, cy = R.camp.y*T*k; c.fillStyle = "#C0302A"; c.strokeStyle = "#FFD27A"; c.lineWidth = 1.5; c.beginPath(); c.moveTo(cx, cy - 7); c.lineTo(cx + 6, cy + 5); c.lineTo(cx - 6, cy + 5); c.closePath(); c.fill(); c.stroke(); } // 진
-    c.strokeStyle = "#fff"; c.lineWidth = 2; { const r = visRect(); c.strokeRect((this.x + r.x/this.z)*k + 1, (this.y + r.y/this.z)*k + 1, r.w/this.z*k - 2, r.h/this.z*k - 2); } } // 미니맵 틀 = 실제 보이는 영역
+    c.strokeStyle = "#fff"; c.lineWidth = 2; if (VIEW.on){ const r = visRect(); c.beginPath(); [[r.x, r.y], [r.x + r.w, r.y], [r.x + r.w, r.y + r.h], [r.x, r.y + r.h]].forEach((q, i) => { const w = VIEW.inv(this.x + q[0]/this.z, this.y + q[1]/this.z); if (i) c.lineTo(w[0]*k, w[1]*k); else c.moveTo(w[0]*k, w[1]*k); }); c.closePath(); c.stroke(); } else { const r = visRect(); c.strokeRect((this.x + r.x/this.z)*k + 1, (this.y + r.y/this.z)*k + 1, r.w/this.z*k - 2, r.h/this.z*k - 2); } } // 미니맵 틀 = 실제 보이는 영역
 };
 camUI.addEventListener("click", ev => { const b = ev.target.closest("button"); if (!b || !Cam.active) return; ev.stopPropagation(); Cam.userT = performance.now(); Cam.tz = b.dataset.cam === "in" ? 1 : Cam.fit; needDraw = true; });
 miniCv.addEventListener("pointerdown", ev => { if (!Cam.active || overlayMode) return; ev.preventDefault(); if (Cam.tz != null){ Cam.zoomTo(Cam.tz, W/2, H/2); Cam.tz = null; } /* 확대·축소 중이면 끝내고 이동 */ const r = miniCv.getBoundingClientRect(), k = r.width/WW;
@@ -6645,11 +6760,11 @@ function cmdPanelHTML(){ // 장군 지휘 판: 필살기 · 진을 쳐라 · 장
   const hint = h && !h.dead ? '<p class="hint" style="margin:2px 0">땅을 누르면 장군이 그리로, 적을 누르면 그 적을 집중해서 쳐요</p>' : '';
   return head + (b ? '<div class="cmdgrid">' + b + '</div>' : '') + hint;
 }
-function waveTap(x, y, fx, fy){ // 물결 중 지도 누르기: 망루는 내구도만, 적은 정보, 나머지는 장군 이동
+function waveTap(x, y, fx, fy, pick){ // 물결 중 지도 누르기: 망루는 내구도만, 적은 정보, 나머지는 장군 이동. pick: 보기(요청 37)에서 그림 자리로 고른 망루·적
   const h = R.hero; R.sel = null; R.heroSel = false;
-  const tw = (x >= 0 && x < COLS && y >= 0 && y < ROWS) ? towerAt(x, y) : null;
+  const tw = pick ? pick.tw : (x >= 0 && x < COLS && y >= 0 && y < ROWS) ? towerAt(x, y) : null; if (pick && tw){ x = tw.x; y = tw.y; }
   if (tw){ if (!tw.maxHp) tw.maxHp = towerMaxHp(tw.type, tw.lvl); addText(x + .5, y - .4, TT[tw.type].name + (tw.ruin ? " · 폐허" : " · 내구도 " + Math.round(tw.hp) + "/" + tw.maxHp), "#FFE3A6", 1.6); needDraw = true; renderPanel(true); return true; }
-  const fe = R.enemies.reduce((a, e) => { if (e.dead || e.under > 0 || e.camp) return a; const d = dist(fx, fy, e.x, e.y - .2); return d < (a ? a.d : .6) ? {e, d} : a; }, null);
+  const fe = pick ? pick.fe : R.enemies.reduce((a, e) => { if (e.dead || e.under > 0 || e.camp) return a; const d = dist(fx, fy, e.x, e.y - .2); return d < (a ? a.d : .6) ? {e, d} : a; }, null);
   if (fe && h && !h.dead){ heroFocus(fe.e); needDraw = true; renderPanel(true); return true; } // 요청 30: 장군이 살아 있으면 누른 적을 집중 공격
   if (fe && !(h && !h.dead)){ const e = fe.e; addText(e.x, e.y - 1.1, ET[e.type].name + " Lv" + (e.lv || 1) + " · 문 부수는 힘 " + powTxt(gatePow(e)) + " · 공격 " + Math.round(foeA(e.type).atk*atkOf(e)), "#FFE3A6", 2.2); addText(e.x, e.y - .7, foeA(e.type).ft + (foeKindTxt(e.type) ? " · " + foeKindTxt(e.type) : ""), "#FFD9C0", 2.2); needDraw = true; return true; }
   if (!h){ return true; }
@@ -6810,7 +6925,7 @@ function tacUse(k){
     for (const e of R.enemies){ if (!e.dead && !e.fly && dist(x, y, e.x, e.y) <= T0.rad){ hit(e, dmg); e.oilT = T0.slowT; } } HIT_SRC = "";
     R.tacFx.push({k:"oil", x, y, rad:T0.rad, t:0, dur:T0.slowT, seed:Math.floor(Math.random()*1e6)});
     burst(x, y, 26, "#FFB13B", 2.4, .7, .09, "fire"); burst(x, y, 18, "#5A4A3A", 1.6, 1.1, .1, "smoke"); addText(x, y - .7, "끓는 기름!", "#FFB13B", 1.4); R.shake = Math.max(R.shake, 8); Sound.play("cannon"); }
-  else if (k === "volley"){ const v = Cam.active ? Cam.view(0) : {x0:0, y0:0, x1:COLS, y1:ROWS};
+  else if (k === "volley"){ const v = Cam.active ? Cam.viewSim() : {x0:0, y0:0, x1:COLS, y1:ROWS};
     R.tacFx.push({k:"volley", x0:v.x0, y0:v.y0, x1:v.x1, y1:v.y1, t:0, at:.45, dur:1.1, dmg:T0.dmg(w)*mul, seed:Math.floor(Math.random()*1e6)});
     addText((v.x0 + v.x1)/2, v.y0 + 1.2, "불화살 일제 사격!", "#FFD27A", 1.5); Sound.play("rocket"); }
   else if (k === "brace"){ const g = tacBraceTarget();
@@ -7344,7 +7459,7 @@ function setSpeed(v){ if (R) R.speed = v; const b = document.getElementById("b-s
 // 누르기 하나를 처리(화면 좌표 → 세계 좌표). 망루 세우기 칸·망루/장수 그림 판정·필살기 위치·장수 목적지 모두 세계 좌표로 계산
 function tapAt(clientX, clientY){
   if (!R || R.over || overlayMode) return;
-  const rect = cv.getBoundingClientRect(), wp = Cam.toWorld(clientX - rect.left, clientY - rect.top), fx = wp[0]/T, fy = wp[1]/T, x = Math.floor(fx), y = Math.floor(fy);
+  const rect = cv.getBoundingClientRect(), wp = Cam.toWorldTap(clientX - rect.left, clientY - rect.top), fx = wp[0]/T, fy = wp[1]/T, x = Math.floor(fx), y = Math.floor(fy);
   if (R.flagMode && R.m.fort){ R.flagMode = false; if (fortIn(x, y) && fortWalk(x, y)){ R.flag = {x:x + .5, y:y + .5}; R.flagN = (R.flagN || 0) + 1; addText(x + .5, y - .3, "깃발!", "#FFE08A", 1.2); if (R.hero) R.hero.manual = false; } else addText(fx, fy, "여기엔 못 꽂아요", "#FF9A8A", 1.1); updateFlagBtn(); needDraw = true; return; } // v10 S4 깃발
   const ts = tutStep();
   if (ts && ts.tile){ // (옛 틀) 정해진 칸만. v10 서장 단계는 자유롭게 눌러 해 보고, 해냈는지는 tutTick이 본다
@@ -7353,12 +7468,23 @@ function tapAt(clientX, clientY){
   }
   const h = R.hero;
   if (R.aim){ if (fx < 0 || fx >= COLS || fy < 0 || fy >= ROWS) return; /* 지도 밖 여백: 조준 유지 */ castSkill(fx, fy); R.aim = false; renderPanel(true); return; }
-  if (fx < 0 || fx >= COLS || fy < 0 || fy >= ROWS + WALL) return; if (R.waveActive && !R.over && waveTap(x, y, fx, fy)) return; /* v14 */ // 지도 밖 여백(축소했을 때)은 무시
+  const swx = Cam.x + (clientX - rect.left)/Cam.z, swy = Cam.y + (clientY - rect.top)/Cam.z; // 요청 37: 보기 공간에서 누른 점
+  const loc = (ax, ay, lift) => { if (!VIEW.on) return [fx*T, fy*T]; const f = VIEW.fwd(ax, ay); return [swx - (f[0] - ax), swy - (f[1] - ay) + (lift || 0)]; }; // 똑바로 세운 그림의 자기 좌표로
+  const dkey = (ax, ay) => VIEW.on ? VIEW.fwd(ax*T, ay*T)[1]/T : ay;
+  const towerHit = t => { const k = TIMG[t.type]; if (!ART.img[k]) return false; const q = loc((t.x+.5)*T, (t.y+.5)*T, VIEW.on && VIEW.iso && isWallCell(t.x, t.y) ? VIEW.wallH(T) : 0); return ART.hitAt(k, towerSprite(t.type, t.lvl, (t.x+.5)*T, (t.y+.5)*T, T).rect, q[0], q[1], towerFlip(t.type, t.ang)); };
+  let pick = null;
+  if (VIEW.on && R.waveActive && !R.over){ // 물결 중: 앞에 그려진 망루 그림 → 그 망루, 아니면 적 그림 둘레(.6칸) 가장 가까운 적
+    const tws = R.towers.slice().sort((a, b) => dkey(b.x + .5, b.y + .5) - dkey(a.x + .5, a.y + .5)), th = tws.find(towerHit);
+    let fe = null; for (const e of R.enemies){ if (e.dead || e.under > 0 || e.camp) continue; const q = loc(e.x*T, e.y*T, 0), d = dist(q[0]/T, q[1]/T, e.x, e.y - .2); if (d < (fe ? fe.d : .6)) fe = {e, d}; }
+    pick = {tw:th || ((x >= 0 && x < COLS && y >= 0 && y < ROWS) ? towerAt(x, y) || null : null), fe}; if (!pick.tw && !pick.fe && (fx < 0 || fx >= COLS || fy < 0 || fy >= ROWS + WALL)) return; } /* 검수 v37 3차: 칸 폴백·지도 밖 무시 */
+  if (!VIEW.on && (fx < 0 || fx >= COLS || fy < 0 || fy >= ROWS + WALL)) return; if (VIEW.on && !pick && (fx < 0 || fx >= COLS || fy < 0 || fy >= ROWS + WALL)) return;
+  if (R.waveActive && !R.over && waveTap(x, y, fx, fy, pick)) return; /* v14 */ // 지도 밖 여백(축소했을 때)은 무시
   const px = fx*T, py = fy*T, inR = r => !!r && px >= r.x && px <= r.x + r.w && py >= r.y && py <= r.y + r.h;
+
   // 화면에서 앞에 그려진 대상부터 판정한다(그리기 순서와 같게: y가 큰 것이 앞). 그림은 불투명한 곳만 맞은 것으로 친다
   const cands = [];
-  R.towers.forEach(t => cands.push({y:t.y+.5, kind:"tower", t, hit:() => { const k = TIMG[t.type]; if (!ART.img[k]) return false; return ART.hitAt(k, towerSprite(t.type, t.lvl, (t.x+.5)*T, (t.y+.5)*T, T).rect, px, py, towerFlip(t.type, t.ang)); }}));
-  if (h && !h.dead) cands.push({y:h.y, kind:"hero", hit:() => { const sp = heroSprite(h, T); return ART.img[sp.hk] ? (ART.hitAt(sp.hk, sp.rect, px, py, h.face < 0) || dist(fx, fy, h.x, h.y - .2) < .35) : dist(fx, fy, h.x, h.y - .2) < .62; }}); // 다리 사이 같은 투명한 틈도 몸 가운데는 장수
+  R.towers.forEach(t => cands.push({y:dkey(t.x + .5, t.y + .5), kind:"tower", t, hit:() => towerHit(t)}));
+  if (h && !h.dead) cands.push({y:dkey(h.x, h.y), kind:"hero", hit:() => { const sp = heroSprite(h, T), q = loc(h.x*T, h.y*T, 0), qx = q[0]/T, qy = q[1]/T; return ART.img[sp.hk] ? (ART.hitAt(sp.hk, sp.rect, q[0], q[1], h.face < 0) || dist(qx, qy, h.x, h.y - .2) < .35) : dist(qx, qy, h.x, h.y - .2) < .62; }}); // 다리 사이 같은 투명한 틈도 몸 가운데는 장수
   cands.sort((a,b) => (b.y - a.y) || ((b.kind === "hero") - (a.kind === "hero"))); // 같은 깊이면 장수가 앞(그리기에서 망루 뒤에 그려짐)
   const top = cands.find(cd => cd.hit());
   const heroHit = !!top && top.kind === "hero";
@@ -7655,7 +7781,7 @@ function start(){
   Shop.init();
   if (M.stars[0] && M.daily.login < kstDate()) showDaily(); // 하루 첫 접속이면 매일 보상부터
   if (!TabLock.pending && !TabLock.ok()) lockScreen(true); // 다른 창이 게임을 갖고 있으면 안내부터(Web Lock 은 잡히면/못 잡히면 그때 처리)
-  window.SanseongDebug = {musicDemo:(i, k, sec, from) => Sound.musicDemo(i, k, sec, from), unitVs, solDefMul, foeKindTxt, unitStrike, UNITS, evWatch, decideTest:k => { const d = k === "boss" ? {k, e:R.enemies.find(e => !e.dead) || {type:"grunt", x:9, y:9}} : k === "gate" ? {k, g:R.gates[0]} : k === "thief" ? {k, e:thiefSpawn()} : {k:"camp"}; if (!d.e && (k === "boss" || k === "thief")) return null; R.decSeen = R.decSeen || {}; R.decSeen[k] = true; R.decCur = d; decideShow(d); return d; }, decideOn:() => decideOn(), decideTick:dt => decideTick(dt), easy:{on:() => easyOn(), recs:() => easyRecs(), repair:() => easyRepair(), tick:dt => easyTick(dt)}, thiefSpawn, get T(){ return T; }, TUT, tutOk, tutCells, fortDbg:{unitTerrMul, cellTerr, fortMove, volDanger, fortWallHit, fortPlan, fortGateSafe, fortGatePts, fortFlagPos, fortVolunteers, flagBtnTap, toggleSortie, tapFlag:(x,y)=>{ R.flagMode = true; const ts = null; if (fortIn(x, y) && fortWalk(x, y)){ R.flag = {x:x + .5, y:y + .5}; } R.flagMode = false; }}, pickMusic, musicNow:() => Sound.musicNow(), MUSIC, WebApp, showStory, Raid, RAID, GATE, STAGES, TabLock, Cam, tapAt, reloadFromDisk, get M(){ return M; }, get R(){ return R; }, newRun, grantStarter, saveMeta, showMenu, castSkill, Track, update, victory, defeat, hideOverlay, Ads, Shop, contOk, loadMeta, CloudSave, SaveCode, Notify, castlePending, castleCollect, ensureMissions, mprog, dailyBoot, showCastle, normMeta, Ledger, castleSettle, claimMission, startWave, get saveGen(){ return saveGen; }, get castleBonus(){ return castleBonus; }, set castleBonus(v){ castleBonus = v; }, get overlayMode(){ return overlayMode; }, bot:{easyRepair:() => easyRepair(true), wavesOf, foeKinds, bossKind, tacUse, tacBlock, volGate, tacGate, buyUnit, UNITS, canBuildAt, cellBuildable, upLimit, rforgeUp, TT, ET, HEROES, TERRAIN, hit, toggleSortie, buildable, upCost, initBarracks, towerMaxHp, spawnHero, towerAt, repairCost, stat, get ROWS(){ return ROWS; }, get COLS(){ return COLS; }}}; // 점검용(bot: 자동 봇 균형 시험)
+  window.SanseongDebug = {VIEW, getT:() => T, musicDemo:(i, k, sec, from) => Sound.musicDemo(i, k, sec, from), unitVs, solDefMul, foeKindTxt, unitStrike, UNITS, evWatch, decideTest:k => { const d = k === "boss" ? {k, e:R.enemies.find(e => !e.dead) || {type:"grunt", x:9, y:9}} : k === "gate" ? {k, g:R.gates[0]} : k === "thief" ? {k, e:thiefSpawn()} : {k:"camp"}; if (!d.e && (k === "boss" || k === "thief")) return null; R.decSeen = R.decSeen || {}; R.decSeen[k] = true; R.decCur = d; decideShow(d); return d; }, decideOn:() => decideOn(), decideTick:dt => decideTick(dt), easy:{on:() => easyOn(), recs:() => easyRecs(), repair:() => easyRepair(), tick:dt => easyTick(dt)}, thiefSpawn, get T(){ return T; }, TUT, tutOk, tutCells, fortDbg:{unitTerrMul, cellTerr, fortMove, volDanger, fortWallHit, fortPlan, fortGateSafe, fortGatePts, fortFlagPos, fortVolunteers, flagBtnTap, toggleSortie, tapFlag:(x,y)=>{ R.flagMode = true; const ts = null; if (fortIn(x, y) && fortWalk(x, y)){ R.flag = {x:x + .5, y:y + .5}; } R.flagMode = false; }}, pickMusic, musicNow:() => Sound.musicNow(), MUSIC, WebApp, showStory, Raid, RAID, GATE, STAGES, TabLock, Cam, tapAt, reloadFromDisk, get M(){ return M; }, get R(){ return R; }, newRun, grantStarter, saveMeta, showMenu, castSkill, Track, update, victory, defeat, hideOverlay, Ads, Shop, contOk, loadMeta, CloudSave, SaveCode, Notify, castlePending, castleCollect, ensureMissions, mprog, dailyBoot, showCastle, normMeta, Ledger, castleSettle, claimMission, startWave, get saveGen(){ return saveGen; }, get castleBonus(){ return castleBonus; }, set castleBonus(v){ castleBonus = v; }, get overlayMode(){ return overlayMode; }, bot:{easyRepair:() => easyRepair(true), wavesOf, foeKinds, bossKind, tacUse, tacBlock, volGate, tacGate, buyUnit, UNITS, canBuildAt, cellBuildable, upLimit, rforgeUp, TT, ET, HEROES, TERRAIN, hit, toggleSortie, buildable, upCost, initBarracks, towerMaxHp, spawnHero, towerAt, repairCost, stat, get ROWS(){ return ROWS; }, get COLS(){ return COLS; }}}; // 점검용(bot: 자동 봇 균형 시험)
   requestAnimationFrame(loop);
 }
 if (window.claude && window.claude.hot && window.claude.hot.snapshot) window.claude.hot.snapshot(() => ({}));

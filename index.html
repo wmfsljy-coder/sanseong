@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta name="app-version" content="20261126-b825e0572c">
+<meta name="app-version" content="20261126-a53d3569aa">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>산성</title>
@@ -6367,8 +6367,10 @@ function draw(){
   const VV = VIEW.on, VI = VV && VIEW.iso; // 요청 37: 보기 변환(땅은 행렬로, 서 있는 것은 제자리에 똑바로)
   const gw = fn => { if (!VV){ fn(); return; } c.save(); c.transform(VIEW.a, VIEW.b, VIEW.c, VIEW.d, VIEW.e, VIEW.f); try { fn(); } finally { c.restore(); } };
   const bw = (x, y, fn, lift) => { if (!VV){ fn(); return; } const p = VIEW.fwd(x*T, y*T); c.save(); c.translate(p[0] - x*T, p[1] - y*T - (lift ? (typeof lift === "number" ? lift : VIEW.wallH(T)) : 0)); try { fn(); } finally { c.restore(); } };
+  const PB = VV ? VIEW.paintImg() : null; VIEW.paintNow = !!PB; // 요청 38: 손그림 바탕
+  if (PB) c.drawImage(PB.img, PB.x0*T, PB.y0*T, PB.w*T, PB.h*T);
   if (VV){ c.save(); c.transform(VIEW.a, VIEW.b, VIEW.c, VIEW.d, VIEW.e, VIEW.f); }
-  c.drawImage(staticCv, 0, 0, WW, WH);
+  if (!PB) c.drawImage(staticCv, 0, 0, WW, WH);
   if (R.bound) drawBound(c);
   const vis = cam ? Cam.view(1.2) : null, inV = (x, y) => !vis || (x >= vis.x0 && x <= vis.x1 && y >= vis.y0 && y <= vis.y1); // 화면에 보이는 것만 그린다
   R.towers.forEach(t => { if (t.type === "caltrop") drawCaltropZone(c, t, T); });
@@ -6394,11 +6396,13 @@ function draw(){
   R.enemies.forEach(e => { if (!e.fly && inV(e.x, e.y)) items.push({x:e.x, y:e.y, draw:() => dimE(e)}); });
   if (R.hero && !R.hero.dead) items.push({x:R.hero.x, y:R.hero.y, draw:() => drawHero(c, R.hero, T)});
   if (R.camp && (!R.camp.dead || R.camp.fade > 0)) items.push({x:R.camp.x, y:R.camp.y + .3, ay:R.camp.y, draw:() => drawCamp(c, T)});
-  if (VI) wallBlocks(c, T, items);
+  if (VI && !PB) wallBlocks(c, T, items);
+  const dimSprites = PB && "filter" in c; if (dimSprites) c.filter = "brightness(.8) saturate(.88)";
   items.forEach(it => { it.k = it.dk != null ? it.dk : VV && it.x != null ? VIEW.fwd(it.x*T, it.y*T)[1]/T + (it.lift ? .05 : 0) : it.y; });
   items.sort((a,b) => a.k - b.k).forEach(it => { if (!VV || it.raw) it.draw(); else if (it.x != null) bw(it.x, it.ay != null ? it.ay : it.y, it.draw, it.lift); else gw(it.draw); });
   if (!VI) gw(() => drawGate(c, T, R.lives/R.maxLives, R.m));
   R.enemies.forEach(e => { if (e.fly && inV(e.x, e.y)) bw(e.x, e.y, () => dimE(e)); });
+  if (dimSprites) c.filter = "none";
   gw(() => drawFog(c));
   gw(() => { drawFx(c, T); drawTac(c, T); drawStrikes(c, T); });
   gw(() => drawBossFx(c, T));
@@ -6513,6 +6517,11 @@ const VIEW = {
   vec(x, y){ return this.on ? [this.a*x + this.c*y, this.b*x + this.d*y] : [x, y]; },
   ang(a){ const v = this.vec(Math.cos(a), Math.sin(a)); return Math.atan2(v[1], v[0]); },
   wallH(T){ return this.on && this.iso ? T*.62 : 0; },
+  // 요청 38: 손그림 바탕(장:돌린 단계:입체 1/위 0). x0·y0·w·h = 보기 공간 칸 단위 자리. 파일은 art/paint/ (웹판은 web/art/paint/)
+  PAINT:{"1:0:1":{src:"art/paint/ch1_iso0.webp",x0:-2.32231,y0:3.42906,w:26.47705,h:14.77789},"1:1:1":{src:"art/paint/ch1_iso1.webp",x0:-0.5,y0:2.80987,w:29.34626,h:16.37931},"1:2:1":{src:"art/paint/ch1_iso2.webp",x0:-2.55779,y0:3.88438,w:25.88463,h:14.44724},"1:3:1":{src:"art/paint/ch1_iso3.webp",x0:-6.29958,y0:1.68179,w:33.47287,h:18.68253},"1:4:1":{src:"art/paint/ch1_iso4.webp",x0:-3.32231,y0:3.42906,w:26.47705,h:14.77789},"1:5:1":{src:"art/paint/ch1_iso5.webp",x0:-6.29958,y0:1.27167,w:33.47287,h:18.68253},"1:6:1":{src:"art/paint/ch1_iso6.webp",x0:-2.55779,y0:3.30438,w:25.88463,h:14.44724},"1:7:1":{src:"art/paint/ch1_iso7.webp",x0:-5.59247,y0:1.27167,w:33.47287,h:18.68253}},
+  paintNow:false,
+  paintImg(){ if (!this.on || !R) return null; const P = this.PAINT[R.s + ":" + this.rot + ":" + (this.iso ? 1 : 0)]; if (!P) return null;
+    if (!P.img){ P.img = new Image(); P.img.onload = () => { P.ok = true; needDraw = true; }; P.img.onerror = () => { P.bad = true; }; P.img.src = P.src; } return P.ok && !P.bad ? P : null; },
   gridBox(sx0, sy0, sx1, sy1){ let X0 = 1e9, Y0 = 1e9, X1 = -1e9, Y1 = -1e9; // 화면 사각형 → 칸 단위 둘레 상자
     [[sx0, sy0], [sx1, sy0], [sx1, sy1], [sx0, sy1]].forEach(q => { const w = this.inv(Cam.x + q[0]/Cam.z, Cam.y + q[1]/Cam.z); X0 = Math.min(X0, w[0]); Y0 = Math.min(Y0, w[1]); X1 = Math.max(X1, w[0]); Y1 = Math.max(Y1, w[1]); });
     return {x0:X0/T, y0:Y0/T, x1:X1/T, y1:Y1/T}; },
@@ -6520,7 +6529,7 @@ const VIEW = {
     this.refresh(); Cam.vx = Cam.vy = 0; Cam.tx = Cam.ty = null; Cam.center(w[0], w[1]); viewBtns(); needDraw = true; },
   grade(c){ // 밤 색감 + 횃불·망루 불빛 + 가장자리 어둡게(화면 좌표)
     if (!R || !Cam.active) return; c.save();
-    c.globalCompositeOperation = "multiply"; c.fillStyle = "rgb(150,158,205)"; c.fillRect(0, 0, W, H);
+    if (!this.paintNow){ c.globalCompositeOperation = "multiply"; c.fillStyle = "rgb(150,158,205)"; c.fillRect(0, 0, W, H); }
     c.globalCompositeOperation = "lighter"; const z = Cam.z, hw = this.wallH(T)*z, lights = [];
     (R.m.gates || []).forEach(g => { lights.push([g.x + .5, g.y + .5, hw*1.3, 2.2]); });
     R.towers.forEach(t => { if (!t.ruin && TT[t.type] && !TT[t.type].noFire) lights.push([t.x + .5, t.y + .5, isWallCell(t.x, t.y) ? hw : 0, 1.3]); });

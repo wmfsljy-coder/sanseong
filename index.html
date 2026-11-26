@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta name="app-version" content="20261126-4ec6f93596">
+<meta name="app-version" content="20261126-ede6f7b13f">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>산성</title>
@@ -490,14 +490,15 @@ const ART = (function(){
     // 크기·뒤집기·하얀 번쩍 판을 미리 그려 둔 캔버스 (매 프레임 큰 그림 줄이기 방지)
     get(k, w, h, flip, white){
       const im = img[k]; if (!im) return null;
-      const pw = Math.max(1, Math.round(w)), ph = Math.max(1, Math.round(h)), key = k + "|" + pw + "|" + ph + "|" + (flip ? 1 : 0) + (white ? 1 : 0);
+      const pw = Math.max(1, Math.round(w)), ph = Math.max(1, Math.round(h)), key = k + "|" + pw + "|" + ph + "|" + (flip ? 1 : 0) + (white ? 1 : 0) + (this.dim && !white ? "d" : "");
       let c = cache.get(key); if (c) return c;
       c = document.createElement("canvas"); c.width = pw; c.height = ph; const x = c.getContext("2d"); x.imageSmoothingQuality = "high";
       if (flip){ x.translate(pw, 0); x.scale(-1, 1); }
       // 큰 그림을 한 번에 많이 줄이면 거칠어지므로 반씩 줄여 간다
       let s = im, sw = im.naturalWidth, sh = im.naturalHeight;
       while (sw > pw*2 && sh > ph*2){ const t = document.createElement("canvas"); t.width = Math.round(sw/2); t.height = Math.round(sh/2); t.getContext("2d").drawImage(s, 0, 0, t.width, t.height); s = t; sw = t.width; sh = t.height; }
-      x.drawImage(s, 0, 0, pw, ph);
+      if (this.dim && !white && "filter" in x) x.filter = "brightness(.8) saturate(.88)"; // 요청 50: 손그림 바탕일 때 어둡게 — 매번 c.filter 대신 그림을 만들 때 한 번만(느림 고침)
+      x.drawImage(s, 0, 0, pw, ph); x.filter = "none";
       if (white){ x.setTransform(1,0,0,1,0,0); x.globalCompositeOperation = "source-atop"; x.fillStyle = "#FFFFFF"; x.fillRect(0, 0, pw, ph); }
       if (cache.size > 400) cache.clear();
       cache.set(key, c); return c;
@@ -506,8 +507,11 @@ const ART = (function(){
     drawAt(c, k, bx, by, h, flip, white, dpr){
       const im = img[k]; if (!im) return false;
       const w = h * im.naturalWidth / im.naturalHeight, d = dpr || 1, cv = this.get(k, w*d, h*d, flip, white);
+      const D = this.def; if (D && this.gaitFn && (D.a > .03 || D.m === "fly" || D.m === "float")){ this.gaitFn(c, cv, bx - w/2, by - h, w, h, D, white); return true; } // 요청 50: 걷기·뛰기·기기·날기·떠다니기
       c.drawImage(cv, bx - w/2, by - h, w, h); return true;
     },
+    def:null, // 요청 50: {m:"walk"|"run"|"crawl"|"fly"|"float", ph(걸음 위상), a(움직이는 정도 0~1), dir(화면에서 가는 쪽 ±1), t(시간), fs(날갯짓 빠르기)}
+    withDef(D, fn){ const o = this.def; this.def = D; try { return fn(); } finally { this.def = o; } },
     // drawAt 이 그릴 사각형(바닥 가운데 기준). 그리기와 터치 판정이 같은 계산을 쓴다
     rectAt(k, bx, by, h){ const im = img[k]; if (!im) return null; const w = h * im.naturalWidth / im.naturalHeight; return {x:bx - w/2, y:by - h, w, h}; },
     // 터치 판정용 알파 마스크(가로 64칸). 그림마다 한 번만 만든다. 만들 수 없으면 null → 사각형 판정
@@ -2063,7 +2067,7 @@ function moDraw(c, e, T, fn){
   const E = ET[e.type], r = E.r*T*(e.grow || 1), mv = moMv(e), o = moCore(e.type, r, e.phase || 0, mv, moDir(e), moAp(e), (R ? R.time : 0) + moSeed(e));
   const fx = e.x*T, fy = E.fly || E.semi ? e.y*T - T*.3 : e.y*T + r*.85;
   c.save(); c.translate(fx + o.x, fy + o.y); if (o.rot) c.rotate(o.rot); if (o.sx !== 1 || o.sy !== 1) c.scale(o.sx, o.sy); c.translate(-fx, -fy); if (o.al < 1) c.globalAlpha *= o.al;
-  try { fn(); } finally { c.restore(); }
+  try { ART.withDef(gaitOfE(e, mv), fn); } finally { c.restore(); }
 }
 // 적이 한 번 때림: 동작 시작 + 맞는 자리 이펙트(같은 적은 0.2초 안에 겹치지 않게)
 function moHit(e, tx, ty){ if (!e || !R || !MO[e.type]) return; if (e.atkT0 != null && R.time - e.atkT0 < .22) return; e.atkT0 = R.time; e.atkX = tx; e.atkY = ty; const k = MO[e.type].fx; if (k) mfx(k, tx, ty, tx >= e.x ? 1 : -1, e.x, e.y); }
@@ -2173,6 +2177,54 @@ function drawHeroShot(c, p, T){ const hs = p.hs; if (!hs || hs === "arrow") retu
   else if (hs === "bolt"){ c.strokeStyle = "#3A2A1A"; c.lineWidth = Math.max(2, T*.04); c.beginPath(); c.moveTo(-T*.18, 0); c.lineTo(T*.14, 0); c.stroke(); c.fillStyle = "#B0B8C0"; c.beginPath(); c.moveTo(T*.2, 0); c.lineTo(T*.12, -T*.05); c.lineTo(T*.12, T*.05); c.fill(); }
   else if (hs === "gun" || hs === "musket"){ c.fillStyle = "rgba(255,210,120,.45)"; c.beginPath(); c.ellipse(-T*.12, 0, T*.16, T*.05, 0, 0, 6.28); c.fill(); c.fillStyle = "#222"; circle(c, 0, 0, T*(hs === "gun" ? .07 : .05)); c.fill(); }
   c.restore(); return true; }
+/* 요청 50: 그림 한 장을 띠로 나눠 움직인다(뼈대 없이 자연스럽게)
+   walk/run: 아래 40%(다리)를 왼쪽·오른쪽 반으로 나눠 엇갈려 내딛고(앞발은 살짝 들림), 몸통은 반대로 조금, 뛰기는 몸을 앞으로 숙이고 보폭이 크다
+   crawl: 세로 띠에 물결이 꼬리 쪽으로 지나간다 / fly: 가운데 몸통은 두고 양쪽 날개 띠를 위아래로 퍼덕이며 접었다 편다 / float: 아래 옷자락이 물결친다 */
+let GAIT_SCR = null, GAIT_OV = .8;
+function gaitDraw(c, cv, x0, y0, w, h, D, white){ if (h < 20){ c.drawImage(cv, x0, y0, w, h); return; } /* 아주 작게 보이면 그대로(가벼움) */ if (!white){ GAIT_OV = c.globalAlpha > .995 ? .8 : 0; gaitDraw0(c, cv, x0, y0, w, h, D); GAIT_OV = .8; return; } /* 반투명(밤·분신)은 띠를 겹치지 않게 바로 그림 — 임시 그림판은 흰 번쩍일 때만 */ // 불투명이면 바로(빠름). 반투명·번쩍일 때만 임시 그림판에 불투명하게 모은 뒤 한 번에 그린다(반투명·번쩍일 때 띠 경계 줄무늬 없음)
+  const k = cv.width/w, PX = Math.ceil(cv.width*.45), PY = Math.ceil(cv.height*.3), SW = cv.width + PX*2, SH = cv.height + PY*2;
+  if (!GAIT_SCR || GAIT_SCR.width < SW || GAIT_SCR.height < SH){ const ow = GAIT_SCR ? GAIT_SCR.width : 0, oh = GAIT_SCR ? GAIT_SCR.height : 0; GAIT_SCR = document.createElement("canvas"); GAIT_SCR.width = Math.max(SW, ow); GAIT_SCR.height = Math.max(SH, oh); }
+  const g = GAIT_SCR.getContext("2d"); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, SW, SH); g.setTransform(k, 0, 0, k, 0, 0); g.imageSmoothingQuality = "high";
+  gaitDraw0(g, cv, PX/k, PY/k, w, h, D);
+  c.drawImage(GAIT_SCR, 0, 0, SW, SH, x0 - PX/k, y0 - PY/k, SW/k, SH/k);
+}
+function gaitDraw0(c, cv, x0, y0, w, h, D){
+  const CW = cv.width, CH = cv.height, a = Math.max(0, Math.min(1, D.a || 0)), dir = D.dir < 0 ? -1 : 1, S = Math.sin;
+  if (D.m === "walk" || D.m === "run"){ // 몸통은 2~3띠(숙이기), 다리는 3줄 × 좌우 반쪽 — 그리기 수를 줄임(가벼움)
+    const run = D.m === "run", sp = S(D.ph), amp = (run ? .12 : .07)*w*a, lean = (run ? .11 : .025)*w*a*dir, lift = (run ? .05 : .028)*h*a, TB = run ? [0, .25, .45, .6] : [0, .33, .6];
+    for (let i = 0; i < TB.length - 1; i++){ const v0 = TB[i], v1 = TB[i + 1], vm = (v0 + v1)/2, sy = Math.floor(v0*CH), sh = Math.min(CH - sy, Math.ceil((v1 - v0)*CH) + 1);
+      c.drawImage(cv, 0, sy, CW, sh, x0 + lean*(1 - vm) - amp*.12*sp, y0 + v0*h, w, (v1 - v0)*h + GAIT_OV); }
+    for (let i = 0; i < 3; i++){ const v0 = .6 + i*.4/3, vm = v0 + .4/6, sy = Math.floor(v0*CH), sh = Math.min(CH - sy, Math.ceil(CH*.4/3) + 1), dy = y0 + v0*h, dh = h*.4/3 + GAIT_OV, k = (vm - .6)/.4, hw = CW/2, dxl = lean*(1 - vm);
+      c.drawImage(cv, 0, sy, hw + 1, sh, x0 + dxl + amp*sp*k, dy - Math.max(0, sp)*lift*k, w/2 + .6, dh);
+      c.drawImage(cv, hw, sy, CW - hw, sh, x0 + w/2 + dxl - amp*sp*k, dy - Math.max(0, -sp)*lift*k, w/2, dh); }
+    return; }
+  if (D.m === "crawl"){
+    const N = 9, A = h*.075*Math.max(.25, a);
+    for (let j = 0; j < N; j++){ const u = (j + .5)/N, sx = Math.floor(j/N*CW), sw = Math.ceil(CW/N) + 1, uu = dir > 0 ? 1 - u : u; // 머리 쪽에서 꼬리 쪽으로
+      c.drawImage(cv, sx, 0, Math.min(sw, CW - sx), CH, x0 + j/N*w, y0 + A*S(D.ph*2 - uu*Math.PI*2.4)*(.35 + .65*uu), w/N + GAIT_OV, h); }
+    return; }
+  if (D.m === "fly"){
+    const N = 9, fl = S((D.t || 0)*(D.fs || 11)), up = Math.max(0, fl);
+    for (let j = 0; j < N; j++){ const u = (j + .5)/N, off = Math.abs(u - .5), sx = Math.floor(j/N*CW), sw = Math.ceil(CW/N) + 1;
+      if (off < .12){ c.drawImage(cv, sx, 0, Math.min(sw, CW - sx), CH, x0 + j/N*w, y0, w/N + .8, h); continue; }
+      const kk = Math.pow(Math.max(0, off - .12)/.38, 1.15), dh = h*(1 - .2*Math.abs(fl)*kk), dyy = -fl*h*.17*kk + (h - dh)*(fl > 0 ? .15 : .85);
+      c.drawImage(cv, sx, 0, Math.min(sw, CW - sx), CH, x0 + j/N*w, y0 + dyy, w/N + .8, dh); }
+    return; }
+  if (D.m === "float"){
+    const N = 7, t = D.t || 0;
+    for (let i = 0; i < N; i++){ const v0 = i/N, vm = (i + .5)/N, sy = Math.floor(v0*CH), sh = Math.ceil(CH/N) + 1, k = vm > .5 ? (vm - .5)/.5 : 0;
+      const dx = w*(.012*S(t*1.3) + .05*k*S(t*2.6 - vm*7)) - dir*w*.04*k*(D.a || 0);
+      c.drawImage(cv, 0, sy, CW, Math.min(sh, CH - sy), x0 + dx, y0 + v0*h, w, h/N + GAIT_OV); }
+    return; }
+  c.drawImage(cv, x0, y0, w, h);
+}
+ART.gaitFn = gaitDraw; // drawAt(바깥 범위)에서 쓰도록
+// 적마다 띠 움직임 종류와 걸음 위상 배율(moCore 걸음과 박자를 맞춤)
+const GAIT_OF = {bat:["fly", 13], gangcheol:["fly", 6], cheonyeo:["float"], eoduk:["float"], mul:["float"], imugi:["crawl"], centipede:["crawl"], fox:["run"], gumiho_c:["run"], thief:["run"], gumiho:["run"]};
+const GAIT_PH = {waddle:1, march:.8, stomp:.7, plod:.6, prowl:1.2, scurry:2.8, sneak:2.3, bound:.8, push:1.2, wobble:1.4, glide:1, slither:1.5};
+function gaitOfE(e, mv){ const G = GAIT_OF[e.type], M0 = MO[e.type], m = G ? G[0] : (moveOf(e) === "run" ? "run" : moveOf(e) === "crawl" ? "crawl" : moveOf(e) === "fly" ? "fly" : "walk");
+  if (e.type === "jeoseung") return {m:"float", a:mv*.6, dir:moDir(e), t:(R ? R.time : 0) + moSeed(e)}; // 저승사자: 발소리 없이 미끄러짐(도포 자락만)
+  return {m, ph:(e.phase || 0)*(M0 && GAIT_PH[M0.g] || 1), a:moAp(e) >= 0 ? mv*.4 : mv, dir:moDir(e), t:(R ? R.time : 0) + moSeed(e), fs:G && G[1]}; }
 function drawEnemy(c, e, T){
   if (e.under > 0){ // 땅속: 흙더미만
     const px = e.x*T, py = e.y*T, w = T*.3 + Math.sin(e.phase*2)*T*.03;
@@ -3371,7 +3423,7 @@ const heroOpen = k => k === "gwon" || (M.heroes[k] || 0) > 0 || STAGES.some((s, 
       const mvR = (() => { const d0 = f._lx == null ? 1 : Math.hypot(f.x - f._lx, f.y - f._ly); f._lx = f.x; f._ly = f.y; f._mvR = (f._mvR == null ? 1 : f._mvR)*.85 + (d0 > .002 ? .15 : 0); return f._mvR; })();
       const mo = MO[f.type] ? moCore(f.type, Tr*E.r, f.walk || 0, mvR, (f.atkX != null && G.t - f.atkT0 < 1 ? f.atkX - f.x : 0) < 0 ? -1 : 1, (() => { if (f.atkT0 == null) return -1; const q = (G.t - f.atkT0)/(MO_DUR[MO[f.type].a] || .38); return q >= 0 && q <= 1 ? q : -1; })(), G.t + (f._sd || (f._sd = Math.random()*9))) : null; // 요청 45
       if (mo){ ctx.save(); ctx.translate(x + mo.x, by + mo.y); if (mo.rot) ctx.rotate(mo.rot); ctx.scale(mo.sx, mo.sy); ctx.translate(-x, -by); if (mo.al < 1) ctx.globalAlpha *= mo.al; }
-      let drew = false; try { drew = !!(ei && ART.drawAt(ctx, ei[0], x, y, h, false, f.hitT > 0, rdpr)); } finally { if (mo) ctx.restore(); }
+      let drew = false; try { const GR = GAIT_OF[f.type], gm = GR ? GR[0] : (f.fly ? "fly" : "walk"); drew = !!(ei && ART.withDef({m:gm, ph:(f.walk || 0), a:mvR, dir:1, t:G.t + (f._sd || 0), fs:GR && GR[1]}, () => ART.drawAt(ctx, ei[0], x, y, h, false, f.hitT > 0, rdpr))); } finally { if (mo) ctx.restore(); } // 요청 50
       if (!drew){ ctx.fillStyle = E.skin || "#7A4AA0"; circle(ctx, x, y - h*.4, Tr*E.r); ctx.fill(); }
       if (f.slowT > 0){ ctx.strokeStyle = "rgba(150,200,255,.8)"; ctx.lineWidth = 2; ellipse(ctx, x, by, Tr*.3, Tr*.12); ctx.stroke(); }
       if (f.type === "lord" && f.wind > 0){ const k = 1 - f.wind/FINAL.wind; ctx.fillStyle = "rgba(220,40,40,"+(.15 + .25*k)+")"; circle(ctx, f.x*Tr, f.y*Tr, FINAL.smashR*Tr); ctx.fill(); ctx.strokeStyle = "rgba(255,80,80,.9)"; ctx.lineWidth = 3; circle(ctx, f.x*Tr, f.y*Tr, FINAL.smashR*Tr*k); ctx.stroke(); }
@@ -4999,7 +5051,7 @@ function drawSoldiers(c, t, T){ // v10 요청 19: 종류마다 걸음, 숨쉬기
     if (rk && RANK_COL[rk]){ c.strokeStyle = RANK_COL[rk]; c.lineWidth = Math.max(1.5, T*.04); ellipse(c, u.x*T, py + T*.18, T*.21, T*.08); c.stroke(); }
     if (U.horse){ const lg = Math.sin(ph*1.8)*T*(mv > .15 ? .06 : .01), hb = mv > .15 ? Math.abs(Math.sin(ph*1.8))*T*.035 : 0; c.fillStyle = "#6A4528"; ellipse(c, px, py + T*.05 - hb, T*.24, T*.1); c.fill(); c.fillRect(px - T*.17 + lg, py + T*.08 - hb, T*.04, T*.12 + hb); c.fillRect(px + T*.13 - lg, py + T*.08 - hb, T*.04, T*.12 + hb); ellipse(c, px + f*T*.25, py - T*.04 - hb - (u.cav && u.cav.st === "in" && mv > .5 ? T*.03 : 0), T*.08, T*.06); c.fill(); c.fillStyle = "#2A1A10"; c.fillRect(f > 0 ? px - T*.3 : px + T*.24, py + T*.02 - hb, T*.06, T*.03); }
     c.save(); c.translate(px, py + T*.2 - bob - (U.horse ? T*.08 : 0)); if (lean) c.rotate(lean); if (breath !== 1) c.scale(1, breath);
-    if (k){ ART.drawAt(c, k, 0, 0, h, f < 0, false, dpr); if (u.hurtT > 0){ c.globalAlpha = Math.min(1, u.hurtT*6); ART.drawAt(c, k, 0, 0, h, f < 0, true, dpr); c.globalAlpha = 1; } }
+    if (k) ART.withDef({m:U.horse || u.runT > 0 ? "run" : "walk", ph:ph*(U.horse ? 1.8 : 1), a:mv > .15 ? Math.min(1, mv) : 0, dir:f}, () => { ART.drawAt(c, k, 0, 0, h, f < 0, false, dpr); if (u.hurtT > 0){ c.globalAlpha = Math.min(1, u.hurtT*6); ART.drawAt(c, k, 0, 0, h, f < 0, true, dpr); c.globalAlpha = 1; } }); // 요청 50: 다리 엇갈려 걷기, 말은 달리기
     else { c.fillStyle = u.hurtT > 0 ? "#FFFFFF" : "#2C4A7A"; circle(c, 0, -T*.2, T*.14); c.fill(); c.fillStyle = "#E8C9A0"; circle(c, 0, -T*.36, T*.08); c.fill(); }
     c.restore();
     // 무기 동작
@@ -6462,8 +6514,9 @@ function drawHero0(c, h, T){
     c.fillStyle = "rgba(0,0,0,.32)"; ellipse(c, px, base, s*.75, s*.25); c.fill();
     c.strokeStyle = R.heroSel ? "#E2B24A" : "rgba(111,179,255,.8)"; c.lineWidth = R.heroSel ? 3 : 2; ellipse(c, px, base, s*.95, s*.34); c.stroke();
     { const o = heroPose(h, T); c.save(); c.translate(px + o.x, base + o.y); if (o.rot) c.rotate(o.rot); if (o.sx !== 1 || o.sy !== 1) c.scale(o.sx, o.sy); // 요청 45: 장군마다 걸음·쏘는 자세
-      try { ART.drawAt(c, hk, 0, 0, hh, h.face < 0, false, dpr);
-      if (h.hurt > 0){ c.globalAlpha = .55; ART.drawAt(c, hk, 0, 0, hh, h.face < 0, true, dpr); c.globalAlpha = 1; } } finally { c.restore(); } }
+      const hmv = dist(h.x, h.y, h.tx == null ? h.x : h.tx, h.ty == null ? h.y : h.ty) > .1 ? 1 : 0, hg = heroMo(h.k).g;
+      try { ART.withDef({m:hg === "crouch" || hg === "skip" ? "run" : "walk", ph:(h.walk || 0)*(hg === "skip" ? 1.3 : hg === "stride" ? .7 : 1), a:hmv, dir:h.face < 0 ? -1 : 1}, () => { ART.drawAt(c, hk, 0, 0, hh, h.face < 0, false, dpr);
+      if (h.hurt > 0){ c.globalAlpha = .55; ART.drawAt(c, hk, 0, 0, hh, h.face < 0, true, dpr); c.globalAlpha = 1; } }); } finally { c.restore(); } } // 요청 50: 장군 걸음(다리 엇갈림)
     const bw = T*.75, by = base - hh - T*.12, f = Math.max(0, h.hp/h.maxHp);
     c.fillStyle = "rgba(0,0,0,.6)"; rr(c, px - bw/2 - 1.5, by - 1.5, bw + 3, T*.11 + 3, 3); c.fill();
     c.fillStyle = "#6FB3FF"; rr(c, px - bw/2, by, bw*f, T*.11, 2); c.fill();
@@ -6634,7 +6687,7 @@ function draw(){
   const VV = VIEW.on, VI = VV && VIEW.iso; // 요청 37: 보기 변환(땅은 행렬로, 서 있는 것은 제자리에 똑바로)
   const gw = fn => { if (!VV){ fn(); return; } c.save(); c.transform(VIEW.a, VIEW.b, VIEW.c, VIEW.d, VIEW.e, VIEW.f); try { fn(); } finally { c.restore(); } };
   const bw = (x, y, fn, lift) => { if (!VV){ fn(); return; } const p = VIEW.fwd(x*T, y*T); c.save(); c.translate(p[0] - x*T, p[1] - y*T - (lift ? (typeof lift === "number" ? lift : VIEW.wallH(T)) : 0)); try { fn(); } finally { c.restore(); } };
-  const PB = VV ? VIEW.paintImg() : null; VIEW.paintNow = !!PB; // 요청 38: 손그림 바탕
+  ART.dim = false; const PB = VV ? VIEW.paintImg() : null; VIEW.paintNow = !!PB; // 요청 38: 손그림 바탕
   if (PB) c.drawImage(PB.img, PB.x0*T, PB.y0*T, PB.w*T, PB.h*T);
   if (VV){ c.save(); c.transform(VIEW.a, VIEW.b, VIEW.c, VIEW.d, VIEW.e, VIEW.f); }
   if (!PB) c.drawImage(staticCv, 0, 0, WW, WH);
@@ -6664,12 +6717,12 @@ function draw(){
   if (R.hero && !R.hero.dead) items.push({x:R.hero.x, y:R.hero.y, draw:() => drawHero(c, R.hero, T)});
   if (R.camp && (!R.camp.dead || R.camp.fade > 0)) items.push({x:R.camp.x, y:R.camp.y + .3, ay:R.camp.y, draw:() => drawCamp(c, T)});
   if (VI && !PB) wallBlocks(c, T, items);
-  const dimSprites = PB && "filter" in c; if (dimSprites) c.filter = "brightness(.8) saturate(.88)";
+  const dimSprites = !!PB; ART.dim = dimSprites; /* 예전: c.filter(그릴 때마다 무거움) */
   items.forEach(it => { it.k = it.dk != null ? it.dk : VV && it.x != null ? VIEW.fwd(it.x*T, it.y*T)[1]/T + (it.lift ? .05 : 0) : it.y; });
   items.sort((a,b) => a.k - b.k).forEach(it => { if (!VV || it.raw) it.draw(); else if (it.x != null) bw(it.x, it.ay != null ? it.ay : it.y, it.draw, it.lift); else gw(it.draw); });
   if (!VI) gw(() => drawGate(c, T, R.lives/R.maxLives, R.m));
   R.enemies.forEach(e => { if (e.fly && inV(e.x, e.y)) bw(e.x, e.y, () => dimE(e)); });
-  if (dimSprites) c.filter = "none";
+  ART.dim = false;
   gw(() => drawFog(c));
   gw(() => { drawFx(c, T); drawTac(c, T); drawStrikes(c, T); });
   gw(() => drawBossFx(c, T));
@@ -8061,7 +8114,7 @@ function start(){
   Shop.init();
   if (M.stars[0] && M.daily.login < kstDate()) showDaily(); // 하루 첫 접속이면 매일 보상부터
   if (!TabLock.pending && !TabLock.ok()) lockScreen(true); // 다른 창이 게임을 갖고 있으면 안내부터(Web Lock 은 잡히면/못 잡히면 그때 처리)
-  window.SanseongDebug = {VIEW, ACC, LVGAP, START_GOLD, RAID_FOES, FINAL, MO, HERO_MO, HERO_BLADE, HEROES, moHit, mfx, muFx, getT:() => T, musicDemo:(i, k, sec, from) => Sound.musicDemo(i, k, sec, from), unitVs, solDefMul, foeKindTxt, unitStrike, UNITS, evWatch, decideTest:k => { const d = k === "boss" ? {k, e:R.enemies.find(e => !e.dead) || {type:"grunt", x:9, y:9}} : k === "gate" ? {k, g:R.gates[0]} : k === "thief" ? {k, e:thiefSpawn()} : {k:"camp"}; if (!d.e && (k === "boss" || k === "thief")) return null; R.decSeen = R.decSeen || {}; R.decSeen[k] = true; R.decCur = d; decideShow(d); return d; }, decideOn:() => decideOn(), decideTick:dt => decideTick(dt), easy:{on:() => easyOn(), recs:() => easyRecs(), repair:() => easyRepair(), tick:dt => easyTick(dt)}, thiefSpawn, get T(){ return T; }, TUT, tutOk, tutCells, fortDbg:{unitTerrMul, cellTerr, fortMove, volDanger, fortWallHit, fortPlan, fortGateSafe, fortGatePts, fortFlagPos, fortVolunteers, flagBtnTap, toggleSortie, tapFlag:(x,y)=>{ R.flagMode = true; const ts = null; if (fortIn(x, y) && fortWalk(x, y)){ R.flag = {x:x + .5, y:y + .5}; } R.flagMode = false; }}, pickMusic, musicNow:() => Sound.musicNow(), MUSIC, WebApp, showStory, Raid, RAID, GATE, STAGES, TabLock, Cam, tapAt, reloadFromDisk, get M(){ return M; }, get R(){ return R; }, newRun, grantStarter, saveMeta, showMenu, castSkill, Track, update, victory, defeat, hideOverlay, Ads, Shop, contOk, loadMeta, CloudSave, SaveCode, Notify, castlePending, castleCollect, ensureMissions, mprog, dailyBoot, showCastle, normMeta, Ledger, castleSettle, claimMission, startWave, get saveGen(){ return saveGen; }, get castleBonus(){ return castleBonus; }, set castleBonus(v){ castleBonus = v; }, get overlayMode(){ return overlayMode; }, bot:{easyRepair:() => easyRepair(true), wavesOf, foeKinds, bossKind, tacUse, tacBlock, volGate, tacGate, buyUnit, UNITS, canBuildAt, cellBuildable, upLimit, rforgeUp, TT, ET, HEROES, TERRAIN, hit, toggleSortie, buildable, upCost, initBarracks, towerMaxHp, spawnHero, towerAt, repairCost, stat, get ROWS(){ return ROWS; }, get COLS(){ return COLS; }}}; // 점검용(bot: 자동 봇 균형 시험)
+  window.SanseongDebug = {VIEW, ACC, LVGAP, START_GOLD, RAID_FOES, FINAL, MO, HERO_MO, HERO_BLADE, HEROES, moHit, mfx, muFx, ART, getT:() => T, musicDemo:(i, k, sec, from) => Sound.musicDemo(i, k, sec, from), unitVs, solDefMul, foeKindTxt, unitStrike, UNITS, evWatch, decideTest:k => { const d = k === "boss" ? {k, e:R.enemies.find(e => !e.dead) || {type:"grunt", x:9, y:9}} : k === "gate" ? {k, g:R.gates[0]} : k === "thief" ? {k, e:thiefSpawn()} : {k:"camp"}; if (!d.e && (k === "boss" || k === "thief")) return null; R.decSeen = R.decSeen || {}; R.decSeen[k] = true; R.decCur = d; decideShow(d); return d; }, decideOn:() => decideOn(), decideTick:dt => decideTick(dt), easy:{on:() => easyOn(), recs:() => easyRecs(), repair:() => easyRepair(), tick:dt => easyTick(dt)}, thiefSpawn, get T(){ return T; }, TUT, tutOk, tutCells, fortDbg:{unitTerrMul, cellTerr, fortMove, volDanger, fortWallHit, fortPlan, fortGateSafe, fortGatePts, fortFlagPos, fortVolunteers, flagBtnTap, toggleSortie, tapFlag:(x,y)=>{ R.flagMode = true; const ts = null; if (fortIn(x, y) && fortWalk(x, y)){ R.flag = {x:x + .5, y:y + .5}; } R.flagMode = false; }}, pickMusic, musicNow:() => Sound.musicNow(), MUSIC, WebApp, showStory, Raid, RAID, GATE, STAGES, TabLock, Cam, tapAt, reloadFromDisk, get M(){ return M; }, get R(){ return R; }, newRun, grantStarter, saveMeta, showMenu, castSkill, Track, update, victory, defeat, hideOverlay, Ads, Shop, contOk, loadMeta, CloudSave, SaveCode, Notify, castlePending, castleCollect, ensureMissions, mprog, dailyBoot, showCastle, normMeta, Ledger, castleSettle, claimMission, startWave, get saveGen(){ return saveGen; }, get castleBonus(){ return castleBonus; }, set castleBonus(v){ castleBonus = v; }, get overlayMode(){ return overlayMode; }, bot:{easyRepair:() => easyRepair(true), wavesOf, foeKinds, bossKind, tacUse, tacBlock, volGate, tacGate, buyUnit, UNITS, canBuildAt, cellBuildable, upLimit, rforgeUp, TT, ET, HEROES, TERRAIN, hit, toggleSortie, buildable, upCost, initBarracks, towerMaxHp, spawnHero, towerAt, repairCost, stat, get ROWS(){ return ROWS; }, get COLS(){ return COLS; }}}; // 점검용(bot: 자동 봇 균형 시험)
   requestAnimationFrame(loop);
 }
 if (window.claude && window.claude.hot && window.claude.hot.snapshot) window.claude.hot.snapshot(() => ({}));

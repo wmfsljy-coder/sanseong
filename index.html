@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta name="app-version" content="20261126-db5c09f0c9">
+<meta name="app-version" content="20261126-f0a9e9b005">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>산성</title>
@@ -1979,6 +1979,189 @@ function drawCaltropZone(c, t, T){
 }
 const EIMG = {siege:["e_siege",1,3.0], centipede:["e_centipede",1,2.4], grunt:["e_grunt",1,3.1], fox:["e_fox",-1,3.2], shield:["e_shield",-1,2.8], bat:["e_bat",1,3.0], boss:["e_boss",1,2.5], lord:["e_lord",1,2.45], mole:["e_mole",-1,2.9],
   gumiho:["boss_gumiho",1,2.5], gumiho_c:["boss_gumiho",1,2.5], mul:["boss_mul",1,2.6], cheonyeo:["boss_cheonyeo",1,2.6],imugi:["boss_imugi",-1,2.4], bulgasari:["boss_bulgasari",-1,2.3], eoduk:["boss_eoduk",1,2.5], egg:["boss_egg",1,2.5], jeoseung:["boss_jeoseung",1,2.5], gangcheol:["boss_gangcheol",-1,2.5], centipede:["e_centipede",-1,2.9]}; // [그림, 그림이 보는 쪽(1 오른쪽), 크기 배율]
+/* ===== 요청 45: 개별 몸짓·공격 — 괴물·대장·장병·장군마다 걷는 법, 서 있는 법, 때리는 동작, 맞는 자리 이펙트가 다르다(그림은 그대로 두고 몸짓·이펙트로) =====
+   g = 걸음, a = 때리는 동작, fx = 맞는 자리 이펙트. 규칙(피해·사거리·주기)은 바꾸지 않는다 */
+const MO = {
+  grunt:    {g:"waddle",  a:"club",   fx:"thud",    say:"뒤뚱뒤뚱 걷다 몽둥이를 머리 위에서 내려쳐요"},
+  gumiho_c: {g:"prowl",   a:"swipe",  fx:"foxfire", say:"낮게 살금살금 오다 앞발로 할퀴어요"},
+  fox:      {g:"bound",   a:"bite",   fx:"bite",    say:"껑충껑충 뛰어와 덥석 물어요"},
+  thief:    {g:"sneak",   a:"jab",    fx:"coin",    say:"웅크려 잰걸음으로 와서 잽싸게 낚아채요"},
+  shield:   {g:"march",   a:"bash",   fx:"shock",   say:"쿵쿵 행군하다 방패로 밀쳐요"},
+  siege:    {g:"push",    a:"recoil", fx:"rock",    say:"수레를 밀며 몸을 숙이고, 쏠 때 뒤로 튕겨요"},
+  bat:      {g:"flutter", a:"dive",   fx:"claw",    say:"팔랑팔랑 흔들리며 날다 내리꽂아 할퀴어요"},
+  mole:     {g:"scurry",  a:"pop",    fx:"dirt",    say:"종종걸음으로 오다 솟구치며 들이받아요"},
+  centipede:{g:"slink",   a:"sting",  fx:"poison",  say:"마디마디 꿈틀거리다 독침으로 찔러요"},
+  boss:     {g:"stomp",   a:"slam",   fx:"quake",   say:"쿵쿵 땅을 울리며 와서 철퇴로 내리찍어요"},
+  lord:     {g:"stomp",   a:"smash",  fx:"voidq",   say:"땅을 울리며 와서 보랏빛 충격으로 내려쳐요"},
+  eoduk:    {g:"loom",    a:"engulf", fx:"dark",    say:"부풀었다 줄었다 떠밀려 오며 어둠으로 덮쳐요"},
+  bulgasari:{g:"plod",    a:"chomp",  fx:"spark",   say:"무겁게 좌우로 흔들리며 와서 쇠를 씹듯 물어뜯어요"},
+  gumiho:   {g:"prowl",   a:"tail",   fx:"foxfire", say:"낮게 어슬렁거리다 몸을 돌려 꼬리로 후려쳐요"},
+  egg:      {g:"wobble",  a:"butt",   fx:"crack",   say:"달걀처럼 데굴데굴 흔들리다 머리로 들이받아요"},
+  imugi:    {g:"slither", a:"strike", fx:"splash",  say:"좌우로 구불구불 기다 길게 튀어나와 물어요"},
+  jeoseung: {g:"glide",   a:"lash",   fx:"chain",   say:"발소리 없이 미끄러지듯 와서 쇠사슬을 휘둘러요"},
+  cheonyeo: {g:"drift",   a:"wail",   fx:"wail",    say:"머리칼을 흩날리며 떠다니다 곡소리로 할퀴어요"},
+  mul:      {g:"sway",    a:"drag",   fx:"splash",  say:"물에 젖은 듯 흐느적거리다 끌어당겨요"},
+  gangcheol:{g:"soar",    a:"breath", fx:null,      say:"몸을 기울이며 날다 불을 뿜어요"}
+};
+const MO_DUR = {slam:.55, smash:.6, tail:.55, engulf:.6, wail:.6, strike:.42, dive:.45, pop:.42, breath:.5};
+const moSeed = e => e._sd || (e._sd = 1 + Math.random()*9);
+// 걸음·서기·공격 몸짓 → 발밑 기준 이동·회전·늘이기. ph = 걸음 위상, mv = 움직이는 정도(0~1), dir = 보는 쪽(±1), ap = 공격 진행(0~1, 없으면 −1), tt = 시간(초)
+function moCore(type, r, ph, mv, dir, ap, tt){
+  const M0 = MO[type], o = {x:0, y:0, rot:0, sx:1, sy:1, al:1}; if (!M0) return o;
+  const S = Math.sin, A = Math.abs, w = mv, st = 1 - mv;
+  switch (M0.g){
+    case "waddle":  o.rot = S(ph)*.14*w; o.y = -A(S(ph))*r*.2*w; o.sy = 1 + .025*S(tt*2.1)*st; break;
+    case "bound":   { const j = A(S(ph*.8)); o.y = -j*r*.6*w; o.sx = 1 - .1*j*w + .08*(1 - j)*w; o.sy = 1 + .12*j*w - .1*(1 - j)*w; o.rot = dir*.18*S(ph*1.6)*w; if (st > .5) o.rot += S(tt*5)*.05; } break;
+    case "sneak":   o.sy = .86 + .04*S(tt*3)*st; o.rot = dir*.2*w; o.y = -A(S(ph*2.3))*r*.06*w; o.x = st*S(tt*1.7)*r*.06; break;
+    case "march":   o.y = -A(S(ph*.8))*r*.07*w; o.sy = 1 - .04*(1 - A(S(ph*.8)))*w; break;
+    case "push":    o.rot = dir*.24*w + dir*.05*st; o.y = -A(S(ph*1.2))*r*.05*w; break;
+    case "flutter": o.y = (S(ph*3.1)*.22 + S(ph*1.3 + 1)*.14)*r; o.x = S(ph*2.2)*r*.16; o.rot = S(ph*3.1)*.14; break;
+    case "scurry":  o.y = -A(S(ph*2.8))*r*.1*w; o.sx = 1.06; o.sy = .92; o.x = S(ph*5.6)*r*.03*w; if (st > .5) o.y = -A(S(tt*3))*r*.05; break;
+    case "slink":   break; // 지네는 따로 그린다(마디 물결)
+    case "stomp":   { const j = A(S(ph*.7)); o.y = -j*r*.12*w; o.rot = S(ph*.7)*.05*w; o.sy = 1 - .07*(1 - j)*w; o.sx = 1 + .05*(1 - j)*w; o.sy *= 1 + .03*S(tt*1.4)*st; } break;
+    case "loom":    { const b = 1 + .1*S(tt*1.3 + ph*.2); o.sx = b; o.sy = b; o.x = S(tt*.9)*r*.12; o.al = .82 + .18*S(tt*2.3); } break;
+    case "plod":    o.rot = S(ph*.6)*.1*w; o.y = -A(S(ph*.6))*r*.08*w; o.sx = 1 + .03*S(tt*1.1)*st; break;
+    case "prowl":   o.sy = .9; o.sx = 1.06; o.x = S(ph*1.2)*r*.1*w; o.rot = S(ph*1.2)*.09*w + S(tt*.8)*.04*st; break;
+    case "wobble":  o.rot = S(ph*1.4)*.28*w + S(tt*2)*.08*st; o.y = -A(S(ph*1.4))*r*.1*w; break;
+    case "slither": o.x = S(ph*1.5)*r*.28*w; o.rot = Math.cos(ph*1.5)*.16*w + S(tt*1.2)*.05*st; o.sx = 1.08; o.sy = .9; break;
+    case "glide":   o.y = -r*.1 + S(tt*1.1)*r*.05; o.rot = dir*.07*w; break;
+    case "drift":   o.y = S(tt*1.3)*r*.14; o.rot = S(tt*.9)*.1; o.x = S(tt*.7)*r*.1; o.al = .85 + .15*S(tt*1.9); break;
+    case "sway":    o.rot = S(ph*1.1)*.11*w + S(tt*1.4)*.06*st; o.sx = 1 + .05*S(tt*2.2); o.sy = 1 - .04*S(tt*2.2); break;
+    case "soar":    o.rot = dir*.22*w + S(tt*.8)*.1; o.y = S(tt*.8)*r*.16; break;
+  }
+  if (ap >= 0 && ap <= 1){ const k = S(Math.PI*ap);
+    switch (M0.a){
+      case "club":   o.rot += dir*(ap < .45 ? -.45*ap/.45 : -.45 + 1.05*Math.min(1, (ap - .45)/.2))*(ap > .7 ? 1 - (ap - .7)/.3 : 1); break;
+      case "swipe":  o.rot += dir*.55*k; o.x += dir*r*.2*k; break;
+      case "bite":   o.x += dir*r*.7*k; o.sx *= 1 + .18*k; o.sy *= 1 - .08*k; o.y -= r*.15*k; break;
+      case "jab":    o.x += dir*r*.45*S(Math.PI*Math.min(1, ap*1.6)); break;
+      case "bash":   o.x += dir*r*.4*k; o.sx *= 1 + .22*k; o.sy *= 1 - .12*k; break;
+      case "recoil": o.x -= dir*r*.25*k; o.rot -= dir*.12*k; break;
+      case "dive":   o.y += r*.75*k; o.rot += dir*.5*k; break;
+      case "pop":    o.sy *= 1 + .4*k; o.sx *= 1 - .18*k; o.y -= r*.35*k; break;
+      case "slam":   { const up = ap < .55 ? ap/.55 : 1 - (ap - .55)/.45; o.y -= r*.45*up*(ap < .55 ? 1 : 0); o.sy *= ap < .55 ? 1 + .18*up : 1 - .2*S(Math.PI*(ap - .55)/.45); o.sx *= ap < .55 ? 1 - .06*up : 1 + .16*S(Math.PI*(ap - .55)/.45); } break;
+      case "smash":  { const up = ap < .5 ? ap/.5 : 0; o.y -= r*.55*up; o.sy *= ap < .5 ? 1 + .2*up : 1 - .25*S(Math.PI*(ap - .5)/.5); o.sx *= ap < .5 ? 1 : 1 + .2*S(Math.PI*(ap - .5)/.5); } break;
+      case "engulf": o.sx *= 1 + .45*k; o.sy *= 1 + .35*k; o.al *= 1 - .3*k; break;
+      case "chomp":  o.x += dir*r*.3*k; o.sy *= 1 - .15*S(Math.PI*ap*3)*k; o.rot += -dir*.1*k; break;
+      case "tail":   o.rot += dir*Math.PI*2*ap; break;
+      case "butt":   o.x += dir*r*.55*k; o.rot += dir*.35*k; o.sx *= 1 + .2*k; break;
+      case "strike": o.x += dir*r*1.0*k; o.sx *= 1 + .35*k; o.sy *= 1 - .15*k; o.y -= r*.1*k; break;
+      case "lash":   o.rot += dir*(ap < .4 ? -.3*ap/.4 : -.3 + .6*(ap - .4)/.6)*(1 - ap*.5); break;
+      case "wail":   o.sx *= 1 + .14*k; o.sy *= 1 + .14*k; o.x += S(ap*60)*r*.05*k; break;
+      case "drag":   o.x -= dir*r*.35*k; o.rot -= dir*.15*k; o.sy *= 1 - .08*k; break;
+      case "breath": o.rot -= dir*.18*k; o.sx *= 1 + .08*k; break;
+      case "sting":  break;
+    } }
+  return o;
+}
+function moMv(e){ const x = e.x, y = e.y; if (e._lx == null){ e._lx = x; e._ly = y; e._mv = 1; } const d = Math.hypot(x - e._lx, y - e._ly); e._lx = x; e._ly = y; const want = d > .002 || (e.fly && !e.hold) ? 1 : 0; e._mv = e._mv*.86 + want*.14; return e._mv; }
+function moAp(e){ if (e.atkT0 == null || !R) return -1; const M0 = MO[e.type], d = M0 && MO_DUR[M0.a] || .38, p = (R.time - e.atkT0)/d; return p >= 0 && p <= 1 ? p : -1; }
+function moDir(e){ const ap = moAp(e); const tx = ap >= 0 && e.atkX != null ? e.atkX - e.x : (e.dx || 0); return tx < 0 ? -1 : 1; }
+// 적 하나를 몸짓을 입혀 그린다(발밑 기준). fn = 원래 그리기
+function moDraw(c, e, T, fn){
+  if (!MO[e.type] || e.type === "centipede"){ fn(); return; }
+  const E = ET[e.type], r = E.r*T*(e.grow || 1), mv = moMv(e), o = moCore(e.type, r, e.phase || 0, mv, moDir(e), moAp(e), (R ? R.time : 0) + moSeed(e));
+  const fx = e.x*T, fy = E.fly || E.semi ? e.y*T - T*.3 : e.y*T + r*.85;
+  c.save(); c.translate(fx + o.x, fy + o.y); if (o.rot) c.rotate(o.rot); if (o.sx !== 1 || o.sy !== 1) c.scale(o.sx, o.sy); c.translate(-fx, -fy); if (o.al < 1) c.globalAlpha *= o.al;
+  try { fn(); } finally { c.restore(); }
+}
+// 적이 한 번 때림: 동작 시작 + 맞는 자리 이펙트(같은 적은 0.2초 안에 겹치지 않게)
+function moHit(e, tx, ty){ if (!e || !R || !MO[e.type]) return; if (e.atkT0 != null && R.time - e.atkT0 < .22) return; e.atkT0 = R.time; e.atkX = tx; e.atkY = ty; const k = MO[e.type].fx; if (k) mfx(k, tx, ty, tx >= e.x ? 1 : -1, e.x, e.y); }
+function moSwing(e, tx, ty){ if (!e || !R) return; if (e._mT > R.time) return; e._mT = R.time + (foeA(e.type).rate || 1.2)*(.85 + Math.random()*.3); moHit(e, tx, ty); } // 맞붙어 계속 치는 동안(피해는 그대로 초당) 주기마다 한 번 휘두른다
+const MFX_DUR = {thud:.45, foxfire:.55, bite:.32, coin:.5, shock:.4, rock:.45, claw:.35, dirt:.55, poison:.6, quake:.7, voidq:.8, dark:.7, spark:.4, crack:.45, splash:.55, chain:.45, wail:.7, pierce:.25, xslash:.32, bonk:.35, charge:.45, slash2:.3, muzzle:.35, javhit:.35, stonehit:.4, sealhit:.4};
+function mfx(k, x, y, dir, sx, sy){ if (!R) return; if (!R.mfx) R.mfx = []; if (R.mfx.length > 90) R.mfx.shift(); R.mfx.push({k, x, y, dir:dir || 1, sx:sx == null ? x : sx, sy:sy == null ? y : sy, t:R.time, dur:MFX_DUR[k] || .4, sd:Math.random()*6.28}); }
+function drawMfx(c, f, T){
+  const p = Math.min(1, Math.max(0, (R.time - f.t)/f.dur)), a = 1 - p, x = f.x*T, y = f.y*T, d = f.dir, L = Math.max(1.5, T*.045);
+  c.save(); c.lineCap = "round"; c.lineJoin = "round";
+  const ring = (rad, col, lw) => { c.strokeStyle = col; c.lineWidth = lw; ellipse(c, x, y + T*.15, rad, rad*.42); c.stroke(); };
+  const dots = (n, col, spd, up, sz) => { for (let i = 0; i < n; i++){ const an = f.sd + i*6.28/n, rr2 = spd*p*T; c.fillStyle = col; circle(c, x + Math.cos(an)*rr2, y + Math.sin(an)*rr2*.5 - up*p*T + up*p*p*T*1.4, sz*T*(1 - p*.5)); c.fill(); } };
+  switch (f.k){
+    case "thud":    c.globalAlpha = a; ring(T*(.15 + .45*p), "rgba(150,120,80,.9)", L); dots(5, "rgba(140,110,70,.8)", .5, .3, .05); break;
+    case "foxfire": c.globalAlpha = a; for (let i = 0; i < 4; i++){ const an = -1.2 + i*.5 + p*1.5*d; c.fillStyle = i % 2 ? "rgba(120,190,255,.9)" : "rgba(200,235,255,.9)"; circle(c, x + Math.cos(an)*T*.35*d, y - T*.2 + Math.sin(an)*T*.25, T*(.09 - .05*p)); c.fill(); } break;
+    case "bite":    { const g = T*.22*(1 - Math.min(1, p*2)); c.globalAlpha = a; c.strokeStyle = "#FFB45A"; c.lineWidth = L*1.3; c.beginPath(); c.arc(x, y - T*.25 - g, T*.18, Math.PI*.15, Math.PI*.85); c.stroke(); c.beginPath(); c.arc(x, y - T*.25 + g, T*.18, -Math.PI*.85, -Math.PI*.15); c.stroke(); if (p > .4) dots(4, "#FFD27A", .35, .1, .035); } break;
+    case "coin":    c.globalAlpha = a; c.fillStyle = "#FFD45A"; c.font = "700 " + Math.round(T*.26) + "px sans-serif"; c.textAlign = "center"; c.fillText("✦", x + d*T*.2*p, y - T*.4 - T*.4*p); dots(3, "#FFE89A", .3, .4, .03); break;
+    case "shock":   c.globalAlpha = a; c.strokeStyle = "rgba(240,240,255,.9)"; c.lineWidth = L*1.4; c.beginPath(); c.arc(x - d*T*.25, y - T*.2, T*(.25 + .3*p), d > 0 ? -0.9 : Math.PI - 0.9, d > 0 ? 0.9 : Math.PI + 0.9); c.stroke(); break;
+    case "rock":    c.globalAlpha = a; dots(6, "#8A7E70", .55, .45, .05); break;
+    case "claw":    { c.globalAlpha = a; c.strokeStyle = "rgba(235,220,255,.95)"; c.lineWidth = L; const q = Math.min(1, p*3); for (let i = -1; i <= 1; i++){ c.beginPath(); c.moveTo(x - T*.2 + i*T*.1, y - T*.5); c.lineTo(x - T*.2 + i*T*.1 + T*.35*q, y - T*.5 + T*.4*q); c.stroke(); } } break;
+    case "dirt":    c.globalAlpha = a; dots(8, "#7A5A34", .5, .7, .055); break;
+    case "poison":  c.globalAlpha = a; dots(6, "#8EE06A", .35, .25, .045); c.fillStyle = "rgba(120,220,90,.25)"; circle(c, x, y - T*.15, T*.3*(.5 + p)); c.fill(); break;
+    case "quake":   c.globalAlpha = a; ring(T*(.25 + .9*p), "rgba(120,90,60,.95)", L*1.8); ring(T*(.1 + .55*p), "rgba(200,170,120,.7)", L); c.strokeStyle = "rgba(60,40,25,.8)"; c.lineWidth = L; for (let i = 0; i < 5; i++){ const an = f.sd + i*1.26; c.beginPath(); c.moveTo(x, y + T*.15); c.lineTo(x + Math.cos(an)*T*.55*Math.min(1, p*2), y + T*.15 + Math.sin(an)*T*.25*Math.min(1, p*2)); c.stroke(); } break;
+    case "voidq":   c.globalAlpha = a; ring(T*(.3 + 1.1*p), "rgba(170,90,240,.95)", L*2); ring(T*(.15 + .6*p), "rgba(230,190,255,.7)", L); dots(6, "rgba(190,120,255,.8)", .8, .4, .05); break;
+    case "dark":    { c.globalAlpha = a*.8; const g = c.createRadialGradient(x, y - T*.2, 0, x, y - T*.2, T*(.3 + .5*p)); g.addColorStop(0, "rgba(10,5,25,.95)"); g.addColorStop(1, "rgba(10,5,25,0)"); c.fillStyle = g; circle(c, x, y - T*.2, T*(.3 + .5*p)); c.fill(); } break;
+    case "spark":   c.globalAlpha = a; c.strokeStyle = "#FFE07A"; c.lineWidth = L*.8; for (let i = 0; i < 7; i++){ const an = f.sd + i*.9, r1 = T*.08, r2 = T*(.15 + .35*p); c.beginPath(); c.moveTo(x + Math.cos(an)*r1, y - T*.25 + Math.sin(an)*r1); c.lineTo(x + Math.cos(an)*r2, y - T*.25 + Math.sin(an)*r2); c.stroke(); } break;
+    case "crack":   { c.globalAlpha = a; c.strokeStyle = "rgba(255,255,245,.95)"; c.lineWidth = L; const R2 = T*(.2 + .35*p); c.beginPath(); for (let i = 0; i <= 10; i++){ const an = i*.628, rr2 = R2*(i % 2 ? .7 : 1); const px2 = x + Math.cos(an)*rr2, py2 = y - T*.25 + Math.sin(an)*rr2*.8; if (i) c.lineTo(px2, py2); else c.moveTo(px2, py2); } c.stroke(); } break;
+    case "splash":  c.globalAlpha = a; dots(8, "rgba(120,200,215,.9)", .5, .55, .05); ring(T*(.15 + .4*p), "rgba(150,220,230,.8)", L); break;
+    case "chain":   { c.globalAlpha = a; const ex = (f.sx - f.x)*T, ey = (f.sy - f.y)*T, Ln = Math.hypot(ex, ey) || 1, kx = ex/Ln, ky = ey/Ln, len = Math.min(Ln, T*.9)*(1 - p*.6); c.strokeStyle = "#3A3A46"; c.lineWidth = L*1.2; c.beginPath(); c.moveTo(x, y - T*.25); c.lineTo(x + kx*len, y - T*.25 + ky*len); c.stroke(); c.strokeStyle = "#9A9AB0"; c.lineWidth = L*.7; for (let i = 0; i < 5; i++){ const q = i/5; c.beginPath(); ellipse(c, x + kx*len*q, y - T*.25 + ky*len*q, T*.05, T*.035); c.stroke(); } } break;
+    case "wail":    c.globalAlpha = a; for (let i = 0; i < 3; i++){ const q = Math.min(1, p*1.3 + i*.15); c.strokeStyle = "rgba(220,230,255," + (.8 - i*.2) + ")"; c.lineWidth = L; c.beginPath(); c.arc(x, y - T*.3, T*(.15 + .5*q), 0, Math.PI*2); c.stroke(); } break;
+    case "pierce":  { c.globalAlpha = a; c.strokeStyle = "rgba(255,255,255,.95)"; c.lineWidth = L*1.2; const q = Math.min(1, p*3); c.beginPath(); c.moveTo(x - d*T*.45, y - T*.22); c.lineTo(x - d*T*.45 + d*T*.6*q, y - T*.22); c.stroke(); c.fillStyle = "#FFF7D0"; circle(c, x + d*T*.12, y - T*.22, T*.06*(1 - p)); c.fill(); } break;
+    case "xslash":  { c.globalAlpha = a; c.strokeStyle = "rgba(255,248,225,.95)"; c.lineWidth = L*1.2; const q = Math.min(1, p*2.5), q2 = Math.min(1, Math.max(0, p*2.5 - .5)); c.beginPath(); c.moveTo(x - T*.25, y - T*.5); c.lineTo(x - T*.25 + T*.5*q, y - T*.5 + T*.45*q); c.stroke(); if (q2 > 0){ c.beginPath(); c.moveTo(x + T*.25, y - T*.5); c.lineTo(x + T*.25 - T*.5*q2, y - T*.5 + T*.45*q2); c.stroke(); } } break;
+    case "slash2":  { c.globalAlpha = a; c.strokeStyle = "rgba(255,248,225,.95)"; c.lineWidth = L*1.2; const q = Math.min(1, p*2.5); c.beginPath(); c.moveTo(x + T*.25, y - T*.5); c.lineTo(x + T*.25 - T*.5*q, y - T*.5 + T*.45*q); c.stroke(); } break;
+    case "bonk":    c.globalAlpha = a; c.fillStyle = "#FFE27A"; for (let i = 0; i < 6; i++){ const an = f.sd + i*1.05, r1 = T*(.06 + .2*p); c.beginPath(); c.moveTo(x, y - T*.4); c.lineTo(x + Math.cos(an)*r1, y - T*.4 + Math.sin(an)*r1); c.lineTo(x + Math.cos(an + .3)*r1*.4, y - T*.4 + Math.sin(an + .3)*r1*.4); c.closePath(); c.fill(); } break;
+    case "charge":  c.globalAlpha = a; c.strokeStyle = "rgba(255,240,200,.9)"; c.lineWidth = L*1.8; c.beginPath(); c.arc(x - d*T*.3, y - T*.2, T*(.3 + .25*p), d > 0 ? -1.1 : Math.PI - 1.1, d > 0 ? 1.1 : Math.PI + 1.1); c.stroke(); dots(6, "rgba(180,150,100,.8)", .45, .15, .05); break;
+    case "muzzle":  c.globalAlpha = a; c.fillStyle = "rgba(255,220,120," + (1 - p) + ")"; circle(c, x + d*T*.3, y - T*.35, T*.12*(1 - p)); c.fill(); dots(5, "rgba(200,200,200,.7)", .35, .35, .07); break;
+    case "javhit":  c.globalAlpha = a; c.strokeStyle = "rgba(255,240,210,.95)"; c.lineWidth = L; for (let i = 0; i < 4; i++){ const an = f.sd + i*1.57, r2 = T*(.1 + .25*p); c.beginPath(); c.moveTo(x, y - T*.2); c.lineTo(x + Math.cos(an)*r2, y - T*.2 + Math.sin(an)*r2); c.stroke(); } break;
+    case "stonehit":c.globalAlpha = a; dots(6, "#9A8E80", .45, .3, .05); ring(T*(.1 + .3*p), "rgba(160,150,140,.8)", L); break;
+    case "sealhit": c.globalAlpha = a; c.strokeStyle = "rgba(255,215,110,.95)"; c.lineWidth = L; c.beginPath(); c.arc(x, y - T*.25, T*(.12 + .3*p), f.sd, f.sd + Math.PI*1.5); c.stroke(); break;
+  }
+  c.restore();
+}
+/* 장병: 종류마다 맞는 자리 이펙트(창 찌르기 섬광, 칼 엇갈려 두 번 베기, 의병 몽둥이 별, 기마 돌격 호). 궁병은 화살 그대로 */
+function muFx(u, k, foe){ if (!foe || !R) return; const d = foe.x >= u.x ? 1 : -1;
+  if (k === "spear") mfx("pierce", foe.x, foe.y, d);
+  else if (k === "sword"){ u.swN = (u.swN | 0) + 1; mfx(u.swN % 2 ? "xslash" : "slash2", foe.x, foe.y, d); }
+  else if (k === "militia") mfx("bonk", foe.x, foe.y, d);
+  else if (k === "cavalry") mfx("charge", foe.x, foe.y, d); }
+/* 장군: 평소 공격(무기)과 걸음이 사람마다 다르다 */
+const HERO_MO = {
+  gwon:        {shot:"arrow",  g:"march",  say:"또박또박 걷고, 활을 크게 당겨 쏴요"},
+  yeon:        {shot:"charm",  g:"skip",   say:"사뿐사뿐 뛰듯 걷고, 손목을 튕겨 부적을 날려요"},
+  ansi:        {shot:"heavy",  g:"stride", say:"성큼성큼 걷고, 무거운 장궁 화살을 쏴요"},
+  parkseo:     {shot:"javelin",g:"guard",  say:"방패를 앞세워 묵직하게 걷고, 짧은 창을 던져요"},
+  kimyunhu:    {shot:"twin",   g:"calm",   say:"스님처럼 조용히 걷고, 화살 두 발을 잇달아 쏴요"},
+  leejeongam:  {shot:"stone",  g:"flag",   say:"깃발을 흔들며 걷고, 돌팔매를 던져요"},
+  kimsimin:    {shot:"gun",    g:"command",say:"당당하게 걷고, 승자총통을 쏴요(연기)"},
+  jeongyakyong:{shot:"bolt",   g:"shuffle",say:"종종걸음으로 걷고, 손쇠뇌 살을 쏴요"},
+  yanghunsu:   {shot:"musket", g:"crouch", say:"몸을 낮춰 재빨리 움직이고, 조총을 쏴요(불꽃·연기)"}
+};
+const heroMo = k => HERO_MO[k] || HERO_MO.gwon;
+function heroShotFx(h, tg){ const m = heroMo(h.k), d = tg.x >= h.x ? 1 : -1; h.atkT0 = R.time; h.atkX = tg.x;
+  if (m.shot === "gun" || m.shot === "musket") mfx("muzzle", h.x, h.y - .1, d); return m.shot; }
+function heroHitFx(p){ if (!p || !p.hs || !p.tg) return; const x = p.tg.x, y = p.tg.y, d = x >= p.x ? 1 : -1;
+  if (p.hs === "javelin" || p.hs === "bolt" || p.hs === "heavy") mfx("javhit", x, y, d); else if (p.hs === "stone") mfx("stonehit", x, y, d); else if (p.hs === "charm") mfx("sealhit", x, y, d); else if (p.hs === "gun" || p.hs === "musket") mfx("spark", x, y, d); }
+// 장군 몸짓: 걸음(gw = 걸음 위상), 쏠 때 자세. 발밑 기준 변환을 돌려준다
+function heroPose(h, T){ const m = heroMo(h.k), S = Math.sin, A = Math.abs, ph = h.walk || 0, tt = (R ? R.time : 0), mv = dist(h.x, h.y, h.tx == null ? h.x : h.tx, h.ty == null ? h.y : h.ty) > .1 ? 1 : 0, f = h.face < 0 ? -1 : 1, o = {y:0, x:0, rot:0, sx:1, sy:1};
+  switch (m.g){
+    case "march":   o.y = -A(S(ph))*T*.05*mv; o.sy = 1 + .02*S(tt*2)*(1 - mv); break;
+    case "skip":    o.y = -A(S(ph*1.3))*T*.11*mv - A(S(tt*2.4))*T*.015*(1 - mv); o.rot = S(ph*1.3)*.08*mv; break;
+    case "stride":  o.y = -A(S(ph*.7))*T*.09*mv; o.rot = f*.05*mv; break;
+    case "guard":   o.y = -A(S(ph*.8))*T*.03*mv; o.rot = S(ph*.8)*.06*mv; o.sx = 1.04; o.sy = .97; break;
+    case "calm":    o.y = -T*.01 - S(tt*1.2)*T*.01; o.rot = 0; break;
+    case "flag":    o.y = -A(S(ph))*T*.05*mv; o.rot = S(tt*2.2)*.07; break;
+    case "command": o.y = -A(S(ph*.9))*T*.05*mv; o.sy = 1 + .03*(1 - mv); break;
+    case "shuffle": o.y = -A(S(ph*2))*T*.025*mv; o.rot = f*.08*mv; break;
+    case "crouch":  o.sy = .9 + .04*(1 - mv); o.rot = f*.12*mv; o.y = -A(S(ph*1.6))*T*.04*mv; break;
+  }
+  const ap = h.atkT0 != null ? (tt - h.atkT0)/.32 : -1;
+  if (ap >= 0 && ap <= 1){ const k = S(Math.PI*ap), d = h.atkX != null ? (h.atkX >= h.x ? 1 : -1) : f;
+    switch (m.shot){
+      case "arrow": case "heavy": case "twin": case "bolt": o.rot -= d*.1*k; o.x -= d*T*.04*k; break; // 시위를 당기며 몸을 젖힘
+      case "charm":   o.rot += d*.25*k; o.y -= T*.04*k; break; // 손목 튕기기
+      case "javelin": o.rot += d*(ap < .4 ? -.3*ap/.4 : -.3 + .55*(ap - .4)/.6)*(1 - ap*.4); o.x += d*T*.06*k; break; // 젖혔다 던지기
+      case "stone":   o.rot += d*(ap < .5 ? -.35*ap/.5 : -.35 + .7*(ap - .5)/.5)*(1 - ap*.5); break; // 팔매 돌리기
+      case "gun": case "musket": o.x -= d*T*.09*k; o.rot -= d*.08*k; break; // 반동
+    } }
+  return o; }
+// 장군 화살·던지기 모양(날아가는 동안)
+function drawHeroShot(c, p, T){ const hs = p.hs; if (!hs || hs === "arrow") return false;
+  c.save(); c.translate(p.x*T, p.y*T); c.rotate(p.a || 0);
+  if (hs === "charm"){ c.rotate(((R ? R.time : 0)*14) % 6.28); c.fillStyle = "#F6E7A8"; c.fillRect(-T*.1, -T*.07, T*.2, T*.14); c.fillStyle = "#C8452F"; c.fillRect(-T*.03, -T*.05, T*.06, T*.1); }
+  else if (hs === "heavy"){ c.strokeStyle = "#2A1A0C"; c.lineWidth = Math.max(2.5, T*.06); c.beginPath(); c.moveTo(-T*.32, 0); c.lineTo(T*.16, 0); c.stroke(); c.fillStyle = "#C83A2A"; c.beginPath(); c.moveTo(-T*.32, 0); c.lineTo(-T*.42, -T*.07); c.lineTo(-T*.36, 0); c.lineTo(-T*.42, T*.07); c.fill(); c.fillStyle = "#D8D8D8"; c.beginPath(); c.moveTo(T*.24, 0); c.lineTo(T*.14, -T*.06); c.lineTo(T*.14, T*.06); c.fill(); }
+  else if (hs === "twin"){ c.strokeStyle = "rgba(255,245,210,.5)"; c.lineWidth = Math.max(1, T*.025); for (const oy of [-T*.07, T*.07]){ c.beginPath(); c.moveTo(-T*.35, oy); c.lineTo(T*.1, oy); c.stroke(); } c.strokeStyle = "#2A1A0C"; c.lineWidth = Math.max(1, T*.025); for (const oy of [-T*.07, T*.07]){ c.beginPath(); c.moveTo(-T*.12, oy); c.lineTo(T*.12, oy); c.stroke(); } }
+  else if (hs === "javelin"){ c.strokeStyle = "#6A4A28"; c.lineWidth = Math.max(2, T*.045); c.beginPath(); c.moveTo(-T*.4, 0); c.lineTo(T*.2, 0); c.stroke(); c.fillStyle = "#E0E4EA"; c.beginPath(); c.moveTo(T*.32, 0); c.lineTo(T*.18, -T*.06); c.lineTo(T*.18, T*.06); c.fill(); }
+  else if (hs === "stone"){ c.rotate(((R ? R.time : 0)*9) % 6.28); c.fillStyle = "#8C8278"; c.beginPath(); c.moveTo(-T*.08, -T*.05); c.lineTo(T*.07, -T*.07); c.lineTo(T*.09, T*.05); c.lineTo(-T*.06, T*.07); c.closePath(); c.fill(); }
+  else if (hs === "bolt"){ c.strokeStyle = "#3A2A1A"; c.lineWidth = Math.max(2, T*.04); c.beginPath(); c.moveTo(-T*.18, 0); c.lineTo(T*.14, 0); c.stroke(); c.fillStyle = "#B0B8C0"; c.beginPath(); c.moveTo(T*.2, 0); c.lineTo(T*.12, -T*.05); c.lineTo(T*.12, T*.05); c.fill(); }
+  else if (hs === "gun" || hs === "musket"){ c.fillStyle = "rgba(255,210,120,.45)"; c.beginPath(); c.ellipse(-T*.12, 0, T*.16, T*.05, 0, 0, 6.28); c.fill(); c.fillStyle = "#222"; circle(c, 0, 0, T*(hs === "gun" ? .07 : .05)); c.fill(); }
+  c.restore(); return true; }
 function drawEnemy(c, e, T){
   if (e.under > 0){ // 땅속: 흙더미만
     const px = e.x*T, py = e.y*T, w = T*.3 + Math.sin(e.phase*2)*T*.03;
@@ -1988,12 +2171,13 @@ function drawEnemy(c, e, T){
     return;
   }
   if (e.boss && !e.clone){ drawBossBody(c, e, T); drawBossHead(c, e, T); return; } // v10 대장 몸짓·머리 위 큰 막대
-  if (e.dash || e.clone || e.inv > 0){ c.save(); c.globalAlpha = e.inv > 0 ? .45 + .25*Math.sin(e.phase*3) : e.clone ? .62 : .55; try { drawEnemy0(c, e, T); } finally { c.restore(); } drawLv(c, e, T); return; }
-  if (e.thief){ drawEnemy0(c, e, T); drawThiefBag(c, e, T); drawLv(c, e, T); return; } // 요청 24
+  if (e.dash || e.clone || e.inv > 0){ c.save(); c.globalAlpha = e.inv > 0 ? .45 + .25*Math.sin(e.phase*3) : e.clone ? .62 : .55; try { moDraw(c, e, T, () => drawEnemy0(c, e, T)); } finally { c.restore(); } drawLv(c, e, T); return; }
+  if (e.thief){ moDraw(c, e, T, () => drawEnemy0(c, e, T)); drawThiefBag(c, e, T); drawLv(c, e, T); return; } // 요청 24
   const mv = moveOf(e), px = e.x*T, py = e.y*T;
   if (e.type === "centipede" && !ART.img.e_centipede){ drawCentipede(c, e, T); drawLv(c, e, T); return; }
   if (e.type === "siege" && !ART.img.e_siege) drawSiegeCart(c, e, T);
-  if (mv === "crawl"){ // 기기: 납작하게, 좌우로 꿈틀
+  if (MO[e.type] && e.type !== "centipede") moDraw(c, e, T, () => drawEnemy0(c, e, T)); // 요청 45: 종류마다 다른 걸음·공격 몸짓
+  else if (mv === "crawl"){ // 기기: 납작하게, 좌우로 꿈틀
     c.save(); c.translate(px + Math.sin(e.phase*4)*T*.04, py + T*.2); c.scale(1.18, .68 + .05*Math.sin(e.phase*4)); c.translate(-px, -(py + T*.2));
     try { drawEnemy0(c, e, T); } finally { c.restore(); }
   } else if (mv === "run"){ // 뛰기: 통통 빠르게
@@ -2043,7 +2227,7 @@ function drawEnemy0(c, e, T){
       base = gy - T*.22 + Math.sin(e.phase*1.6)*T*.06;
     } else {
       c.fillStyle = "rgba(0,0,0,.28)"; ellipse(c, px, gy + r*.85, r*.85, r*.28); c.fill();
-      base = gy + r*.85 - Math.abs(Math.sin(e.phase))*r*.28;
+      base = gy + r*.85 - (MO[e.type] ? 0 : Math.abs(Math.sin(e.phase))*r*.28); // 요청 45: 걸음은 moDraw가 맡음
     }
     if (e.boss){ const col = {gumiho:"110,170,255", mul:"90,170,190", cheonyeo:"200,220,255", imugi:"80,200,160", bulgasari:"255,150,60"}[e.type] || "255,200,120", g2 = c.createRadialGradient(px, base - h*.45, r*.3, px, base - h*.45, r*1.9); g2.addColorStop(0,"rgba("+col+",.38)"); g2.addColorStop(1,"rgba("+col+",0)"); c.fillStyle = g2; circle(c, px, base - h*.45, r*1.9); c.fill(); } // 대장 기운(구미호 꼬리의 푸른 여우불 — 분신에는 없다)
     if (e.type === "lord"){ const g = c.createRadialGradient(px, base - h*.5, r*.4, px, base - h*.5, r*2.1); g.addColorStop(0,"rgba(150,70,220,.4)"); g.addColorStop(1,"rgba(150,70,220,0)"); c.fillStyle = g; circle(c, px, base - h*.5, r*2.1); c.fill(); }
@@ -2950,7 +3134,7 @@ const heroOpen = k => k === "gwon" || (M.heroes[k] || 0) > 0 || STAGES.some((s, 
     const mt = G.my[f.lane], tgt = prey || (mt.hp > 0 ? mt : G.castle);
     const reach = F.range + (tgt.kind ? (tgt.kind === "castle" ? 1.1 : .55) : .25);
     if (dist(f.x, f.y, tgt.x, tgt.y) <= reach){
-      if (f.cd <= 0){ f.cd = f.type === "boss" ? 1.6 : 1.1; burst(tgt.x, tgt.y - .2, "#B78AF5", .22); hitOurs(tgt, F.dmg*G.lm*(tgt.kind && f.type === "mole" ? 1.2 : 1), f.type); }
+      if (f.cd <= 0){ f.cd = f.type === "boss" ? 1.6 : 1.1; f.atkT0 = G.t; f.atkX = tgt.x; burst(tgt.x, tgt.y - .2, "#B78AF5", .22); hitOurs(tgt, F.dmg*G.lm*(tgt.kind && f.type === "mole" ? 1.2 : 1), f.type); }
       return; }
     let gx, gy;
     if (tgt === prey){ gx = prey.x; gy = prey.y; }
@@ -3173,7 +3357,11 @@ const heroOpen = k => k === "gwon" || (M.heroes[k] || 0) > 0 || STAGES.some((s, 
       if (f.under > 0){ ctx.fillStyle = "#6E5332"; ctx.beginPath(); ctx.ellipse(x, by, Tr*.28, Tr*.14, 0, Math.PI, 0); ctx.fill(); return; }
       const ei = EIMG[f.type], E = ET[f.type], h = Tr*E.r*(ei ? ei[2] : 3)*.95, y = by - (f.fly ? Tr*.35 : 0) + Math.abs(Math.sin(f.walk))*Tr*-.04;
       ctx.fillStyle = "rgba(0,0,0,.28)"; ellipse(ctx, x, by, Tr*.22, Tr*.08); ctx.fill();
-      if (!(ei && ART.drawAt(ctx, ei[0], x, y, h, false, f.hitT > 0, rdpr))){ ctx.fillStyle = E.skin || "#7A4AA0"; circle(ctx, x, y - h*.4, Tr*E.r); ctx.fill(); }
+      const mvR = (() => { const d0 = f._lx == null ? 1 : Math.hypot(f.x - f._lx, f.y - f._ly); f._lx = f.x; f._ly = f.y; f._mvR = (f._mvR == null ? 1 : f._mvR)*.85 + (d0 > .002 ? .15 : 0); return f._mvR; })();
+      const mo = MO[f.type] ? moCore(f.type, Tr*E.r, f.walk || 0, mvR, (f.atkX != null && G.t - f.atkT0 < 1 ? f.atkX - f.x : 0) < 0 ? -1 : 1, (() => { if (f.atkT0 == null) return -1; const q = (G.t - f.atkT0)/(MO_DUR[MO[f.type].a] || .38); return q >= 0 && q <= 1 ? q : -1; })(), G.t + (f._sd || (f._sd = Math.random()*9))) : null; // 요청 45
+      if (mo){ ctx.save(); ctx.translate(x + mo.x, by + mo.y); if (mo.rot) ctx.rotate(mo.rot); ctx.scale(mo.sx, mo.sy); ctx.translate(-x, -by); if (mo.al < 1) ctx.globalAlpha *= mo.al; }
+      let drew = false; try { drew = !!(ei && ART.drawAt(ctx, ei[0], x, y, h, false, f.hitT > 0, rdpr)); } finally { if (mo) ctx.restore(); }
+      if (!drew){ ctx.fillStyle = E.skin || "#7A4AA0"; circle(ctx, x, y - h*.4, Tr*E.r); ctx.fill(); }
       if (f.slowT > 0){ ctx.strokeStyle = "rgba(150,200,255,.8)"; ctx.lineWidth = 2; ellipse(ctx, x, by, Tr*.3, Tr*.12); ctx.stroke(); }
       if (f.type === "lord" && f.wind > 0){ const k = 1 - f.wind/FINAL.wind; ctx.fillStyle = "rgba(220,40,40,"+(.15 + .25*k)+")"; circle(ctx, f.x*Tr, f.y*Tr, FINAL.smashR*Tr); ctx.fill(); ctx.strokeStyle = "rgba(255,80,80,.9)"; ctx.lineWidth = 3; circle(ctx, f.x*Tr, f.y*Tr, FINAL.smashR*Tr*k); ctx.stroke(); }
       bar(x, y - h - Tr*.1, Tr*.5, f.hp/f.max, "#E05A4A"); }}));
@@ -4158,7 +4346,7 @@ function unitVs(k, e){ const U = UNITS[k], ks = foeKinds(e.type); let m = 1; if 
 const unitDef = (k, rank) => Math.min(.5, ((UNITS[k] && UNITS[k].def) || 0) + .05*(rank || 0));
 const solDefMul = u => 1 - unitDef(u.k || (u.t && u.t.unit) || "spear", u.rank | 0); // 장병이 받는 피해 배율(방어)
 function unitStrike(u, k, foe, dmg){ // 장병의 한 번 공격: 상성 배율 + 유닛별 특기
-  if (!foe || foe.dead) return; const U = UNITS[k] || UNITS.spear, m = unitVs(k, foe)*(foe.fly && !U.ranged ? .5 : 1);
+  if (!foe || foe.dead) return; const U = UNITS[k] || UNITS.spear, m = unitVs(k, foe)*(foe.fly && !U.ranged ? .5 : 1); if (!U.ranged) muFx(u, k, foe); // 요청 45
   hit(foe, dmg*m); if (m > 1.01 && Math.random() < .35) addText(foe.x, foe.y - .55, "상성!", "#FFE08A", .6);
   if (U.cleave){ let b = null, bd = .85; for (const o of R.enemies){ if (o === foe || o.dead || o.fly || o.under > 0) continue; const d = dist(foe.x, foe.y, o.x, o.y); if (d < bd){ bd = d; b = o; } } if (b) hit(b, dmg*.5*unitVs(k, b)); } // 칼병: 곁의 적 하나 더(50%)
   if (U.wall && moveOf(foe) === "run" && !foe.walled && !foe.dead){ foe.walled = true; R.fx.push({k:"aura", x:foe.x, y:foe.y, rad:.3, t:0, at:0, dur:.6, dmg:0, slow:1}); addText(foe.x, foe.y - .5, "창벽!", "#BFE6FF", .7); } // 창병: 뛰는 적을 0.6초 멈춤
@@ -4772,14 +4960,14 @@ function enemyHold(e, dt){
     if (e.firing > 0) e.firing -= dt;
     let tg = null, bd = E.siege.range + moundRange(e); R.towers.forEach(t => { if (t.ruin || hiddenT(t)) return; const d = dist(t.x + .5, t.y + .5, e.x, e.y); if (d < bd){ bd = d; tg = t; } });
     if (tg){ e.scd = (e.scd === undefined ? .8 : e.scd) - dt; e.dx = (tg.x + .5 - e.x) || e.dx;
-      if (e.scd <= 0){ e.scd = E.siege.rate; e.firing = .3; damageTower(tg, E.siege.dmg*atkOf(e)); burst(tg.x + .5, tg.y + .3, 6, "#A0968A", 1.2, .4, .07, "smoke"); Sound.play("cannon");
+      if (e.scd <= 0){ e.scd = E.siege.rate; e.firing = .3; moHit(e, tg.x + .5, tg.y + .3); damageTower(tg, E.siege.dmg*atkOf(e)); burst(tg.x + .5, tg.y + .3, 6, "#A0968A", 1.2, .4, .07, "smoke"); Sound.play("cannon");
         if (!R.toldSiege){ R.toldSiege = true; moveTip("siege", "포차 도깨비가 망루를 부수오! 멈춰 서서 쏠 때 잡으시오."); } }
       return true; }
   }
   if (R.m.fort && !e.fly && !(e.under > 0) && !e.inside && fortSmash(e, dt)) return true; // v10 S2
   if (e.blk){
     const u = e.blk; if (u.dead || (R.towers.indexOf(u.t) < 0 && !(R.tempB && R.tempB.indexOf(u.t) >= 0) && !(R.volB && R.volB.indexOf(u.t) >= 0)) || u.t.ruin || u.flee > 0){ e.blk = null; return false; }
-    { const dd = (E.hit || 8)*atkOf(e)*dt*solDefMul(u); u.hp -= dd; u.hacc = (u.hacc || 0) + dd; if (u.hacc >= 4){ ufxHurt(u, e, u.hacc); u.hacc = 0; } } if (u.hp <= 0){ soldierDie(u); return false; }
+    moSwing(e, u.x, u.y); { const dd = (E.hit || 8)*atkOf(e)*dt*solDefMul(u); u.hp -= dd; u.hacc = (u.hacc || 0) + dd; if (u.hacc >= 4){ ufxHurt(u, e, u.hacc); u.hacc = 0; } } if (u.hp <= 0){ soldierDie(u); return false; }
     return true;
   }
   return false;
@@ -4791,7 +4979,7 @@ function drawSoldiers(c, t, T){ // v10 요청 19: 종류마다 걸음, 숨쉬기
     if (u.runT > 0 && Math.random() < .3) R.parts.push({x:u.x + (Math.random() - .5)*.2, y:u.y + .15, vx:(Math.random() - .5)*.3, vy:-.2, life:.4, max:.4, size:.07, color:"#B89A6A", kind:"smoke"}); // 달려오는 먼지
     const kind = u.k || t.unit, U = UNITS[kind] || UNITS.spear, W = UFX.walk[kind] || UFX.walk.spear, rk = u.rank | 0, k = ART.img[U.img] ? U.img : ART.img.u_spear ? "u_spear" : null;
     const f = (u.lookT > 0 ? -u.face : u.face) < 0 ? -1 : 1, mv = u.mv || 0, ph = (u.walk || 0)*W[0], a = u.atk || 0, ap = Math.sin(Math.PI*(1 - a)), h = T*.62;
-    const bob = mv > .15 ? Math.abs(Math.sin(ph))*T*W[1] : 0, sway = mv > .15 ? Math.sin(ph)*.07 : 0, breath = mv > .15 ? 1 : 1 + Math.sin((u.bt || 0)*2.4 + u.i)*.028;
+    const bob = mv > .15 ? Math.abs(Math.sin(ph))*T*W[1] : 0, idle = (u.bt || 0) + (u.i || 0), sway = mv > .15 ? Math.sin(ph)*.07 : kind === "sword" ? Math.sin(idle*1.3)*.06 : kind === "militia" ? Math.sin(idle*3.1)*.03 : kind === "archer" ? -.03 : 0, breath = mv > .15 ? 1 : kind === "spear" ? 1 + Math.sin(idle*1.6)*.012 : 1 + Math.sin(idle*2.4)*.028; // 요청 45: 서 있을 때도 종류마다(칼병 무게 옮기기, 의병 들썩, 활병 몸 젖힘, 창병 버팀)
     let ox = 0, lean = sway;
     if (a > 0){ if (kind === "spear") ox = f*T*.14*ap; else if (kind === "sword" || kind === "militia"){ ox = f*T*.07*ap; lean += f*.18*ap; } else if (kind === "cavalry") ox = f*T*.1*ap; else if (kind === "archer") ox = -f*T*.03*ap; }
     if (U.horse && u.cav && u.cav.st === "out") lean += f*.14;
@@ -4806,7 +4994,8 @@ function drawSoldiers(c, t, T){ // v10 요청 19: 종류마다 걸음, 숨쉬기
     // 무기 동작
     if (a > 0){ c.save(); c.translate(px, py - T*.18); c.scale(f, 1); c.lineCap = "round";
       if (kind === "spear" || kind === "cavalry"){ c.strokeStyle = "rgba(90,60,30,.95)"; c.lineWidth = Math.max(1.5, T*.035); c.beginPath(); c.moveTo(T*.02, 0); c.lineTo(T*(.2 + .32*ap), -T*.02); c.stroke(); c.fillStyle = "rgba(235,240,250," + (.6 + .4*a) + ")"; c.beginPath(); c.moveTo(T*(.2 + .32*ap), -T*.06); c.lineTo(T*(.29 + .32*ap), -T*.02); c.lineTo(T*(.2 + .32*ap), T*.02); c.closePath(); c.fill(); }
-      else if (kind === "sword" || kind === "militia"){ c.strokeStyle = "rgba(255,250,230," + (a*.85) + ")"; c.lineWidth = Math.max(2, T*.06*a + T*.01); c.beginPath(); c.arc(T*.06, 0, T*.3, -1.4 + (1 - a)*.4, -1.4 + (1 - a)*.4 + 2.4*Math.min(1, (1 - a)*2.2 + .15)); c.stroke(); }
+      else if (kind === "militia"){ const an = -2.1 + 2.7*Math.min(1, (1 - a)*1.8); c.strokeStyle = "rgba(110,75,40,.95)"; c.lineWidth = Math.max(2, T*.05); c.beginPath(); c.moveTo(0, 0); c.lineTo(Math.cos(an)*T*.32, Math.sin(an)*T*.32); c.stroke(); c.fillStyle = "#7A5530"; circle(c, Math.cos(an)*T*.32, Math.sin(an)*T*.32, T*.06); c.fill(); } // 요청 45: 의병은 몽둥이를 머리 위에서 내려쳐요
+      else if (kind === "sword"){ if ((u.swN | 0) % 2) c.scale(1, -1); c.strokeStyle = "rgba(255,250,230," + (a*.85) + ")"; c.lineWidth = Math.max(2, T*.06*a + T*.01); c.beginPath(); c.arc(T*.06, 0, T*.3, -1.4 + (1 - a)*.4, -1.4 + (1 - a)*.4 + 2.4*Math.min(1, (1 - a)*2.2 + .15)); c.stroke(); }
       else if (kind === "archer"){ c.strokeStyle = "rgba(240,230,200,.8)"; c.lineWidth = Math.max(1, T*.02); c.beginPath(); c.arc(T*.12, 0, T*.16, -1.1, 1.1); c.stroke(); }
       c.restore(); }
     else if (kind === "archer" && u.aim && u.cd < .35){ const pull = 1 - Math.max(0, u.cd)/.35; c.save(); c.translate(px, py - T*.18); c.scale(f, 1); c.strokeStyle = "rgba(240,230,200,.85)"; c.lineWidth = Math.max(1, T*.02); c.beginPath(); c.arc(T*.12, 0, T*.16, -1.1, 1.1); c.stroke(); c.beginPath(); c.moveTo(T*.12 + Math.cos(-1.1)*T*.16, Math.sin(-1.1)*T*.16); c.lineTo(T*(.12 - .1*pull), 0); c.lineTo(T*.12 + Math.cos(1.1)*T*.16, Math.sin(1.1)*T*.16); c.stroke(); c.restore(); }
@@ -5160,7 +5349,7 @@ function moveEnemy(e, dt, slow){
 // 넓은 길에서 너무 겹치면 옆 자리를 조금 밀어낸다(칸 버킷으로 가까운 적만 비교)
 function moleSurface(e){ // 땅속 이동을 끝내고 지상으로(마름쇠 범위에 들어온 순간)
   if (!(e.under > 0)) return; e.under = 0; e.digCd = 3 + Math.random()*2; burst(e.x, e.y, 10, "#7A5C36", 1.6, .5, .07);
-  { const d = (ET[e.type].hit || 10)*atkOf(e)*2; foeUnits(u => { if (!u.dead && dist(u.x, u.y, e.x, e.y) <= .9) foeHurtUnit(u, d, e); }); const h = R.hero; if (h && !h.dead && dist(h.x, h.y, e.x, e.y) <= .9) heroHurt(h, d); } // 요청 34: 튀어나오며 한 번 세게
+  { moHit(e, e.x, e.y); const d = (ET[e.type].hit || 10)*atkOf(e)*2; foeUnits(u => { if (!u.dead && dist(u.x, u.y, e.x, e.y) <= .9) foeHurtUnit(u, d, e); }); const h = R.hero; if (h && !h.dead && dist(h.x, h.y, e.x, e.y) <= .9) heroHurt(h, d); } // 요청 34: 튀어나오며 한 번 세게
 }
 /* ---------- 장별 대장(구미호·물귀신·처녀귀신·이무기·불가사리) ---------- */
 function bossInit(e){
@@ -5398,10 +5587,8 @@ function drawBossBody(c, e, T){ // 대장 그림: 걸음마다 다른 몸짓
   c.save(); c.globalAlpha = a;
   try {
     if (e.rolling > 0 || e.daze > 0){ const cy = py - r*.6, ang = e.rolling > 0 ? e.zz*9*((e.dx || 0) >= 0 ? 1 : -1) : Math.sin(e.zz*20)*.25; c.translate(px, cy); c.rotate(ang); c.translate(-px, -cy); }
-    else if (e.type === "cheonyeo" || e.type === "mul"){ c.translate(0, -T*.08 - Math.sin(e.zz*2)*T*.06); }
-    else if (e.type === "imugi"){ const cy = py; c.translate(px, cy); c.rotate(Math.cos(e.zz*2.4)*.12); c.translate(-px, -cy); }
     else if (e.type === "bulgasari" && e.btg){ c.translate(Math.sin(e.zz*25)*T*.03, 0); }
-    drawEnemy0(c, e, T);
+    if (e.rolling > 0 || e.daze > 0) drawEnemy0(c, e, T); else moDraw(c, e, T, () => drawEnemy0(c, e, T)); // 요청 45: 대장마다 다른 걸음·공격
   } finally { c.restore(); }
   if (e.daze > 0){ c.fillStyle = "#FFE7A8"; c.font = "700 " + Math.round(T*.26) + "px sans-serif"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("✦ ✦", px, py - r*2.2); }
 }
@@ -5901,10 +6088,10 @@ function fortWallHit(e, dt){
   e.wcd = (e.wcd === undefined ? 1 + Math.random() : e.wcd) - dt; if (e.wcd > 0) return; e.wcd = 2.2;
   const G = R.base || R.grid; let tg = null, bd = 1.6;
   R.towers.forEach(t => { if (t.ruin || t.virtual || !G[t.y] || G[t.y][t.x] !== 8) return; const d = dist(t.x + .5, t.y + .5, e.x, e.y); if (d < bd){ bd = d; tg = t; } });
-  if (!tg) return; damageTower(tg, (ET[e.type].hit || 8)*atkOf(e)*.5); burst(tg.x + .5, tg.y + .5, 3, "#A0968A", .8, .25, .05, "smoke");
+  if (!tg) return; moHit(e, tg.x + .5, tg.y + .3); damageTower(tg, (ET[e.type].hit || 8)*atkOf(e)*.5); burst(tg.x + .5, tg.y + .5, 3, "#A0968A", .8, .25, .05, "smoke");
   if (!R.toldWall){ R.toldWall = true; moveTip("wallhit", "문 앞 요괴가 성벽 위 망루까지 치오! 내구도를 보고 물결 사이에 고치시오."); }
 }
-function hitGate(g, e){
+function hitGate(g, e){ moHit(e, g.x + .5, g.y + .5);
   const dmg = Math.round(gatePow(e)*(e.type === "bulgasari" && !e.elite ? BOSS_SKILL.bulgasari.gate : 1)*10)/10; // v10: 요괴 레벨이 문 부수는 힘
   if (e.type === "bulgasari" && e.grow < BOSS_SKILL.bulgasari.growMax){ e.grow = Math.min(BOSS_SKILL.bulgasari.growMax, e.grow + .05); const add = e.maxHp*.04; e.maxHp += add; e.hp += add; addText(e.x, e.y - 1, "쇠를 먹었다!", "#D9C29A", .9); } // 불가사리: 문을 칠 때마다 커진다(상한)
   g.hp = Math.max(0, g.hp - dmg); R.shake = Math.max(R.shake, 3);
@@ -5997,7 +6184,7 @@ function palaceHit(e, dt){ // 행궁 곁에 붙어 서서 주기마다 친다. �
   if (E.chief && !e.elite && R.st.bossLives && !e.hardSpawn) dmg *= Math.min(1, R.st.bossLives/(E.lives || 10)); // 앞 장 대장은 덜 아프게(예전 bossLives와 같은 뜻)
   dmg = Math.round(dmg*10)/10;
   R.lives = Math.max(0, R.lives - dmg); R.shake = Math.max(R.shake, E.lives > 1 ? 6 : 3); Sound.play("gate");
-  const pp = palaceSpot(); burst(pp[0] + (e.x - pp[0])*.5, pp[1] + (e.y - pp[1])*.5, 5, "#C9A35A", 1.3, .4, .06); addText(pp[0] + (Math.random() - .5)*.8, pp[1] - .8, "−" + powTxt(dmg), "#FF7A6A", .9);
+  const pp = palaceSpot(); moHit(e, pp[0] + (e.x - pp[0])*.5, pp[1] + (e.y - pp[1])*.5); burst(pp[0] + (e.x - pp[0])*.5, pp[1] + (e.y - pp[1])*.5, 5, "#C9A35A", 1.3, .4, .06); addText(pp[0] + (Math.random() - .5)*.8, pp[1] - .8, "−" + powTxt(dmg), "#FF7A6A", .9);
   if (M.set.vib && navigator.vibrate){ try { navigator.vibrate(E.lives > 1 ? 120 : 30); } catch(err){} }
   Cam.alert(pp[0], pp[1]);
   if (!R.toldPal){ R.toldPal = true; moveTip("palace", "요괴가 행궁 곁에 붙어 계속 치오! 장수와 장병으로 어서 잡으시오."); }
@@ -6014,7 +6201,7 @@ function oldGateHit(e, dt){ // 아래 성문 지도: 성문 앞에 서서 주기
 }
 function foeBlkSpecial(e, dt){ // true면 이번 프레임 막기에서 풀려 움직인다
   const u = e.blk; if (!u || u.dead) return false; const A = foeA(e.type);
-  if (e.type === "fox"){ e.bite = (e.bite || 0) + dt; if (e.bite < A.rate) return false; e.bite = 0; foeHurtUnit(u, (ET.fox.hit || 6)*atkOf(e)*1.5, e); if (u.tg === e) u.tg = null; e.blk = null; e.d += .6; addText(e.x, e.y - .5, "물고 빠짐!", "#FFC890", .8); return true; }
+  if (e.type === "fox"){ e.bite = (e.bite || 0) + dt; if (e.bite < A.rate) return false; e.bite = 0; moHit(e, u.x, u.y); foeHurtUnit(u, (ET.fox.hit || 6)*atkOf(e)*1.5, e); if (u.tg === e) u.tg = null; e.blk = null; e.d += .6; addText(e.x, e.y - .5, "물고 빠짐!", "#FFC890", .8); return true; }
   if (e.type === "centipede"){ e.pois = (e.pois || 0) - dt; if (e.pois <= 0){ e.pois = A.rate; u.poison = 3; u.poisonD = 2.5*atkOf(e); } }
   return false;
 }
@@ -6034,14 +6221,14 @@ function foeTick(dt){
       if (h && !h.dead && inCone(h.x, h.y)){ heroHurt(h, dmg); any = true; }
       R.towers.forEach(t => { if (!t.ruin && !t.virtual && inCone(t.x + .5, t.y + .5)){ damageTower(t, dmg*.5); t.burn = Math.max(t.burn || 0, 2); any = true; } });
       if (any) for (let i = 0; i < 10; i++){ const k = Math.random()*A.reach; R.parts.push({x:e.x + fx*k + (Math.random() - .5)*.4, y:e.y + fy*k + (Math.random() - .5)*.4, vx:fx*.6, vy:fy*.6, life:.45, max:.45, size:.08, color:"#FF8A3A", kind:"fire"}); }
-      e.fcd = any ? A.rate : .6; if (any) e.hold = A.rate + .2; continue;
+      e.fcd = any ? A.rate : .6; if (any){ e.hold = A.rate + .2; moHit(e, e.x + fx, e.y + fy); } continue;
     }
     let best = null, bd = A.reach, kind = null; // 할퀴기: 가장 가까운 장병·장수·성벽 위 궁수
     foeUnits(u => { if (u.dead) return; const d = dist(u.x, u.y, e.x, e.y); if (d < bd){ bd = d; best = u; kind = "u"; } });
     if (h && !h.dead){ const d = dist(h.x, h.y, e.x, e.y); if (d < bd){ bd = d; best = h; kind = "h"; } }
     R.towers.forEach(t => { if (t.ruin || t.virtual || t.type !== "archer" || !G[t.y] || G[t.y][t.x] !== 8) return; const d = dist(t.x + .5, t.y + .5, e.x, e.y); if (d < bd){ bd = d; best = t; kind = "t"; } });
     if (!best){ e.fcd = .4; continue; }
-    e.fcd = A.rate; e.hold = A.rate + .2; // 요청 39: 상대 곁에 머물며 계속 친다
+    e.fcd = A.rate; e.hold = A.rate + .2; moHit(e, kind === "t" ? best.x + .5 : best.x, kind === "t" ? best.y + .3 : best.y); // 요청 39: 상대 곁에 머물며 계속 친다
     if (kind === "u") foeHurtUnit(best, dmg, e); else if (kind === "h") heroHurt(best, dmg); else damageTower(best, dmg*.6);
     burst(kind === "t" ? best.x + .5 : best.x, kind === "t" ? best.y + .3 : best.y - .2, 4, "#D8C8E8", .9, .25, .05);
   }
@@ -6109,7 +6296,7 @@ function updateHero(dt){
   if (h.bind > 0) h.bind -= dt; // 물귀신에게 끌려 묶임: 못 움직이고 못 쏜다
   if (d > .04 && !(h.bind > 0)){ const v = Math.min(d, 2.4*unitTerrMul(h, h.tx, h.ty)*dt); h.x += dx/d*v; h.y += dy/d*v; h.walk += dt*9; if (Math.abs(dx) > .05) h.face = dx > 0 ? 1 : -1; }
   let dps = 0;
-  for (const e of R.enemies) if (!e.dead && !e.fly && !(e.under > 0) && dist(h.x, h.y, e.x, e.y) < .8) dps += ET[e.type].hit || 0;
+  for (const e of R.enemies) if (!e.dead && !e.fly && !(e.under > 0) && dist(h.x, h.y, e.x, e.y) < .8){ dps += ET[e.type].hit || 0; moSwing(e, h.x, h.y); }
   if (dps){
     h.hp -= dps*dt; h.hurt = .12;
     if (h.hp <= 0){ h.hp = 0; h.dead = true; h.rt = 10; R.heroSel = false; R.aim = false; burst(h.x, h.y, 14, "#C9C2B2", 1.6, .6, .07, "smoke"); addText(h.x, h.y - .5, "장수가 쓰러졌어요", "#FF9A8A", 1.6); R.reviveAsk = 0; if (R.m && R.m.fort) moveTip("herodown", "장수는 10초 뒤 일어나오. 급하면 장수 단추를 두 번 눌러 옥 " + REVIVE.jade + "으로 바로 일으킬 수 있소."); renderPanel(true); return; }
@@ -6120,8 +6307,8 @@ function updateHero(dt){
     for (const e of R.enemies) if (!e.dead && !(e.under > 0) && dist(h.x, h.y, e.x, e.y) <= h.range && (!best || e.d > best.d)) best = e;
     const fT = h.forceTg && !h.forceTg.dead && !(h.forceTg.under > 0) ? h.forceTg : null; if (fT && dist(h.x, h.y, fT.x, fT.y) <= h.range) best = fT; // 집중 표적이 사거리 안이면 그 적, 밖이면 사거리 안 다른 적이라도 쏜다(검수 v17 대체)
     const atCampH = R.sortie && !h.manual && campAlive() && dist(h.x, h.y, R.camp.x, R.camp.y) <= 1.6 && !R.enemies.some(e => !e.dead && !e.fly && !(e.under > 0) && dist(h.x, h.y, e.x, e.y) < .9); // 출격해 진 곁에 닿으면 몸에 붙은 적이 없는 한 진부터 친다
-    if (best && (best === fT || !atCampH)){ Sound.play("arrow"); R.projs.push({k:"arrow", x:h.x, y:h.y - .35, tg:best, lx:best.x, ly:best.y, dmg:h.dmg, charm:h.k === "yeon"}); h.cd = 1/h.rate; h.face = best.x >= h.x ? 1 : -1; }
-    else if (!fT && campAlive() && dist(h.x, h.y, R.camp.x, R.camp.y) <= Math.max(h.range, 1.5)){ const cp = R.camp; Sound.play("arrow"); R.projs.push({k:"arrow", x:h.x, y:h.y - .35, tg:cp, lx:cp.x, ly:cp.y, dmg:h.dmg, charm:h.k === "yeon"}); h.cd = 1/h.rate; h.face = cp.x >= h.x ? 1 : -1; } // 적이 없으면 진을 친다
+    if (best && (best === fT || !atCampH)){ Sound.play(heroMo(h.k).shot === "gun" || heroMo(h.k).shot === "musket" ? "cannon" : "arrow"); R.projs.push({k:"arrow", x:h.x, y:h.y - .35, tg:best, lx:best.x, ly:best.y, dmg:h.dmg, charm:h.k === "yeon", hs:heroShotFx(h, best)}); h.cd = 1/h.rate; h.face = best.x >= h.x ? 1 : -1; }
+    else if (!fT && campAlive() && dist(h.x, h.y, R.camp.x, R.camp.y) <= Math.max(h.range, 1.5)){ const cp = R.camp; Sound.play("arrow"); R.projs.push({k:"arrow", x:h.x, y:h.y - .35, tg:cp, lx:cp.x, ly:cp.y, dmg:h.dmg, charm:h.k === "yeon", hs:heroShotFx(h, cp)}); h.cd = 1/h.rate; h.face = cp.x >= h.x ? 1 : -1; } // 적이 없으면 진을 친다
   }
 }
 const SKILL_COST = .12; // 요청 31: 필살기를 쓰면 장군 체력이 최대 체력의 12% 줄어든다(필살기로는 쓰러지지 않음, 1 남김)
@@ -6248,9 +6435,10 @@ function drawHero0(c, h, T){
     const sp = heroSprite(h, T), base = sp.base, hh = sp.hh;
     c.fillStyle = "rgba(0,0,0,.32)"; ellipse(c, px, base, s*.75, s*.25); c.fill();
     c.strokeStyle = R.heroSel ? "#E2B24A" : "rgba(111,179,255,.8)"; c.lineWidth = R.heroSel ? 3 : 2; ellipse(c, px, base, s*.95, s*.34); c.stroke();
-    ART.drawAt(c, hk, px, base - bob, hh, h.face < 0, false, dpr);
-    if (h.hurt > 0){ c.globalAlpha = .55; ART.drawAt(c, hk, px, base - bob, hh, h.face < 0, true, dpr); c.globalAlpha = 1; }
-    const bw = T*.75, by = base - bob - hh - T*.12, f = Math.max(0, h.hp/h.maxHp);
+    { const o = heroPose(h, T); c.save(); c.translate(px + o.x, base + o.y); if (o.rot) c.rotate(o.rot); if (o.sx !== 1 || o.sy !== 1) c.scale(o.sx, o.sy); // 요청 45: 장군마다 걸음·쏘는 자세
+      try { ART.drawAt(c, hk, 0, 0, hh, h.face < 0, false, dpr);
+      if (h.hurt > 0){ c.globalAlpha = .55; ART.drawAt(c, hk, 0, 0, hh, h.face < 0, true, dpr); c.globalAlpha = 1; } } finally { c.restore(); } }
+    const bw = T*.75, by = base - hh - T*.12, f = Math.max(0, h.hp/h.maxHp);
     c.fillStyle = "rgba(0,0,0,.6)"; rr(c, px - bw/2 - 1.5, by - 1.5, bw + 3, T*.11 + 3, 3); c.fill();
     c.fillStyle = "#6FB3FF"; rr(c, px - bw/2, by, bw*f, T*.11, 2); c.fill();
     return;
@@ -6377,7 +6565,7 @@ function update(dt){
       const d = dist(p.x,p.y,p.lx,p.ly), v = (p.fast ? 18 : 11)*dt;
       p.a = Math.atan2(p.ly-p.y, p.lx-p.x);
       if (d <= v + .05 && p.miss){ burst(p.lx, p.ly, 3, "#B8A888", .6, .2, .04); p.done = true; } // 요청 40: 빗나감
-      else if (d <= v + .05){ if (!p.tg.dead){ HIT_SRC = p.src || (p.charm ? "magic" : "arrow"); hit(p.tg, p.dmg + (p.pierce ? (p.tg.armor || 0)*.5 : 0), false, formIntact(p.tg) ? .8 : 1); HIT_SRC = ""; } p.done = true; }
+      else if (d <= v + .05){ if (p.hs) heroHitFx(p); if (!p.tg.dead){ HIT_SRC = p.src || (p.charm ? "magic" : "arrow"); hit(p.tg, p.dmg + (p.pierce ? (p.tg.armor || 0)*.5 : 0), false, formIntact(p.tg) ? .8 : 1); HIT_SRC = ""; } p.done = true; }
       else { p.x += (p.lx-p.x)/d*v; p.y += (p.ly-p.y)/d*v; }
     } else if (p.k === "ball"){
       p.t += dt/p.dur;
@@ -6464,11 +6652,13 @@ function draw(){
   const bwP = (p, fn) => { if (!VV){ fn(); return; } const bx = p.k === "ball" ? p.sx + (p.tx - p.sx)*p.t : p.x, by = p.k === "ball" ? p.sy + (p.ty - p.sy)*p.t : p.y, sa = p.a, svx = p.vx, svy = p.vy;
     if (p.a != null) p.a = VIEW.ang(p.a); if (p.vx != null && p.vy != null){ const v = VIEW.vec(p.vx, p.vy); p.vx = v[0]; p.vy = v[1]; } try { bw(bx, by, fn); } finally { p.a = sa; p.vx = svx; p.vy = svy; } };
   for (const p of R.projs) bwP(p, () => {
+    if (p.k === "arrow" && p.hs && drawHeroShot(c, p, T)) return; // 요청 45: 장군마다 다른 화살·창·돌·탄
     if (p.k === "arrow" && p.charm){ c.save(); c.translate(p.x*T, p.y*T); c.rotate(p.a || 0); c.fillStyle = "#F6E7A8"; c.fillRect(-T*.1,-T*.07,T*.2,T*.14); c.fillStyle = "#C8452F"; c.fillRect(-T*.03,-T*.05,T*.06,T*.1); c.restore(); }
     else if (p.k === "arrow"){ c.save(); c.translate(p.x*T, p.y*T); c.rotate(p.a || 0); c.strokeStyle = "rgba(255,240,200,.35)"; c.lineWidth = Math.max(2,T*.05); c.beginPath(); c.moveTo(-T*.45,0); c.lineTo(-T*.15,0); c.stroke(); c.strokeStyle = "#2A1A0C"; c.lineWidth = Math.max(2,T*.05); c.beginPath(); c.moveTo(-T*.2,0); c.lineTo(T*.12,0); c.stroke(); c.fillStyle = "#D9D9D9"; c.beginPath(); c.moveTo(T*.16,0); c.lineTo(T*.08,-T*.04); c.lineTo(T*.08,T*.04); c.fill(); c.fillStyle = "#C8452F"; c.fillRect(-T*.2,-T*.035,T*.07,T*.07); c.restore(); }
     else if (p.k === "ball"){ const x = (p.sx + (p.tx-p.sx)*p.t)*T, y = (p.sy + (p.ty-p.sy)*p.t)*T - Math.sin(p.t*Math.PI)*T*.9; c.fillStyle = "rgba(255,160,60,.35)"; circle(c, x, y, T*.15); c.fill(); c.fillStyle = "#1E1E1E"; circle(c, x, y, T*.1); c.fill(); c.fillStyle = "rgba(255,255,255,.35)"; circle(c, x-T*.025, y-T*.025, T*.03); c.fill(); }
     else if (p.k === "rocket" && !(p.delay > 0)){ c.save(); c.translate(p.x*T, p.y*T); c.rotate(Math.atan2(p.vy,p.vx)); c.fillStyle = "rgba(255,190,80,.4)"; ellipse(c, -T*.22, 0, T*.2, T*.09); c.fill(); c.fillStyle = "#FFB13B"; c.beginPath(); c.moveTo(-T*.12,0); c.lineTo(-T*.28,-T*.05); c.lineTo(-T*.24,0); c.lineTo(-T*.28,T*.05); c.fill(); c.fillStyle = "#8C2A1E"; c.fillRect(-T*.12,-T*.03,T*.22,T*.06); c.fillStyle = "#E8E2D0"; c.fillRect(T*.08,-T*.03,T*.05,T*.06); c.restore(); }
   });
+  if (R.mfx && R.mfx.length){ R.mfx = R.mfx.filter(f => R.time - f.t < f.dur && R.time >= f.t - .05); for (const f of R.mfx) bw(f.x, f.y, () => drawMfx(c, f, T)); } // 요청 45: 때린 자리 이펙트
   for (const p of R.parts) bw(p.x, p.y, () => {
     const a = Math.max(0, p.life/p.max), x = p.x*T, y = p.y*T;
     if (p.kind === "smoke"){ c.globalAlpha = a*.5; c.fillStyle = p.color; circle(c, x, y, p.size*T*(2 - a)); c.fill(); }
@@ -7134,7 +7324,7 @@ const open = STAGES.map((_, i) => i).filter(i => i > 0 && isOpen(i)); if (!open.
 const RUN_KEY = "sanseong-run-v1", RUN_V = 1;
 const RUN_SKIPR = new Set(["s","st","m","mode","ch","test","waveActive","over","paused","speed","runId","resultSeq","sig","bannerT","shake","time","qt","countdown","evPending","prepWarn","heroSel","aim","tacOpen","flagMode","navSig","navDirty","lowOn","slowT","downT","downName","tacTipT","reviveAsk","campHelpT","campStall","campHelpCd","thiefT","resLock","payFail","prepT","noJade","restored","sid","runMarked","grid","base"]);
 const RUN_OBJR = ["decSeen","gates","bound","bound0","rforge","evDone","seen","thiefPlan","leaks","tacCd","flag","mound","towersOpen"];
-const RUN_SKIPK = new Set(["t","tg","blk","btg","target","foe","nx","path","el"]);
+const RUN_SKIPK = new Set(["t","tg","blk","btg","target","foe","nx","path","el","atkT0","atkX","atkY","_mT","_lx","_ly","_mv","_sd"]); /* 요청 45: 몸짓 시각은 저장하지 않음 */
 function runPlain(o, d){
   if (o == null || typeof o !== "object") return typeof o === "function" ? undefined : o;
   if (d > 5) return undefined;
@@ -7844,7 +8034,7 @@ function start(){
   Shop.init();
   if (M.stars[0] && M.daily.login < kstDate()) showDaily(); // 하루 첫 접속이면 매일 보상부터
   if (!TabLock.pending && !TabLock.ok()) lockScreen(true); // 다른 창이 게임을 갖고 있으면 안내부터(Web Lock 은 잡히면/못 잡히면 그때 처리)
-  window.SanseongDebug = {VIEW, ACC, LVGAP, START_GOLD, RAID_FOES, FINAL, getT:() => T, musicDemo:(i, k, sec, from) => Sound.musicDemo(i, k, sec, from), unitVs, solDefMul, foeKindTxt, unitStrike, UNITS, evWatch, decideTest:k => { const d = k === "boss" ? {k, e:R.enemies.find(e => !e.dead) || {type:"grunt", x:9, y:9}} : k === "gate" ? {k, g:R.gates[0]} : k === "thief" ? {k, e:thiefSpawn()} : {k:"camp"}; if (!d.e && (k === "boss" || k === "thief")) return null; R.decSeen = R.decSeen || {}; R.decSeen[k] = true; R.decCur = d; decideShow(d); return d; }, decideOn:() => decideOn(), decideTick:dt => decideTick(dt), easy:{on:() => easyOn(), recs:() => easyRecs(), repair:() => easyRepair(), tick:dt => easyTick(dt)}, thiefSpawn, get T(){ return T; }, TUT, tutOk, tutCells, fortDbg:{unitTerrMul, cellTerr, fortMove, volDanger, fortWallHit, fortPlan, fortGateSafe, fortGatePts, fortFlagPos, fortVolunteers, flagBtnTap, toggleSortie, tapFlag:(x,y)=>{ R.flagMode = true; const ts = null; if (fortIn(x, y) && fortWalk(x, y)){ R.flag = {x:x + .5, y:y + .5}; } R.flagMode = false; }}, pickMusic, musicNow:() => Sound.musicNow(), MUSIC, WebApp, showStory, Raid, RAID, GATE, STAGES, TabLock, Cam, tapAt, reloadFromDisk, get M(){ return M; }, get R(){ return R; }, newRun, grantStarter, saveMeta, showMenu, castSkill, Track, update, victory, defeat, hideOverlay, Ads, Shop, contOk, loadMeta, CloudSave, SaveCode, Notify, castlePending, castleCollect, ensureMissions, mprog, dailyBoot, showCastle, normMeta, Ledger, castleSettle, claimMission, startWave, get saveGen(){ return saveGen; }, get castleBonus(){ return castleBonus; }, set castleBonus(v){ castleBonus = v; }, get overlayMode(){ return overlayMode; }, bot:{easyRepair:() => easyRepair(true), wavesOf, foeKinds, bossKind, tacUse, tacBlock, volGate, tacGate, buyUnit, UNITS, canBuildAt, cellBuildable, upLimit, rforgeUp, TT, ET, HEROES, TERRAIN, hit, toggleSortie, buildable, upCost, initBarracks, towerMaxHp, spawnHero, towerAt, repairCost, stat, get ROWS(){ return ROWS; }, get COLS(){ return COLS; }}}; // 점검용(bot: 자동 봇 균형 시험)
+  window.SanseongDebug = {VIEW, ACC, LVGAP, START_GOLD, RAID_FOES, FINAL, MO, HERO_MO, moHit, mfx, muFx, getT:() => T, musicDemo:(i, k, sec, from) => Sound.musicDemo(i, k, sec, from), unitVs, solDefMul, foeKindTxt, unitStrike, UNITS, evWatch, decideTest:k => { const d = k === "boss" ? {k, e:R.enemies.find(e => !e.dead) || {type:"grunt", x:9, y:9}} : k === "gate" ? {k, g:R.gates[0]} : k === "thief" ? {k, e:thiefSpawn()} : {k:"camp"}; if (!d.e && (k === "boss" || k === "thief")) return null; R.decSeen = R.decSeen || {}; R.decSeen[k] = true; R.decCur = d; decideShow(d); return d; }, decideOn:() => decideOn(), decideTick:dt => decideTick(dt), easy:{on:() => easyOn(), recs:() => easyRecs(), repair:() => easyRepair(), tick:dt => easyTick(dt)}, thiefSpawn, get T(){ return T; }, TUT, tutOk, tutCells, fortDbg:{unitTerrMul, cellTerr, fortMove, volDanger, fortWallHit, fortPlan, fortGateSafe, fortGatePts, fortFlagPos, fortVolunteers, flagBtnTap, toggleSortie, tapFlag:(x,y)=>{ R.flagMode = true; const ts = null; if (fortIn(x, y) && fortWalk(x, y)){ R.flag = {x:x + .5, y:y + .5}; } R.flagMode = false; }}, pickMusic, musicNow:() => Sound.musicNow(), MUSIC, WebApp, showStory, Raid, RAID, GATE, STAGES, TabLock, Cam, tapAt, reloadFromDisk, get M(){ return M; }, get R(){ return R; }, newRun, grantStarter, saveMeta, showMenu, castSkill, Track, update, victory, defeat, hideOverlay, Ads, Shop, contOk, loadMeta, CloudSave, SaveCode, Notify, castlePending, castleCollect, ensureMissions, mprog, dailyBoot, showCastle, normMeta, Ledger, castleSettle, claimMission, startWave, get saveGen(){ return saveGen; }, get castleBonus(){ return castleBonus; }, set castleBonus(v){ castleBonus = v; }, get overlayMode(){ return overlayMode; }, bot:{easyRepair:() => easyRepair(true), wavesOf, foeKinds, bossKind, tacUse, tacBlock, volGate, tacGate, buyUnit, UNITS, canBuildAt, cellBuildable, upLimit, rforgeUp, TT, ET, HEROES, TERRAIN, hit, toggleSortie, buildable, upCost, initBarracks, towerMaxHp, spawnHero, towerAt, repairCost, stat, get ROWS(){ return ROWS; }, get COLS(){ return COLS; }}}; // 점검용(bot: 자동 봇 균형 시험)
   requestAnimationFrame(loop);
 }
 if (window.claude && window.claude.hot && window.claude.hot.snapshot) window.claude.hot.snapshot(() => ({}));

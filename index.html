@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta name="app-version" content="20261126-b55c5d7c6b">
+<meta name="app-version" content="20261126-db5c09f0c9">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>산성</title>
@@ -1045,7 +1045,7 @@ const STAGE_GATE_HP = STAGES.map((st, i) => !i ? 12 : PLACE_GATE_HP[st.oldIdx] !
   STAGES.forEach((st, i) => { if (!i || i > 9) return; const L = POS_TW[Math.min(i, 6)]; st.towers = ["archer","crossbow","catapult","cannon","caltrop","rocket","musket","barracks"].filter(k => L.indexOf(k) >= 0); }); }
 STAGES.forEach((st, i) => { if (STAGE_GATE_HP[i] != null) st.gateHp = STAGE_GATE_HP[i]; if (STAGE_PALACE_HP[i] != null) st.palaceHp = STAGE_PALACE_HP[i]; });
 /* v21 새 순서 1~4장 자리 값(서툰 봇 1~3장·보통 봇 4장 8판씩, docs/난이도표.md v21) */
-{ const T14 = {1:{mul:.65, lateHp:.35}, 2:{mul:.62, lateHp:.42}, 3:{mul:.58, lateHp:.44}, 4:{mul:.87, lateHp:1.05}}; /* v21c: 행궁 수비병 뒤 다시(서툰 봇 1장 5/8·2장 4/8·3장 4/8, 보통 봇 4장 .86/1.0 5/8·.88/1.1 3/8) */ for (const i in T14) if (STAGES[i]) Object.assign(STAGES[i], T14[i]); }
+{ const T14 = {1:{mul:.88, lateHp:.62}, 2:{mul:.64, lateHp:.44}, 3:{mul:1.07, lateHp:.92}}; /* 요청 44: 초장 1~3장도 보통 봇 약 80% 승(1 안시 .85~.88에서 31/38, 2 귀주 .64~.65 17/22, 3 처인 1.05~1.12 18/22) */ /* v21c: 행궁 수비병 뒤 다시(서툰 봇 1장 5/8·2장 4/8·3장 4/8, 보통 봇 4장 .86/1.0 5/8·.88/1.1 3/8) */ for (const i in T14) if (STAGES[i]) Object.assign(STAGES[i], T14[i]); }
 /* v21 새 순서 균형 5~9장(자리 값, 보통 봇 10~12판): 5 정족 4/10 · 6 연안 4/10 · 7 수원 3/10 · 8 귀주 3/10 · 9 남한 2/12 */
 { const POS_TUNE59 = {4:{mul:.73, lateHp:.85}, 5:{mul:.65, lateHp:2.1}, 6:{mul:1.04, lateHp:2.45}, 7:{mul:.62, lateHp:2.2}, 8:{mul:.67, lateHp:1.95}, 9:{mul:.75, lateHp:5.7}}; /* 요청 43 연대순 세 구간(보통 봇 6~8판): 초장 1~3 거의 이김 · 중장 4 연안 4/6·5 진주 3/6·6 행주 4/8 · 종장 7 남한 2/6·8 수원 5/16·9 정족 3/14 */ /* v21c: 행궁 수비병 들어간 뒤 다시(보통 봇) */ for (const i in POS_TUNE59) if (STAGES[i]) Object.assign(STAGES[i], POS_TUNE59[i]); }
 // 요괴 레벨 = 문 부수는 힘: 기본 × (1 + 0.15 × (레벨 − 1)), 대장 ×2(지난 장 요괴 ×1.5)
@@ -2749,8 +2749,10 @@ const RAID_FOES = { // 도깨비 병사(그림·이름은 ET). 체력은 ET.hp �
   bat:{hp:1.3, dmg:6, range:.7, spd:1.05, fly:true}, mole:{hp:1, dmg:8, range:.7, spd:.75}, boss:{hp:.45, dmg:34, range:.9, spd:.42},
   lord:{hp:.55, dmg:42, range:1, spd:.36} // 최종장: 본채 체력 절반에서 직접 나오는 두억시니
 };
+/* 요청 44: 10장에는 1~9장 대장이 모두 차례로 나온다(연대순). 진지에서 쓰는 공통 값(체력 = ET.hp × hp × 세기) */
+Object.keys(ET).forEach(k => { const E = ET[k]; if (E.chief && k !== "lord" && !RAID_FOES[k]) RAID_FOES[k] = {hp:.12, dmg:11, range:.9, spd:.45, armor:2, fly:!!E.fly, chief:true}; /* 진지 봇 8판 5승(최종장 세기 .515) */ });
 // 10장 · 두억시니의 진(진지 치기 방식). 단계 6 세기, 시간 4분. 본채 50%에서 두억시니가 나와 6초마다 내려치기(1.2초 전 예고, 그 사이 필살기를 맞히면 막음)
-const FINAL = {lv:6, mul:.55 /* 난이도표.md: 봇 기준 겨우 이기는 선 */, time:240, hqMul:1.2, lordAt:.5, smash:6, wind:1.2, smashR:1.7, smashDmg:120, first:400, win:120};
+const FINAL = {lv:6, mul:.515 /* 요청 44: 장 대장 아홉이 나오며 .55 → .515(보통 봇 8판 5승, 예전 .55 대장 없이 62~77%) */, chief0:18, chiefGap:18 /* 요청 44: 장 대장 아홉이 18초부터 18초마다 하나씩, 두억시니가 나오면 남은 대장이 한꺼번에 */, time:240, hqMul:1.2, lordAt:.5, smash:6, wind:1.2, smashR:1.7, smashDmg:120, first:400, win:120};
 const FINAL_POST = [["nar","두억시니가 쓰러지자 진을 덮던 검은 안개가 걷히고, 옛 싸움터마다 아침 해가 떠올랐다."],
   ["yeon","이겼어요… 정말 이겼어요!"],
   ["gwon","깨어난 귀신들도 이제 편히 잠들 것이오."],
@@ -2806,7 +2808,7 @@ const heroOpen = k => k === "gwon" || (M.heroes[k] || 0) > 0 || STAGES.some((s, 
     const heroes = Object.keys(HEROES).map(k => { const H = HEROES[k], open = heroOpen(k);
       return '<button class="btn'+(p.hero === k ? ' primary' : '')+'" data-act="raid-hero" data-k="'+k+'"'+(open ? '' : ' disabled')+'><img src="'+FACES[H.face]+'" alt=""><span>'+H.name+(open ? ' · '+(M.heroes[k] || 1)+'단계' : ' · 그 장을 지키면 열려요')+'</span></button>'; }).join("");
     showOverlay((ART.ok("c6") ? '<img class="noteimg" src="'+ART.url("c6")+'" alt="">' : '')
-      + (p.final ? '<h2>10장 · 두억시니의 진</h2><div class="rtip"><img src="'+FACES.lord+'" alt="두억시니"><span>진을 부수거나 두억시니를 쓰러뜨리면 이겨요. 본채가 절반쯤 무너지면 두억시니가 직접 나와요. 내려치기 전에 필살기를 맞히면 막을 수 있어요.</span></div>' : '<h2>진지 다시 치기</h2>' + tip
+      + (p.final ? '<h2>10장 · 두억시니의 진</h2><div class="rtip"><img src="'+FACES.lord+'" alt="두억시니"><span>1~9장 대장들이 차례로 모두 나와요. 진을 부수거나 두억시니를 쓰러뜨리면 이겨요. 본채가 절반쯤 무너지면 두억시니가 직접 나와요. 내려치기 전에 필살기를 맞히면 막을 수 있어요.</span></div>' : '<h2>진지 다시 치기</h2>' + tip
       + '<h3>단계</h3><div class="rlv"><button class="btn" data-act="raid-lv" data-k="-1"'+(p.lv <= 1 ? ' disabled' : '')+'>◀</button><span><b>'+p.lv+'단계</b><br>'+starsHTML(best)+'</span><button class="btn" data-act="raid-lv" data-k="1"'+(p.lv >= M.raid.lv ? ' disabled' : '')+'>▶</button></div>')
       + '<h3>카드 3장 고르기 · '+p.deck.length+'/3</h3><div class="rdeck">'+deck+'</div>'
       + '<h3>처음 보낼 부대 (기력 없이)</h3><div class="rfirst">'+row(0)+row(1)+'</div>'
@@ -2832,7 +2834,8 @@ const heroOpen = k => k === "gwon" || (M.heroes[k] || 0) > 0 || STAGES.some((s, 
     const fin = !!p.final, lv = fin ? FINAL.lv : p.lv, lm = RAID.lvMul(lv)*diffMul()*(fin ? FINAL.mul : 1)*(o && o.easier ? .8 : 1), hk = heroOpen(p.hero) ? p.hero : "gwon", H = HEROES[hk], hl = Math.max(1, M.heroes[hk] || 1);
     M.raid.deck = p.deck.slice(); M.raid.hero = hk; saveMeta();
     const hhp = heroVal(H.hp, hl)*(M.perks.armor ? 1.3 : 1)*castleFx().heroHp;
-    G = {gen:saveGen, helped:!!(o && o.easier), lv, final:fin, lord:null, P:raidPlan(lv), lm, t:0, time:fin ? FINAL.time : RAID.time, energy:RAID.eStart, eAcc:0, speed:1, over:false, done:false, slow:0, endT:0, result:"", stars:0,
+    const P0 = raidPlan(lv); if (fin) P0.boss = []; // 최종장: 일반 도깨비 대장 대신 1~9장 대장이 차례로
+    G = {gen:saveGen, helped:!!(o && o.easier), lv, final:fin, lord:null, P:P0, lm, chiefs:fin ? STAGES.slice(1, 10).map((st, i) => ({k:st.boss, ch:i + 1})).filter(c => ET[c.k] && RAID_FOES[c.k]) : [], chiefN:0, t:0, time:fin ? FINAL.time : RAID.time, energy:RAID.eStart, eAcc:0, speed:1, over:false, done:false, slow:0, endT:0, result:"", stars:0,
       units:[], foes:[], projs:[], fx:[], queue:[], fired:new Set(), cycleStart:0, bossDone:0, cards:p.deck.slice(), sel:null, aim:false,
       kills:0, jade:0, sent:0, skillUsed:0, hurtBy:{}, tut:M.raid.tut ? -1 : 0, tipT:0, userT:-1e9, heartT:0,
       castle:{x:RAID.castle.x, y:RAID.castle.y, hp:CASTLE_HP, max:CASTLE_HP, cd:0, range:3.8, dmg:28, rate:1, kind:"castle", hitT:0},
@@ -2865,6 +2868,8 @@ const heroOpen = k => k === "gwon" || (M.heroes[k] || 0) > 0 || STAGES.some((s, 
       const [, type, n, lane] = it, lanes = lane === 2 ? [0, 1] : [lane];
       lanes.forEach((ln, j) => { const m = lane === 2 ? (j === 0 ? Math.ceil(n/2) : Math.floor(n/2)) : n; for (let q = 0; q < m; q++) G.queue.push({at:G.t + q*.55, type, lane:ln}); }); });
     if (tc >= P.cycle){ G.cycleStart += P.cycle; G.fired.clear(); }
+    if (G.chiefs && G.chiefN < G.chiefs.length && G.t >= FINAL.chief0 + G.chiefN*FINAL.chiefGap){ const c = G.chiefs[G.chiefN], ln = G.chiefN % 2; G.chiefN++;
+      spawnFoe(c.k, ln); const nm = ET[c.k].name, cc = nm.charCodeAt(nm.length - 1) - 0xAC00; tip(c.ch + "장 대장 " + nm + (cc >= 0 && cc < 11172 && cc % 28 ? "이" : "가") + " 나왔소! (" + G.chiefN + "/" + G.chiefs.length + ")", 3.5); Sound.play("gate"); }
     while (G.bossDone < P.boss.length && G.t >= P.boss[G.bossDone]){ G.queue.push({at:G.t, type:"boss", lane:G.bossDone % 2}); G.bossDone++; }
     for (let i = G.queue.length - 1; i >= 0; i--) if (G.queue[i].at <= G.t){ const q = G.queue[i]; G.queue.splice(i, 1); spawnFoe(q.type, q.lane); }
   }
@@ -2875,7 +2880,7 @@ const heroOpen = k => k === "gwon" || (M.heroes[k] || 0) > 0 || STAGES.some((s, 
   function proj(x, y, t, kind){ G.projs.push({x, y, tx:t.x, ty:t.y - (t.kind ? .8 : .3), t:0, dur:.22, kind}); }
   function burst(x, y, col, r){ G.fx.push({x, y, r:r || .4, t:0, dur:.35, col}); }
   function hitFoe(f, d){ // 우리 쪽이 도깨비를 때림
-    const E = ET[f.type]; const v = Math.max(d*.25, d - (E.armor || 0)); f.hp -= v; f.hitT = .12;
+    const E = ET[f.type], RF = RAID_FOES[f.type]; const v = Math.max(d*.25, d - ((RF && RF.armor != null ? RF.armor : E.armor) || 0)); /* 요청 44: 진지에선 장 대장 갑옷을 따로(RAID_FOES.armor) */ f.hp -= v; f.hitT = .12;
     if (f.hp <= 0){ G.kills++; G.jade += E.jade || 0; Sound.play("kill"); burst(f.x, f.y, "#E2B24A", .45);
       if (f.type === "lord" && G.final){ G.downT = 1.8; burst(f.x, f.y, "#B78AF5", 1.6); endGame("win", 3, true); } } // 두억시니 격파 = 승리
   }
@@ -2885,9 +2890,11 @@ const heroOpen = k => k === "gwon" || (M.heroes[k] || 0) > 0 || STAGES.some((s, 
     spawnFoe("lord", lane); const f = G.foes[G.foes.length - 1]; f.x = G.hq.x + (lane ? .8 : -.8); f.y = G.hq.y + 1.4; f.smashT = 3; f.wind = 0; G.lord = f;
     Sound.play("gate"); tip("두억시니가 본채에서 직접 나왔소! 붉은 원이 뜨면 필살기로 막으시오.", 7);
     G.lordBanner = 2.2; Track.event("raid_lord", {t:Math.round(G.t)});
+    if (G.chiefs && G.chiefN < G.chiefs.length){ const left = G.chiefs.slice(G.chiefN); G.chiefN = G.chiefs.length; left.forEach((c, j) => spawnFoe(c.k, j % 2)); tip("두억시니가 나왔소! 남은 대장 " + left.length + "도 함께 몰려오오. 붉은 원이 뜨면 필살기로 막으시오.", 7); } // 요청 44: 대장은 어느 판이든 모두 나온다
   }
   function hitStruct(s, d){ // 우리 쪽이 진지를 때림
     if (s.hp <= 0) return; s.hp -= d; s.hitT = .12;
+    if (s.kind === "hq" && G.final && !G.lord && s.hp <= s.max*FINAL.lordAt){ s.hp = Math.max(1, s.hp); lordAppear(); return; } // 요청 44: 한 번에 절반을 넘겨도 두억시니·남은 대장은 꼭 나온다
     if (s.hp <= 0){ s.hp = 0; Sound.play("cannon"); burst(s.x, s.y - .6, "#FF9A5A", 1.2);
       if (s.kind === "hq") endGame("win", 3, true);
       else if (G.et.every(o => o.hp <= 0)) tip("진지 망루를 모두 부쉈소! 이제 본채만 남았소.", 4); }
@@ -7228,7 +7235,7 @@ function showStory(){ // 이야기 화면: 이어서 하기(다음 장) · 장 �
   const startBtn = runInProgress() ? '<button class="btn primary cont" data-act="resume">이어서 하기 · '+R.st.title+'</button>' // 진행 중인 판은 재개(새 판을 만들지 않음)
     : nextIdx >= 0 ? '<button class="btn primary cont" data-act="stage" data-k="'+nextIdx+'">시작하기 · '+STAGES[nextIdx].title+'</button>' : (finOpen && !M.raid.final ? '<button class="btn primary cont" data-act="raid-final">시작하기 · 10장 두억시니의 진</button>' : '');
   // 최종장 카드: 이야기 목록 맨 끝. 4대문을 이기면 열린다
-  const finalCard = '<div class="stgwrap"><button class="stg raidcard'+(finOpen && !M.raid.final ? ' now' : '')+'" data-act="raid-final"'+(finOpen ? '' : ' disabled')+'>'+(ART.ok("c6") ? '<img class="band" src="'+ART.url("c6")+'" alt="">' : '')+'<span class="txt"><span><b>10장 · 두억시니의 진</b><small>'+(finOpen ? (M.raid.final ? '진을 부쉈어요 '+starsHTML(M.raid.final) : '카드로 병사를 보내 진을 부숴요 · 대장 두억시니') : '앞 장을 마치면 열려요')+'</small></span></span></button></div>';
+  const finalCard = '<div class="stgwrap"><button class="stg raidcard'+(finOpen && !M.raid.final ? ' now' : '')+'" data-act="raid-final"'+(finOpen ? '' : ' disabled')+'>'+(ART.ok("c6") ? '<img class="band" src="'+ART.url("c6")+'" alt="">' : '')+'<span class="txt"><span><b>10장 · 두억시니의 진</b><small>'+(finOpen ? (M.raid.final ? '진을 부쉈어요 '+starsHTML(M.raid.final) : '카드로 병사를 보내 진을 부숴요 · 1~9장 대장 모두와 두억시니') : '앞 장을 마치면 열려요')+'</small></span></span></button></div>';
   const gateT = STAGES.find(s => !s.tutorial && MAPS[s.map] && MAPS[s.map].gates), gateNo = gateT ? gateT.title.split(" · ")[0] + " " + (gateT.place || "") : "";
   const starGuide = '<details class="starinfo"><summary>별은 이렇게 받아요 · 장마다 최대 ★5</summary><ul>'
     + '<li><b>보통 모드</b>: 이기면 ★1 · 성문 체력 절반 이상 남기면 ★2 · 90% 이상 남기면 ★3</li>'
@@ -7837,7 +7844,7 @@ function start(){
   Shop.init();
   if (M.stars[0] && M.daily.login < kstDate()) showDaily(); // 하루 첫 접속이면 매일 보상부터
   if (!TabLock.pending && !TabLock.ok()) lockScreen(true); // 다른 창이 게임을 갖고 있으면 안내부터(Web Lock 은 잡히면/못 잡히면 그때 처리)
-  window.SanseongDebug = {VIEW, ACC, LVGAP, START_GOLD, getT:() => T, musicDemo:(i, k, sec, from) => Sound.musicDemo(i, k, sec, from), unitVs, solDefMul, foeKindTxt, unitStrike, UNITS, evWatch, decideTest:k => { const d = k === "boss" ? {k, e:R.enemies.find(e => !e.dead) || {type:"grunt", x:9, y:9}} : k === "gate" ? {k, g:R.gates[0]} : k === "thief" ? {k, e:thiefSpawn()} : {k:"camp"}; if (!d.e && (k === "boss" || k === "thief")) return null; R.decSeen = R.decSeen || {}; R.decSeen[k] = true; R.decCur = d; decideShow(d); return d; }, decideOn:() => decideOn(), decideTick:dt => decideTick(dt), easy:{on:() => easyOn(), recs:() => easyRecs(), repair:() => easyRepair(), tick:dt => easyTick(dt)}, thiefSpawn, get T(){ return T; }, TUT, tutOk, tutCells, fortDbg:{unitTerrMul, cellTerr, fortMove, volDanger, fortWallHit, fortPlan, fortGateSafe, fortGatePts, fortFlagPos, fortVolunteers, flagBtnTap, toggleSortie, tapFlag:(x,y)=>{ R.flagMode = true; const ts = null; if (fortIn(x, y) && fortWalk(x, y)){ R.flag = {x:x + .5, y:y + .5}; } R.flagMode = false; }}, pickMusic, musicNow:() => Sound.musicNow(), MUSIC, WebApp, showStory, Raid, RAID, GATE, STAGES, TabLock, Cam, tapAt, reloadFromDisk, get M(){ return M; }, get R(){ return R; }, newRun, grantStarter, saveMeta, showMenu, castSkill, Track, update, victory, defeat, hideOverlay, Ads, Shop, contOk, loadMeta, CloudSave, SaveCode, Notify, castlePending, castleCollect, ensureMissions, mprog, dailyBoot, showCastle, normMeta, Ledger, castleSettle, claimMission, startWave, get saveGen(){ return saveGen; }, get castleBonus(){ return castleBonus; }, set castleBonus(v){ castleBonus = v; }, get overlayMode(){ return overlayMode; }, bot:{easyRepair:() => easyRepair(true), wavesOf, foeKinds, bossKind, tacUse, tacBlock, volGate, tacGate, buyUnit, UNITS, canBuildAt, cellBuildable, upLimit, rforgeUp, TT, ET, HEROES, TERRAIN, hit, toggleSortie, buildable, upCost, initBarracks, towerMaxHp, spawnHero, towerAt, repairCost, stat, get ROWS(){ return ROWS; }, get COLS(){ return COLS; }}}; // 점검용(bot: 자동 봇 균형 시험)
+  window.SanseongDebug = {VIEW, ACC, LVGAP, START_GOLD, RAID_FOES, FINAL, getT:() => T, musicDemo:(i, k, sec, from) => Sound.musicDemo(i, k, sec, from), unitVs, solDefMul, foeKindTxt, unitStrike, UNITS, evWatch, decideTest:k => { const d = k === "boss" ? {k, e:R.enemies.find(e => !e.dead) || {type:"grunt", x:9, y:9}} : k === "gate" ? {k, g:R.gates[0]} : k === "thief" ? {k, e:thiefSpawn()} : {k:"camp"}; if (!d.e && (k === "boss" || k === "thief")) return null; R.decSeen = R.decSeen || {}; R.decSeen[k] = true; R.decCur = d; decideShow(d); return d; }, decideOn:() => decideOn(), decideTick:dt => decideTick(dt), easy:{on:() => easyOn(), recs:() => easyRecs(), repair:() => easyRepair(), tick:dt => easyTick(dt)}, thiefSpawn, get T(){ return T; }, TUT, tutOk, tutCells, fortDbg:{unitTerrMul, cellTerr, fortMove, volDanger, fortWallHit, fortPlan, fortGateSafe, fortGatePts, fortFlagPos, fortVolunteers, flagBtnTap, toggleSortie, tapFlag:(x,y)=>{ R.flagMode = true; const ts = null; if (fortIn(x, y) && fortWalk(x, y)){ R.flag = {x:x + .5, y:y + .5}; } R.flagMode = false; }}, pickMusic, musicNow:() => Sound.musicNow(), MUSIC, WebApp, showStory, Raid, RAID, GATE, STAGES, TabLock, Cam, tapAt, reloadFromDisk, get M(){ return M; }, get R(){ return R; }, newRun, grantStarter, saveMeta, showMenu, castSkill, Track, update, victory, defeat, hideOverlay, Ads, Shop, contOk, loadMeta, CloudSave, SaveCode, Notify, castlePending, castleCollect, ensureMissions, mprog, dailyBoot, showCastle, normMeta, Ledger, castleSettle, claimMission, startWave, get saveGen(){ return saveGen; }, get castleBonus(){ return castleBonus; }, set castleBonus(v){ castleBonus = v; }, get overlayMode(){ return overlayMode; }, bot:{easyRepair:() => easyRepair(true), wavesOf, foeKinds, bossKind, tacUse, tacBlock, volGate, tacGate, buyUnit, UNITS, canBuildAt, cellBuildable, upLimit, rforgeUp, TT, ET, HEROES, TERRAIN, hit, toggleSortie, buildable, upCost, initBarracks, towerMaxHp, spawnHero, towerAt, repairCost, stat, get ROWS(){ return ROWS; }, get COLS(){ return COLS; }}}; // 점검용(bot: 자동 봇 균형 시험)
   requestAnimationFrame(loop);
 }
 if (window.claude && window.claude.hot && window.claude.hot.snapshot) window.claude.hot.snapshot(() => ({}));

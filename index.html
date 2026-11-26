@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta name="app-version" content="20261126-3f0c99ccee">
+<meta name="app-version" content="20261126-4fcb673386">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>산성</title>
@@ -6638,7 +6638,7 @@ function draw(){
   if (PB) c.drawImage(PB.img, PB.x0*T, PB.y0*T, PB.w*T, PB.h*T);
   if (VV){ c.save(); c.transform(VIEW.a, VIEW.b, VIEW.c, VIEW.d, VIEW.e, VIEW.f); }
   if (!PB) c.drawImage(staticCv, 0, 0, WW, WH);
-  if (R.bound) drawBound(c);
+  if (R.bound && !VIEW.cap) drawBound(c); // 요청 48: 촬영 모드(손그림 밑그림)는 경계·이름표·불빛 없이
   const vis = cam ? Cam.view(1.2) : null, inV = (x, y) => !vis || (x >= vis.x0 && x <= vis.x1 && y >= vis.y0 && y <= vis.y1); // 화면에 보이는 것만 그린다
   R.towers.forEach(t => { if (t.type === "caltrop") drawCaltropZone(c, t, T); });
   drawBushes(c, T); drawMound(c, T);
@@ -6673,7 +6673,7 @@ function draw(){
   gw(() => drawFog(c));
   gw(() => { drawFx(c, T); drawTac(c, T); drawStrikes(c, T); });
   gw(() => drawBossFx(c, T));
-  if (!VV) drawGateTags(c, T);
+  if (VIEW.cap){} else if (!VV) drawGateTags(c, T);
   else if (R.gates && R.m.gates){ R.m.gates.forEach((g, gi) => { const S = R.gates[gi]; if (S) bw(g.x + .5, g.y + .5, () => gateTag(c, T, g, S), VI ? VIEW.wallH(T)*1.9 : 0); }); if (R.m.castle){ const pp = palaceSpot(); bw(pp[0], pp[1], () => { drawPalaceGuards(c, T); palaceTag(c, T); }, VI ? VIEW.wallH(T)*1.8 : 0); } }
   const bwP = (p, fn) => { if (!VV){ fn(); return; } const bx = p.k === "ball" ? p.sx + (p.tx - p.sx)*p.t : p.x, by = p.k === "ball" ? p.sy + (p.ty - p.sy)*p.t : p.y, sa = p.a, svx = p.vx, svy = p.vy;
     if (p.a != null) p.a = VIEW.ang(p.a); if (p.vx != null && p.vy != null){ const v = VIEW.vec(p.vx, p.vy); p.vx = v[0]; p.vy = v[1]; } try { bw(bx, by, fn); } finally { p.a = sa; p.vx = svx; p.vy = svy; } };
@@ -6715,7 +6715,7 @@ function draw(){
   });
   c.globalAlpha = 1;
   c.restore();
-  if (VV) VIEW.grade(c); // 요청 37: 밤 색감·불빛
+  if (VV && !VIEW.cap) VIEW.grade(c); // 요청 37: 밤 색감·불빛
   if (Cam.active) Cam.overlay(c); // 화면 밖 적 경고 화살표(화면 좌표)
   if (campAlive()) drawCampBar(c);
   if (R.bossE || R.downT > 0) drawBossBar(c); // 대장 체력 막대·격파 띠(화면 좌표)
@@ -6774,7 +6774,7 @@ const miniCv = (() => { const c = document.createElement("canvas"); c.id = "mini
    입체에서는 성벽·문루·행궁을 높이 있는 덩어리로 세우고, 깊이 순서로 그려 벽 뒤의 적은 가려진다. 터치는 Cam.toWorld 에서 거꾸로 풀어 칸을 맞춘다. */
 const VIEW = {
   on:false, iso:true, rot:0, a:1, b:0, c:0, d:1, e:0, f:0, det:1, cx:0, cy:0,
-  allowed(){ return !!(R && R.m && R.m.fort && (R.st.oldIdx || R.s) === 6 && !R.st.tutorial && !R.test); }, // 요청 43: 행주산성(연대순 6장)
+  allowed(){ const k = R && R.st ? (R.st.oldIdx || R.s) : 0; return !!(R && R.m && R.m.fort && k >= 1 && k <= 9 && !R.st.tutorial && !R.test); }, // 요청 48: 1~9장 모두(손그림은 PAINT 표에 있는 장·각도만)
   reset(){ this.rot = 0; this.iso = true; },
   refresh(){ this.on = this.allowed(); if (!this.on){ this.a = this.d = 1; this.b = this.c = this.e = this.f = 0; this.det = 1; return; }
     const k = R.m.castle; this.cx = k ? (k.x + k.w/2)*T : WW/2; this.cy = k ? (k.y + k.h/2)*T : WH/2;
@@ -6787,8 +6787,8 @@ const VIEW = {
   ang(a){ const v = this.vec(Math.cos(a), Math.sin(a)); return Math.atan2(v[1], v[0]); },
   wallH(T){ return this.on && this.iso ? T*.62 : 0; },
   // 요청 38: 손그림 바탕(장:돌린 단계:입체 1/위 0). x0·y0·w·h = 보기 공간 칸 단위 자리. 파일은 art/paint/ (웹판은 web/art/paint/)
-  PAINT:{"c6:0:1":{src:"art/paint/ch1_iso0.webp",x0:-2.32231,y0:3.42906,w:26.47705,h:14.77789},"c6:1:1":{src:"art/paint/ch1_iso1.webp",x0:-0.5,y0:2.80987,w:29.34626,h:16.37931},"c6:2:1":{src:"art/paint/ch1_iso2.webp",x0:-2.55779,y0:3.88438,w:25.88463,h:14.44724},"c6:3:1":{src:"art/paint/ch1_iso3.webp",x0:-6.29958,y0:1.68179,w:33.47287,h:18.68253},"c6:4:1":{src:"art/paint/ch1_iso4.webp",x0:-3.32231,y0:3.42906,w:26.47705,h:14.77789},"c6:5:1":{src:"art/paint/ch1_iso5.webp",x0:-6.29958,y0:1.27167,w:33.47287,h:18.68253},"c6:6:1":{src:"art/paint/ch1_iso6.webp",x0:-2.55779,y0:3.30438,w:25.88463,h:14.44724},"c6:7:1":{src:"art/paint/ch1_iso7.webp",x0:-5.59247,y0:1.27167,w:33.47287,h:18.68253}},
-  paintNow:false,
+  PAINT:{"c6:0:1":{src:"art/paint/ch1_iso0.webp",x0:-2.32231,y0:3.42906,w:26.47705,h:14.77789},"c6:1:1":{src:"art/paint/ch1_iso1.webp",x0:-0.5,y0:2.80987,w:29.34626,h:16.37931},"c6:2:1":{src:"art/paint/ch1_iso2.webp",x0:-2.55779,y0:3.88438,w:25.88463,h:14.44724},"c6:3:1":{src:"art/paint/ch1_iso3.webp",x0:-6.29958,y0:1.68179,w:33.47287,h:18.68253},"c6:4:1":{src:"art/paint/ch1_iso4.webp",x0:-3.32231,y0:3.42906,w:26.47705,h:14.77789},"c6:5:1":{src:"art/paint/ch1_iso5.webp",x0:-6.29958,y0:1.27167,w:33.47287,h:18.68253},"c6:6:1":{src:"art/paint/ch1_iso6.webp",x0:-2.55779,y0:3.30438,w:25.88463,h:14.44724},"c6:7:1":{src:"art/paint/ch1_iso7.webp",x0:-5.59247,y0:1.27167,w:33.47287,h:18.68253},"c1:0:1":{src:"art/paint/c1_iso0.webp",x0:-1.50786,y0:2.26808,w:22.01571,h:12.38384},"c1:1:1":{src:"art/paint/c1_iso1.webp",x0:-6.02051,y0:-0.61729,w:30.21259,h:16.99458},"c1:2:1":{src:"art/paint/c1_iso2.webp",x0:-1.50786,y0:1.10808,w:22.01571,h:12.38384},"c1:3:1":{src:"art/paint/c1_iso3.webp",x0:-4.60629,y0:-1.43753,w:30.21259,h:16.99458},"c1:4:1":{src:"art/paint/c1_iso4.webp",x0:0.49214,y0:1.10808,w:22.01571,h:12.38384},"c1:5:1":{src:"art/paint/c1_iso5.webp",x0:-3.19208,y0:-0.61729,w:30.21259,h:16.99458},"c1:6:1":{src:"art/paint/c1_iso6.webp",x0:0.49214,y0:2.26808,w:22.01571,h:12.38384},"c1:7:1":{src:"art/paint/c1_iso7.webp",x0:-4.60629,y0:0.20295,w:30.21259,h:16.99458},"c2:0:1":{src:"art/paint/c2_iso0.webp",x0:-2.54938,y0:3.31222,w:24.09877,h:13.55556},"c2:1:1":{src:"art/paint/c2_iso1.webp",x0:-5.98921,y0:1.26338,w:31.68553,h:17.82311},"c2:2:1":{src:"art/paint/c2_iso2.webp",x0:-1.00786,y0:4.18808,w:22.01571,h:12.38384},"c2:3:1":{src:"art/paint/c2_iso3.webp",x0:-5.98921,y0:1.67351,w:31.68553,h:17.82311},"c2:4:1":{src:"art/paint/c2_iso4.webp",x0:-2.54938,y0:3.89222,w:24.09877,h:13.55556},"c2:5:1":{src:"art/paint/c2_iso5.webp",x0:-6.69632,y0:1.67351,w:31.68553,h:17.82311},"c2:6:1":{src:"art/paint/c2_iso6.webp",x0:-2.00786,y0:4.18808,w:22.01571,h:12.38384},"c2:7:1":{src:"art/paint/c2_iso7.webp",x0:-6.69632,y0:1.26338,w:31.68553,h:17.82311},"c3:0:1":{src:"art/paint/c3_iso0.webp",x0:-1.46633,y0:2.27394,w:19.93266,h:11.21212},"c3:1:1":{src:"art/paint/c3_iso1.webp",x0:-5.13335,y0:0.21124,w:27.2667,h:15.33752},"c3:2:1":{src:"art/paint/c3_iso2.webp",x0:-1.46633,y0:2.27394,w:19.93266,h:11.21212},"c3:3:1":{src:"art/paint/c3_iso3.webp",x0:-5.13335,y0:0.21124,w:27.2667,h:15.33752},"c3:4:1":{src:"art/paint/c3_iso4.webp",x0:-1.46633,y0:2.27394,w:19.93266,h:11.21212},"c3:5:1":{src:"art/paint/c3_iso5.webp",x0:-5.13335,y0:0.21124,w:27.2667,h:15.33752},"c3:6:1":{src:"art/paint/c3_iso6.webp",x0:-1.46633,y0:2.27394,w:19.93266,h:11.21212},"c3:7:1":{src:"art/paint/c3_iso7.webp",x0:-5.13335,y0:0.21124,w:27.2667,h:15.33752},"c4:0:1":{src:"art/paint/c4_iso0.webp",x0:-1.54938,y0:2.89222,w:24.09877,h:13.55556},"c4:1:1":{src:"art/paint/c4_iso1.webp",x0:-6.72568,y0:0.66936,w:33.15847,h:18.65164},"c4:2:1":{src:"art/paint/c4_iso2.webp",x0:-3.04938,y0:3.18222,w:24.09877,h:13.55556},"c4:3:1":{src:"art/paint/c4_iso3.webp",x0:-8.13989,y0:0.25924,w:33.15847,h:18.65164},"c4:4:1":{src:"art/paint/c4_iso4.webp",x0:-3.54938,y0:2.31222,w:24.09877,h:13.55556}},
+  paintNow:false, cap:false, // cap: 손그림 밑그림 촬영 모드(시험용)
   paintImg(){ if (!this.on || !R) return null; const P = this.PAINT["c" + (R.st.oldIdx || R.s) + ":" + this.rot + ":" + (this.iso ? 1 : 0)]; /* 성(원래 번호) 기준 */ if (!P) return null;
     if (!P.img){ P.img = new Image(); P.img.onload = () => { P.ok = true; needDraw = true; }; P.img.onerror = () => { P.bad = true; }; P.img.src = P.src; } return P.ok && !P.bad ? P : null; },
   gridBox(sx0, sy0, sx1, sy1){ let X0 = 1e9, Y0 = 1e9, X1 = -1e9, Y1 = -1e9; // 화면 사각형 → 칸 단위 둘레 상자
@@ -6868,6 +6868,7 @@ const viewUI = (() => { const d = document.createElement("div"); d.id = "viewui"
 function viewBtns(){ const show = VIEW.allowed() && Cam.active; if (viewUI.hidden === show) viewUI.hidden = !show; viewUI.style.display = show ? "flex" : "none"; /* 인라인 display가 hidden을 이기므로 직접 끔 */ if (!show) return;
   const ch = camUI.getBoundingClientRect().height || 130; viewUI.style.left = (cv.offsetLeft + 8) + "px"; viewUI.style.top = (cv.offsetTop + VT + 16 + ch) + "px";
   const m = viewUI.querySelector('[data-v="m"]'), t = VIEW.iso ? "위" : "입체"; if (m.textContent !== t) m.textContent = t; m.setAttribute("aria-label", VIEW.iso ? "바로 위에서 보기" : "입체로 보기"); }
+const CAM_ZMAX = 1; // 요청 48: 손그림이 흐려지지 않게 1배까지(선생님 "확대가 안 되어도 좋아")
 const Cam = {
   active:false, x:0, y:0, z:1, fit:1, tx:null, ty:null, tz:null, vx:0, vy:0, userT:-1e9, runId:null, arrows:[], small:null, ms:1, lastTap:null, holding:false,
   setup(){
@@ -6879,7 +6880,7 @@ const Cam = {
     if (!this.active){ VIEW.refresh(); viewBtns(); this.x = this.y = 0; this.z = 1; this.tx = this.ty = this.tz = null; this.vx = this.vy = 0; this.arrows = []; return; }
     if (this.runId !== R.runId) VIEW.reset(); VIEW.refresh(); viewBtns(); // 요청 37
     if (this.runId !== R.runId){ this.runId = R.runId; this.z = 1; this.vx = this.vy = 0; this.tx = this.ty = this.tz = null; this.userT = -1e9; const h = this.home(); this.center(h[0]*T, h[1]*T); }
-    this.z = Math.max(this.fit, Math.min(1, this.z)); this.clamp(); this.place(); this.makeMini(); this.buttons();
+    this.z = Math.max(this.fit, Math.min(CAM_ZMAX, this.z)); this.clamp(); this.place(); this.makeMini(); this.buttons();
   },
   home(){ const k = R.m.castle; if (R.m.gates && k) return palaceSpot(); return [gateCol(R.m) + .5, ROWS]; }, // 성문(또는 성 한가운데)
   clampXY(x, y, z){ const vw = VW/z, vh = Math.max(20, VH - cmdOcc())/z, oy = VT/z; /* 이동 한계도 Cam.vis와 같은 보이는 높이 */ let xv = x, yv = y + oy;
@@ -6903,8 +6904,8 @@ const Cam = {
   seen(x, y, m){ const p = this.toScreen(x*T, y*T), r = visRect(), mm = (m || 0)*T*this.z; return p[0] >= r.x - mm && p[0] <= r.x + r.w + mm && p[1] >= r.y - mm && p[1] <= r.y + r.h + mm; }, // 요청 37
   vis(m){ m = m || 0; const r = visRect(); if (VIEW.on){ const b = VIEW.gridBox(r.x, r.y, r.x + r.w, r.y + r.h); return {x0:b.x0 - m, y0:b.y0 - m, x1:b.x1 + m, y1:b.y1 + m}; } return {x0:(this.x + r.x/this.z)/T - m, y0:(this.y + r.y/this.z)/T - m, x1:(this.x + (r.x + r.w)/this.z)/T + m, y1:(this.y + (r.y + r.h)/this.z)/T + m}; }, // 칸 단위(사람이 실제로 보는 영역: 화면 안 판정·자동 이동·화살표·미니맵, 검수 v12 1차)
   panBy(dx, dy){ this.x += dx; this.y += dy; this.clamp(); this.tx = this.ty = null; },
-  zoomTo(nz, sx, sy){ const w = [this.x + sx/this.z, this.y + sy/this.z]; this.z = Math.max(this.fit, Math.min(1, nz)); this.x = w[0] - sx/this.z; this.y = w[1] - sy/this.z; this.clamp(); this.tx = this.ty = null; this.buttons(); },
-  buttons(){ const b = camUI.querySelectorAll("button"); if (b.length < 2) return; b[0].disabled = this.z >= .999; b[1].disabled = this.z <= this.fit + .001; },
+  zoomTo(nz, sx, sy){ const w = [this.x + sx/this.z, this.y + sy/this.z]; this.z = Math.max(this.fit, Math.min(CAM_ZMAX, nz)); this.x = w[0] - sx/this.z; this.y = w[1] - sy/this.z; this.clamp(); this.tx = this.ty = null; this.buttons(); },
+  buttons(){ const b = camUI.querySelectorAll("button"); if (b.length < 2) return; b[0].disabled = this.z >= CAM_ZMAX - .001; b[1].disabled = this.z <= this.fit + .001; },
   step(dt){ if (!this.active) return false; let moved = false;
     if (this.tz != null){ const k = Math.min(1, dt*7), nz = this.z + (this.tz - this.z)*k; if (Math.abs(this.tz - nz) < .004){ this.zoomTo(this.tz, VW/2, VT + VH/2); this.tz = null; } else this.zoomTo(nz, VW/2, VT + VH/2); moved = true; }
     if (this.tx != null){ const tp = this.clampXY(this.tx, this.ty, this.z); this.tx = tp[0]; this.ty = tp[1]; /* 배율·창이 바뀌어 닿을 수 없는 목표가 남지 않게 */ const k = Math.min(1, dt*5); this.x += (this.tx - this.x)*k; this.y += (this.ty - this.y)*k;
@@ -7008,7 +7009,7 @@ const Cam = {
     if (campAlive()){ const cx = R.camp.x*T*k, cy = R.camp.y*T*k; c.fillStyle = "#C0302A"; c.strokeStyle = "#FFD27A"; c.lineWidth = 1.5; c.beginPath(); c.moveTo(cx, cy - 7); c.lineTo(cx + 6, cy + 5); c.lineTo(cx - 6, cy + 5); c.closePath(); c.fill(); c.stroke(); } // 진
     c.strokeStyle = "#fff"; c.lineWidth = 2; if (VIEW.on){ const r = visRect(); c.beginPath(); [[r.x, r.y], [r.x + r.w, r.y], [r.x + r.w, r.y + r.h], [r.x, r.y + r.h]].forEach((q, i) => { const w = VIEW.inv(this.x + q[0]/this.z, this.y + q[1]/this.z); if (i) c.lineTo(w[0]*k, w[1]*k); else c.moveTo(w[0]*k, w[1]*k); }); c.closePath(); c.stroke(); } else { const r = visRect(); c.strokeRect((this.x + r.x/this.z)*k + 1, (this.y + r.y/this.z)*k + 1, r.w/this.z*k - 2, r.h/this.z*k - 2); } } // 미니맵 틀 = 실제 보이는 영역
 };
-camUI.addEventListener("click", ev => { const b = ev.target.closest("button"); if (!b || !Cam.active) return; ev.stopPropagation(); Cam.userT = performance.now(); Cam.tz = b.dataset.cam === "in" ? 1 : Cam.fit; needDraw = true; });
+camUI.addEventListener("click", ev => { const b = ev.target.closest("button"); if (!b || !Cam.active) return; ev.stopPropagation(); Cam.userT = performance.now(); Cam.tz = b.dataset.cam === "in" ? (Cam.z < .999 ? 1 : Math.min(CAM_ZMAX, Cam.z*1.6)) : (Cam.z > 1.001 ? 1 : Cam.fit); /* 요청 48: + 는 1배 → 1.6배 → 2.4배, − 는 1배 → 전체 */ needDraw = true; });
 miniCv.addEventListener("pointerdown", ev => { if (!Cam.active || overlayMode) return; ev.preventDefault(); if (Cam.tz != null){ Cam.zoomTo(Cam.tz, W/2, H/2); Cam.tz = null; } /* 확대·축소 중이면 끝내고 이동 */ const r = miniCv.getBoundingClientRect(), k = r.width/WW;
   Cam.aim((ev.clientX - r.left)/k, (ev.clientY - r.top)/k); Cam.userT = performance.now(); needDraw = true; });
 

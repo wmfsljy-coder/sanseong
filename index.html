@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta name="app-version" content="20261126-f0a9e9b005">
+<meta name="app-version" content="20261126-3f0c99ccee">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>산성</title>
@@ -769,7 +769,7 @@ const HEROES = { // hp·dmg: [1단계 값, 단계마다 더하는 값]
 Object.assign(HEROES, {
   ansi:{name:"양만춘", face:"ansi", art:"h_ansi", desc:"활로 쏴요 · 안시성 성주", hp:[170,22], dmg:[20,3.2], rate:1.25, range:2.8, chap:true,
         skill:{kind:"push", name:"토산 빼앗기", desc:"높이 뛰어 땅을 내려찍어 둘레 적을 밀어내고 피해를 줘요", cd:26, rad:2.2, dmg:[110,18], col:"#D9B27A", anim:"jump"}},
-  parkseo:{name:"박서", face:"parkseo", art:"h_parkseo", desc:"성을 굳게 지켜요", hp:[190,24], dmg:[18,3], rate:1.2, range:2.6, chap:true,
+  parkseo:{name:"박서", face:"parkseo", art:"h_parkseo", desc:"큰 칼로 내려베요 · 곁의 적까지", melee:true, hp:[230,28], dmg:[18,3], rate:1.2, range:2.2, chap:true,
         skill:{kind:"fire", name:"쇳물 붓기", desc:"빙글 돌며 쇳물을 뿌려 둘레를 불바다로 만들어요(불가살이에 두 배)", cd:26, rad:2.1, dmg:[70,12], dot:30, dur:3, col:"#FF8A3C", anim:"spin"}},
   kimyunhu:{name:"김윤후", face:"kimyunhu", art:"h_kimyunhu", desc:"승려 출신 활잡이", hp:[150,20], dmg:[26,4], rate:1.1, range:3.2, chap:true,
         skill:{kind:"snipe", name:"연속 저격", desc:"둘레에서 가장 센 적 셋에게 차례로 강한 화살(진짜 구미호에 세 배)", cd:18, rad:2.6, dmg:[260,40], col:"#FFE6A8", anim:"aim"}},
@@ -779,7 +779,7 @@ Object.assign(HEROES, {
         skill:{kind:"haste", name:"성민 결집", desc:"둘레 3칸 망루·장병이 8초 동안 40% 빨리 싸우고, 둘레 적은 겁먹어 느려져요", cd:30, rad:3, dmg:[0,0], dur:8, col:"#FFD27A", anim:"jump"}},
   jeongyakyong:{name:"정약용", face:"jeongyakyong", art:"h_jeongyakyong", desc:"거중기를 만든 학자", hp:[150,18], dmg:[16,2.6], rate:1.3, range:2.6, chap:true,
         skill:{kind:"repair", name:"거중기", desc:"둘레 망루 하나(또는 문)를 바로 고치고 4초 무적, 둘레 적은 1초 넘어져요", cd:24, rad:2.5, dmg:[0,0], col:"#BFE6FF", anim:"jump"}},
-  yanghunsu:{name:"양헌수", face:"yanghunsu", art:"h_yanghunsu", desc:"밤에 몰래 건너 매복했어요", hp:[180,22], dmg:[22,3.5], rate:1.3, range:2.8, chap:true,
+  yanghunsu:{name:"양헌수", face:"yanghunsu", art:"h_yanghunsu", desc:"달려들어 환도로 빠르게 베어요", melee:true, hp:[220,26], dmg:[22,3.5], rate:1.3, range:2.6, chap:true,
         skill:{kind:"ambush", name:"매복 기습", desc:"가장 가까운 적까지 번개처럼 돌진해 베고, 둘레 망루의 다음 한 발이 2.5배", cd:22, rad:2.6, dmg:[120,18], col:"#B9D8FF", anim:"dash"}}
 });
 HEROES.gwon.skill.kind = "rain"; HEROES.yeon.skill.kind = "seal";
@@ -2068,7 +2068,7 @@ function moDraw(c, e, T, fn){
 // 적이 한 번 때림: 동작 시작 + 맞는 자리 이펙트(같은 적은 0.2초 안에 겹치지 않게)
 function moHit(e, tx, ty){ if (!e || !R || !MO[e.type]) return; if (e.atkT0 != null && R.time - e.atkT0 < .22) return; e.atkT0 = R.time; e.atkX = tx; e.atkY = ty; const k = MO[e.type].fx; if (k) mfx(k, tx, ty, tx >= e.x ? 1 : -1, e.x, e.y); }
 function moSwing(e, tx, ty){ if (!e || !R) return; if (e._mT > R.time) return; e._mT = R.time + (foeA(e.type).rate || 1.2)*(.85 + Math.random()*.3); moHit(e, tx, ty); } // 맞붙어 계속 치는 동안(피해는 그대로 초당) 주기마다 한 번 휘두른다
-const MFX_DUR = {thud:.45, foxfire:.55, bite:.32, coin:.5, shock:.4, rock:.45, claw:.35, dirt:.55, poison:.6, quake:.7, voidq:.8, dark:.7, spark:.4, crack:.45, splash:.55, chain:.45, wail:.7, pierce:.25, xslash:.32, bonk:.35, charge:.45, slash2:.3, muzzle:.35, javhit:.35, stonehit:.4, sealhit:.4};
+const MFX_DUR = {thud:.45, foxfire:.55, bite:.32, coin:.5, shock:.4, rock:.45, claw:.35, dirt:.55, poison:.6, quake:.7, voidq:.8, dark:.7, spark:.4, crack:.45, splash:.55, chain:.45, wail:.7, pierce:.25, xslash:.32, cleave:.4, bonk:.35, charge:.45, slash2:.3, muzzle:.35, javhit:.35, stonehit:.4, sealhit:.4};
 function mfx(k, x, y, dir, sx, sy){ if (!R) return; if (!R.mfx) R.mfx = []; if (R.mfx.length > 90) R.mfx.shift(); R.mfx.push({k, x, y, dir:dir || 1, sx:sx == null ? x : sx, sy:sy == null ? y : sy, t:R.time, dur:MFX_DUR[k] || .4, sd:Math.random()*6.28}); }
 function drawMfx(c, f, T){
   const p = Math.min(1, Math.max(0, (R.time - f.t)/f.dur)), a = 1 - p, x = f.x*T, y = f.y*T, d = f.dir, L = Math.max(1.5, T*.045);
@@ -2097,6 +2097,7 @@ function drawMfx(c, f, T){
     case "xslash":  { c.globalAlpha = a; c.strokeStyle = "rgba(255,248,225,.95)"; c.lineWidth = L*1.2; const q = Math.min(1, p*2.5), q2 = Math.min(1, Math.max(0, p*2.5 - .5)); c.beginPath(); c.moveTo(x - T*.25, y - T*.5); c.lineTo(x - T*.25 + T*.5*q, y - T*.5 + T*.45*q); c.stroke(); if (q2 > 0){ c.beginPath(); c.moveTo(x + T*.25, y - T*.5); c.lineTo(x + T*.25 - T*.5*q2, y - T*.5 + T*.45*q2); c.stroke(); } } break;
     case "slash2":  { c.globalAlpha = a; c.strokeStyle = "rgba(255,248,225,.95)"; c.lineWidth = L*1.2; const q = Math.min(1, p*2.5); c.beginPath(); c.moveTo(x + T*.25, y - T*.5); c.lineTo(x + T*.25 - T*.5*q, y - T*.5 + T*.45*q); c.stroke(); } break;
     case "bonk":    c.globalAlpha = a; c.fillStyle = "#FFE27A"; for (let i = 0; i < 6; i++){ const an = f.sd + i*1.05, r1 = T*(.06 + .2*p); c.beginPath(); c.moveTo(x, y - T*.4); c.lineTo(x + Math.cos(an)*r1, y - T*.4 + Math.sin(an)*r1); c.lineTo(x + Math.cos(an + .3)*r1*.4, y - T*.4 + Math.sin(an + .3)*r1*.4); c.closePath(); c.fill(); } break;
+    case "cleave":  { c.globalAlpha = a; const q = Math.min(1, p*2.6); c.strokeStyle = "rgba(255,246,220,.95)"; c.lineWidth = L*2.2; c.beginPath(); c.arc(x - d*T*.15, y - T*.35, T*.55, d > 0 ? -2.2 : -0.94 - 1.26*q, d > 0 ? -2.2 + 1.26*q : -0.94); c.stroke(); c.strokeStyle = "rgba(255,200,120,.6)"; c.lineWidth = L; c.beginPath(); c.arc(x - d*T*.15, y - T*.35, T*.68, d > 0 ? -2.1 : -1.04 - 1.06*q, d > 0 ? -2.1 + 1.06*q : -1.04); c.stroke(); if (p > .35) dots(5, "rgba(170,140,100,.8)", .45, .1, .05); } break;
     case "charge":  c.globalAlpha = a; c.strokeStyle = "rgba(255,240,200,.9)"; c.lineWidth = L*1.8; c.beginPath(); c.arc(x - d*T*.3, y - T*.2, T*(.3 + .25*p), d > 0 ? -1.1 : Math.PI - 1.1, d > 0 ? 1.1 : Math.PI + 1.1); c.stroke(); dots(6, "rgba(180,150,100,.8)", .45, .15, .05); break;
     case "muzzle":  c.globalAlpha = a; c.fillStyle = "rgba(255,220,120," + (1 - p) + ")"; circle(c, x + d*T*.3, y - T*.35, T*.12*(1 - p)); c.fill(); dots(5, "rgba(200,200,200,.7)", .35, .35, .07); break;
     case "javhit":  c.globalAlpha = a; c.strokeStyle = "rgba(255,240,210,.95)"; c.lineWidth = L; for (let i = 0; i < 4; i++){ const an = f.sd + i*1.57, r2 = T*(.1 + .25*p); c.beginPath(); c.moveTo(x, y - T*.2); c.lineTo(x + Math.cos(an)*r2, y - T*.2 + Math.sin(an)*r2); c.stroke(); } break;
@@ -2116,14 +2117,22 @@ const HERO_MO = {
   gwon:        {shot:"arrow",  g:"march",  say:"또박또박 걷고, 활을 크게 당겨 쏴요"},
   yeon:        {shot:"charm",  g:"skip",   say:"사뿐사뿐 뛰듯 걷고, 손목을 튕겨 부적을 날려요"},
   ansi:        {shot:"heavy",  g:"stride", say:"성큼성큼 걷고, 무거운 장궁 화살을 쏴요"},
-  parkseo:     {shot:"javelin",g:"guard",  say:"방패를 앞세워 묵직하게 걷고, 짧은 창을 던져요"},
+  parkseo:     {shot:"cleave", g:"guard",  say:"방패를 앞세워 묵직하게 걷고, 큰 칼로 내려베요(곁의 적까지)"},
   kimyunhu:    {shot:"twin",   g:"calm",   say:"스님처럼 조용히 걷고, 화살 두 발을 잇달아 쏴요"},
   leejeongam:  {shot:"stone",  g:"flag",   say:"깃발을 흔들며 걷고, 돌팔매를 던져요"},
   kimsimin:    {shot:"gun",    g:"command",say:"당당하게 걷고, 승자총통을 쏴요(연기)"},
   jeongyakyong:{shot:"bolt",   g:"shuffle",say:"종종걸음으로 걷고, 손쇠뇌 살을 쏴요"},
-  yanghunsu:   {shot:"musket", g:"crouch", say:"몸을 낮춰 재빨리 움직이고, 조총을 쏴요(불꽃·연기)"}
+  yanghunsu:   {shot:"blade",  g:"crouch", say:"몸을 낮춰 달려들어 환도로 빠르게 베어요"}
 };
 const heroMo = k => HERO_MO[k] || HERO_MO.gwon;
+/* 요청 47: 칼 쓰는 장군 — 던지거나 쏘지 않고 적에게 달려가 벤다. reach = 칼이 닿는 거리, mul = 한 번 피해 배율(붙어 싸우는 위험 몫), cleave = 곁의 적에게 주는 몫, rad = 곁 범위.
+   사거리(range)는 '달려들 적을 찾는 거리'로 쓴다. 집으로 삼는 자리(지휘로 보낸 곳)에서 range+1 넘게 쫓아가지 않는다 */
+const HERO_BLADE = {parkseo:{reach:.85, mul:1.35, cleave:.6, rad:.95, fx:"cleave"}, yanghunsu:{reach:.8, mul:1.75, cleave:.35, rad:.65, fx:"xslash"}}; /* 보통 봇(벽·문 규칙 고친 뒤, 8판씩): 2장 박서 1.3에서 11/16·1.4에서 14/16 → 1.35(목표 약 80%), 9장 양헌수 1.75에서 3/16(목표 약 20%, 예전 활 1/8) */
+const heroBlade = h => h && HERO_BLADE[h.k] || null; const sideOf = o => !(R && R.m && R.m.fort) ? null : (o.inside ? true : fortCastleIn(o.x, o.y)); const atGateNear = e => !e.inside && !fortCastleIn(e.x, e.y) && ((e.atGate != null && e.atGate >= 0) || !!(R.gates && R.gates.some(g => !g.broken && dist(g.x + .5, g.y + .5, e.x, e.y) <= 1.4))); // 문을 치거나 문 곁에 붙은 적: 문간으로 나가 벤다
+function bladeTarget(h, HB){ const ax = h.tx == null ? h.x : h.tx, ay = h.ty == null ? h.y : h.ty, lim = h.manual ? HB.reach*1.6 : (h.range || 2.5) + 1, hin = sideOf(h);
+  const ok = e => e && !e.dead && !(e.under > 0) && dist(h.x, h.y, e.x, e.y) <= (h.manual ? HB.reach*1.6 : (h.range || 2.5)) && dist(ax, ay, e.x, e.y) <= lim && (hin === null || sideOf(e) === hin || (hin && atGateNear(e))); // 손으로 옮긴 장군은 그 자리 곁만 벤다
+  const f = h.forceTg; if (f && !f.dead && !(f.under > 0) && R.enemies.indexOf(f) >= 0) return f; // 집중 표적은 사거리와 상관없이 끝까지(지휘 명령) — 반대쪽이면 이동은 집중 이동(문 경로)이 맡는다
+  let best = null, bd = 1e9; for (const e of R.enemies){ if (!ok(e)) continue; const d = dist(h.x, h.y, e.x, e.y) - (e.boss ? .3 : 0); if (d < bd){ bd = d; best = e; } } return best; }
 function heroShotFx(h, tg){ const m = heroMo(h.k), d = tg.x >= h.x ? 1 : -1; h.atkT0 = R.time; h.atkX = tg.x;
   if (m.shot === "gun" || m.shot === "musket") mfx("muzzle", h.x, h.y - .1, d); return m.shot; }
 function heroHitFx(p){ if (!p || !p.hs || !p.tg) return; const x = p.tg.x, y = p.tg.y, d = x >= p.x ? 1 : -1;
@@ -2149,6 +2158,8 @@ function heroPose(h, T){ const m = heroMo(h.k), S = Math.sin, A = Math.abs, ph =
       case "javelin": o.rot += d*(ap < .4 ? -.3*ap/.4 : -.3 + .55*(ap - .4)/.6)*(1 - ap*.4); o.x += d*T*.06*k; break; // 젖혔다 던지기
       case "stone":   o.rot += d*(ap < .5 ? -.35*ap/.5 : -.35 + .7*(ap - .5)/.5)*(1 - ap*.5); break; // 팔매 돌리기
       case "gun": case "musket": o.x -= d*T*.09*k; o.rot -= d*.08*k; break; // 반동
+      case "blade":   o.rot += d*(ap < .3 ? -.35*ap/.3 : -.35 + .8*Math.min(1, (ap - .3)/.25))*(ap > .6 ? 1 - (ap - .6)/.4 : 1); o.x += d*T*.12*k; break; // 환도: 짧게 젖혔다 앞으로 베기
+      case "cleave":  { const up = ap < .45 ? ap/.45 : 0; o.y -= T*.12*up; o.rot += d*(ap < .45 ? -.25*up : -.25 + .6*Math.min(1, (ap - .45)/.2))*(ap > .7 ? 1 - (ap - .7)/.3 : 1); o.sy *= ap < .45 ? 1 + .06*up : 1 - .08*Math.sin(Math.PI*Math.min(1, (ap - .45)/.55)); } break; // 큰 칼: 들어 올렸다 내려베기
     } }
   return o; }
 // 장군 화살·던지기 모양(날아가는 동안)
@@ -6259,7 +6270,7 @@ function heroFocusMove(h, e, d0, want, dt){
   if (h.fs === "exit" || h.fs === "enter"){ const g = seqGate(), P = fortGatePts(g), seq = h.fs === "exit" ? [P.mid, P.out] : [P.mid, P.inn], w = seq[h.wp || 0]; if (g.openT > 0) g.openT = Math.max(g.openT, .4);
     if (dist(h.x, h.y, w.x, w.y) < .15){ if ((h.wp || 0) === 0) h.wp = 1; else { h.fs = h.fs === "exit" ? "out" : "in"; h.wp = 0; } } return w; }
   if (d0 <= want && hin === tin) return null; // 같은 쪽에서 사거리 안: 제자리에서 쏜다
-  if (d0 <= (h.range || 3) && hin !== tin) return null; // 성벽 너머라도 사거리 안이면 그 자리에서 쏜다
+  if (d0 <= (h.range || 3) && hin !== tin && !heroBlade(h)) return null; // 성벽 너머라도 사거리 안이면 그 자리에서 쏜다(칼 장군은 문으로 돌아 나간다)
   if (hin && !tin){ if (h.fgi == null) h.fgi = fortNearGate(e.x, e.y); const g = seqGate(), P = fortGatePts(g); // 성 안 → 문으로 나감
     if (dist(h.x, h.y, P.inn.x, P.inn.y) < .3){ if (fortGateSafe(g) || g.broken){ fortOpenGate(g); h.fs = "exit"; h.wp = 0; } else fortWaitGate(g); } return {x:P.inn.x, y:P.inn.y}; }
   if (!hin && tin){ if (h.fgi == null) h.fgi = fortNearGate(h.x, h.y); const g = seqGate(), P = fortGatePts(g); // 성 밖 → 문으로 들어감
@@ -6282,8 +6293,8 @@ function updateHero(dt){
     return;
   }
   const ftg = heroForce(h); // 요청 30: 적을 눌러 집중 공격 — 사거리까지 다가가 그 적만 친다
-  if (ftg){ if (h.nxT > 0) h.nxT -= dt; const d0 = dist(h.x, h.y, ftg.x, ftg.y), want = Math.max(.7, (h.range || 3)*.8);
-    if (R.m.fort && R.gates && R.gates.length){ const n0 = heroFocusMove(h, ftg, d0, want, dt); if (n0){ h.tx = n0.x; h.ty = n0.y; } else if (h.forceTg){ h.tx = h.x; h.ty = h.y; } }
+  if (ftg){ if (h.nxT > 0) h.nxT -= dt; const d0 = dist(h.x, h.y, ftg.x, ftg.y), want = heroBlade(h) ? heroBlade(h).reach*.7 : Math.max(.7, (h.range || 3)*.8);
+    if (R.m.fort && R.gates && R.gates.length){ if (!(heroBlade(h) && h.bladeOv)){ const n0 = heroFocusMove(h, ftg, d0, want, dt); if (n0){ h.tx = n0.x; h.ty = n0.y; } else if (h.forceTg){ h.tx = h.x; h.ty = h.y; } } } // 칼 장군이 곧장·문간으로 베러 가는 동안은 문 경로 상태를 돌리지 않는다
     else if (d0 > want){ h.tx = ftg.x + (h.x - ftg.x)/d0*want; h.ty = ftg.y + (h.y - ftg.y)/d0*want; } else { h.tx = h.x; h.ty = h.y; } }
   else if (R.m.fort && R.gates && R.gates.length && !h.manual) fortHeroAI(h, dt); // v10 S4
   else if (R.sortie && campAlive() && !h.manual){ // 출격: 길을 따라 진으로
@@ -6292,7 +6303,17 @@ function updateHero(dt){
     if (dist(h.x, h.y, h.tx, h.ty) < .5 && h.pd > stopD) h.pd = Math.max(stopD, h.pd - 2.4*dt);
     const p = posAt(P, h.pd); h.tx = p.x; h.ty = p.y;
   }
-  const dx = h.tx - h.x, dy = h.ty - h.y, d = Math.hypot(dx, dy);
+  const HB = heroBlade(h); let gx = h.tx, gy = h.ty; h.mtg = null;
+  h.bladeOv = false;
+  if (HB && !(h.bind > 0)){ const mt = bladeTarget(h, HB); if (mt){ h.mtg = mt; const dm = dist(h.x, h.y, mt.x, mt.y), hs = sideOf(h);
+      const clear = () => { if (hs === null) return true; const nS = Math.max(4, Math.ceil(dm/.25)); for (let i = 1; i < nS; i++){ const q = i/nS; if (fortCastleIn(h.x + (mt.x - h.x)*q, h.y + (mt.y - h.y)*q) !== hs) return false; } return true; }; // 가는 길 중간이 성벽 반대쪽을 지나면 곧장 가지 않는다(밖↔밖이 성을 가로지르는 경우 등)
+      const same = hs === null || (sideOf(mt) === hs && clear()); // 요청 47: 칼 장군은 달려들어 벤다(벽은 뚫지 않는다)
+      if (same) h.bladeOv = true;
+      if (same && dm <= HB.reach*.8){ gx = h.x; gy = h.y; }
+      else if (same){ gx = mt.x + (h.x - mt.x)/dm*HB.reach*.6; gy = mt.y + (h.y - mt.y)/dm*HB.reach*.6; }
+      else if (hs && atGateNear(mt) && R.gates && R.gates.length){ const g = R.gates[fortNearGate(mt.x, mt.y)] || R.gates[0], P = fortGatePts(g); gx = P.mid.x; gy = P.mid.y; h.bladeOv = true; } // 성 안 장군 ↔ 문을 치는 적: 닫힌 문 안쪽 문간에 서서 벤다(문은 열지 않는다 — 설계)
+      /* 그 밖(반대쪽 집중 표적): gx/gy는 그대로 — 집중 이동이 문으로 돌아 나간다 */ } }
+  const dx = gx - h.x, dy = gy - h.y, d = Math.hypot(dx, dy);
   if (h.bind > 0) h.bind -= dt; // 물귀신에게 끌려 묶임: 못 움직이고 못 쏜다
   if (d > .04 && !(h.bind > 0)){ const v = Math.min(d, 2.4*unitTerrMul(h, h.tx, h.ty)*dt); h.x += dx/d*v; h.y += dy/d*v; h.walk += dt*9; if (Math.abs(dx) > .05) h.face = dx > 0 ? 1 : -1; }
   let dps = 0;
@@ -6302,7 +6323,12 @@ function updateHero(dt){
     if (h.hp <= 0){ h.hp = 0; h.dead = true; h.rt = 10; R.heroSel = false; R.aim = false; burst(h.x, h.y, 14, "#C9C2B2", 1.6, .6, .07, "smoke"); addText(h.x, h.y - .5, "장수가 쓰러졌어요", "#FF9A8A", 1.6); R.reviveAsk = 0; if (R.m && R.m.fort) moveTip("herodown", "장수는 10초 뒤 일어나오. 급하면 장수 단추를 두 번 눌러 옥 " + REVIVE.jade + "으로 바로 일으킬 수 있소."); renderPanel(true); return; }
   } else if (d <= .04) h.hp = Math.min(h.maxHp, h.hp + h.maxHp*.04*dt); // 쉬면 조금씩 회복
   h.cd -= dt;
-  if (h.cd <= 0 && !(h.bind > 0)){
+  if (HB && h.cd <= 0 && !(h.bind > 0)){ // 요청 47: 베기 — 닿은 적 + 곁의 적(cleave)
+    const t = h.mtg && !h.mtg.dead && dist(h.x, h.y, h.mtg.x, h.mtg.y) <= HB.reach && (sideOf(h) === null || sideOf(h.mtg) === sideOf(h) || atGateNear(h.mtg) && R.gates && R.gates.some(g => dist(h.x, h.y, g.x + .5, g.y + .5) <= 1.1)) ? h.mtg : null, cpOk = !t && campAlive() && dist(h.x, h.y, R.camp.x, R.camp.y) <= 1.5;
+    if (t || cpOk){ const tg = t || R.camp, dm = h.dmg*HB.mul; heroShotFx(h, tg); h.face = tg.x >= h.x ? 1 : -1; Sound.play("kill"); mfx(HB.fx, tg.x, tg.y, h.face, h.x, h.y);
+      HIT_SRC = "melee"; hit(tg, dm); if (t){ const ts = sideOf(t); R.enemies.forEach(o => { if (o !== t && !o.dead && !(o.under > 0) && dist(o.x, o.y, t.x, t.y) <= HB.rad && (ts === null || sideOf(o) === ts)) hit(o, dm*HB.cleave); }); } HIT_SRC = "";
+      h.cd = 1/h.rate; } }
+  else if (h.cd <= 0 && !(h.bind > 0)){
     let best = null;
     for (const e of R.enemies) if (!e.dead && !(e.under > 0) && dist(h.x, h.y, e.x, e.y) <= h.range && (!best || e.d > best.d)) best = e;
     const fT = h.forceTg && !h.forceTg.dead && !(h.forceTg.under > 0) ? h.forceTg : null; if (fT && dist(h.x, h.y, fT.x, fT.y) <= h.range) best = fT; // 집중 표적이 사거리 안이면 그 적, 밖이면 사거리 안 다른 적이라도 쏜다(검수 v17 대체)
@@ -7324,7 +7350,7 @@ const open = STAGES.map((_, i) => i).filter(i => i > 0 && isOpen(i)); if (!open.
 const RUN_KEY = "sanseong-run-v1", RUN_V = 1;
 const RUN_SKIPR = new Set(["s","st","m","mode","ch","test","waveActive","over","paused","speed","runId","resultSeq","sig","bannerT","shake","time","qt","countdown","evPending","prepWarn","heroSel","aim","tacOpen","flagMode","navSig","navDirty","lowOn","slowT","downT","downName","tacTipT","reviveAsk","campHelpT","campStall","campHelpCd","thiefT","resLock","payFail","prepT","noJade","restored","sid","runMarked","grid","base"]);
 const RUN_OBJR = ["decSeen","gates","bound","bound0","rforge","evDone","seen","thiefPlan","leaks","tacCd","flag","mound","towersOpen"];
-const RUN_SKIPK = new Set(["t","tg","blk","btg","target","foe","nx","path","el","atkT0","atkX","atkY","_mT","_lx","_ly","_mv","_sd"]); /* 요청 45: 몸짓 시각은 저장하지 않음 */
+const RUN_SKIPK = new Set(["t","tg","blk","btg","target","foe","nx","path","el","mtg","bladeOv","atkT0","atkX","atkY","_mT","_lx","_ly","_mv","_sd"]); /* 요청 45: 몸짓 시각은 저장하지 않음 */
 function runPlain(o, d){
   if (o == null || typeof o !== "object") return typeof o === "function" ? undefined : o;
   if (d > 5) return undefined;
@@ -8034,7 +8060,7 @@ function start(){
   Shop.init();
   if (M.stars[0] && M.daily.login < kstDate()) showDaily(); // 하루 첫 접속이면 매일 보상부터
   if (!TabLock.pending && !TabLock.ok()) lockScreen(true); // 다른 창이 게임을 갖고 있으면 안내부터(Web Lock 은 잡히면/못 잡히면 그때 처리)
-  window.SanseongDebug = {VIEW, ACC, LVGAP, START_GOLD, RAID_FOES, FINAL, MO, HERO_MO, moHit, mfx, muFx, getT:() => T, musicDemo:(i, k, sec, from) => Sound.musicDemo(i, k, sec, from), unitVs, solDefMul, foeKindTxt, unitStrike, UNITS, evWatch, decideTest:k => { const d = k === "boss" ? {k, e:R.enemies.find(e => !e.dead) || {type:"grunt", x:9, y:9}} : k === "gate" ? {k, g:R.gates[0]} : k === "thief" ? {k, e:thiefSpawn()} : {k:"camp"}; if (!d.e && (k === "boss" || k === "thief")) return null; R.decSeen = R.decSeen || {}; R.decSeen[k] = true; R.decCur = d; decideShow(d); return d; }, decideOn:() => decideOn(), decideTick:dt => decideTick(dt), easy:{on:() => easyOn(), recs:() => easyRecs(), repair:() => easyRepair(), tick:dt => easyTick(dt)}, thiefSpawn, get T(){ return T; }, TUT, tutOk, tutCells, fortDbg:{unitTerrMul, cellTerr, fortMove, volDanger, fortWallHit, fortPlan, fortGateSafe, fortGatePts, fortFlagPos, fortVolunteers, flagBtnTap, toggleSortie, tapFlag:(x,y)=>{ R.flagMode = true; const ts = null; if (fortIn(x, y) && fortWalk(x, y)){ R.flag = {x:x + .5, y:y + .5}; } R.flagMode = false; }}, pickMusic, musicNow:() => Sound.musicNow(), MUSIC, WebApp, showStory, Raid, RAID, GATE, STAGES, TabLock, Cam, tapAt, reloadFromDisk, get M(){ return M; }, get R(){ return R; }, newRun, grantStarter, saveMeta, showMenu, castSkill, Track, update, victory, defeat, hideOverlay, Ads, Shop, contOk, loadMeta, CloudSave, SaveCode, Notify, castlePending, castleCollect, ensureMissions, mprog, dailyBoot, showCastle, normMeta, Ledger, castleSettle, claimMission, startWave, get saveGen(){ return saveGen; }, get castleBonus(){ return castleBonus; }, set castleBonus(v){ castleBonus = v; }, get overlayMode(){ return overlayMode; }, bot:{easyRepair:() => easyRepair(true), wavesOf, foeKinds, bossKind, tacUse, tacBlock, volGate, tacGate, buyUnit, UNITS, canBuildAt, cellBuildable, upLimit, rforgeUp, TT, ET, HEROES, TERRAIN, hit, toggleSortie, buildable, upCost, initBarracks, towerMaxHp, spawnHero, towerAt, repairCost, stat, get ROWS(){ return ROWS; }, get COLS(){ return COLS; }}}; // 점검용(bot: 자동 봇 균형 시험)
+  window.SanseongDebug = {VIEW, ACC, LVGAP, START_GOLD, RAID_FOES, FINAL, MO, HERO_MO, HERO_BLADE, HEROES, moHit, mfx, muFx, getT:() => T, musicDemo:(i, k, sec, from) => Sound.musicDemo(i, k, sec, from), unitVs, solDefMul, foeKindTxt, unitStrike, UNITS, evWatch, decideTest:k => { const d = k === "boss" ? {k, e:R.enemies.find(e => !e.dead) || {type:"grunt", x:9, y:9}} : k === "gate" ? {k, g:R.gates[0]} : k === "thief" ? {k, e:thiefSpawn()} : {k:"camp"}; if (!d.e && (k === "boss" || k === "thief")) return null; R.decSeen = R.decSeen || {}; R.decSeen[k] = true; R.decCur = d; decideShow(d); return d; }, decideOn:() => decideOn(), decideTick:dt => decideTick(dt), easy:{on:() => easyOn(), recs:() => easyRecs(), repair:() => easyRepair(), tick:dt => easyTick(dt)}, thiefSpawn, get T(){ return T; }, TUT, tutOk, tutCells, fortDbg:{unitTerrMul, cellTerr, fortMove, volDanger, fortWallHit, fortPlan, fortGateSafe, fortGatePts, fortFlagPos, fortVolunteers, flagBtnTap, toggleSortie, tapFlag:(x,y)=>{ R.flagMode = true; const ts = null; if (fortIn(x, y) && fortWalk(x, y)){ R.flag = {x:x + .5, y:y + .5}; } R.flagMode = false; }}, pickMusic, musicNow:() => Sound.musicNow(), MUSIC, WebApp, showStory, Raid, RAID, GATE, STAGES, TabLock, Cam, tapAt, reloadFromDisk, get M(){ return M; }, get R(){ return R; }, newRun, grantStarter, saveMeta, showMenu, castSkill, Track, update, victory, defeat, hideOverlay, Ads, Shop, contOk, loadMeta, CloudSave, SaveCode, Notify, castlePending, castleCollect, ensureMissions, mprog, dailyBoot, showCastle, normMeta, Ledger, castleSettle, claimMission, startWave, get saveGen(){ return saveGen; }, get castleBonus(){ return castleBonus; }, set castleBonus(v){ castleBonus = v; }, get overlayMode(){ return overlayMode; }, bot:{easyRepair:() => easyRepair(true), wavesOf, foeKinds, bossKind, tacUse, tacBlock, volGate, tacGate, buyUnit, UNITS, canBuildAt, cellBuildable, upLimit, rforgeUp, TT, ET, HEROES, TERRAIN, hit, toggleSortie, buildable, upCost, initBarracks, towerMaxHp, spawnHero, towerAt, repairCost, stat, get ROWS(){ return ROWS; }, get COLS(){ return COLS; }}}; // 점검용(bot: 자동 봇 균형 시험)
   requestAnimationFrame(loop);
 }
 if (window.claude && window.claude.hot && window.claude.hot.snapshot) window.claude.hot.snapshot(() => ({}));

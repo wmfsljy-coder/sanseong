@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta name="app-version" content="20261127-440cdf2eca">
+<meta name="app-version" content="20261127-881b787c5d">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>산성</title>
@@ -7087,9 +7087,17 @@ const Cam = {
       c.globalCompositeOperation = "lighter"; const lit = (x, y, r) => { const g = c.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, "rgba(255,170,80,.55)"); g.addColorStop(1, "rgba(255,170,80,0)"); c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, Math.PI*2); c.fill(); };
       (R.m.gates || []).forEach(g => lit((g.x + .5)*T*k, (g.y + .5)*T*k, Math.max(3, T*k*1.2))); if (R.m.castle && R.gates){ const pp = palaceSpot(); lit(pp[0]*T*k, pp[1]*T*k, Math.max(4, T*k*1.6)); } c.restore(); } // 문·행궁 횃불
     if (R.bound){ const B = R.bound, x0 = B.x0*T*k, y0 = B.y0*T*k, x1 = (B.x1 + 1)*T*k, y1 = (B.y1 + 1)*T*k, mw = miniCv.width, mh = miniCv.height; c.fillStyle = "rgba(60,60,60,.14)"; c.fillRect(0, 0, mw, y0); c.fillRect(0, y1, mw, mh - y1); c.fillRect(0, y0, x0, y1 - y0); c.fillRect(x1, y0, mw - x1, y1 - y0); c.strokeStyle = "#FFE296"; c.lineWidth = 1.5; c.setLineDash([3, 2]); c.strokeRect(x0 + .75, y0 + .75, x1 - x0 - 1.5, y1 - y0 - 1.5); c.setLineDash([]); } // v10: 아직 안 열린 전장
-    c.fillStyle = "#FF5A4A"; for (const e of R.enemies){ if (e.dead) continue; c.fillRect(e.x*T*k - 2, e.y*T*k - 2, 4, 4); }
+    { const u = Math.max(2.4, T*k*.32), TC = {archer:"#8FD3FF", crossbow:"#8FD3FF", bigbow:"#8FD3FF", catapult:"#FFB36B", cannon:"#FFB36B", bigcannon:"#FFB36B", rocket:"#FFB36B", musket:"#FFB36B", barracks:"#6FA8FF", caltrop:"#AEB4BA"}; // 요청 54: 작은 지도 기호 — 망루(네모), 장병(파란 점), 적(빨강: 땅 점·하늘 세모·대장 큰 원), 장군(금빛 별)
+      R.towers.forEach(tw => { if (tw.virtual) return; const x = (tw.x + .5)*T*k, y = (tw.y + .5)*T*k, col = tw.ruin ? "#555" : (TC[tw.type] || "#CFD8E0"); if (tw.type === "caltrop"){ c.strokeStyle = col; c.lineWidth = 1.2; c.beginPath(); c.moveTo(x - u*.7, y - u*.7); c.lineTo(x + u*.7, y + u*.7); c.moveTo(x + u*.7, y - u*.7); c.lineTo(x - u*.7, y + u*.7); c.stroke(); return; }
+        c.fillStyle = "rgba(10,14,20,.75)"; c.fillRect(x - u*.95, y - u*.95, u*1.9, u*1.9); c.fillStyle = col; c.fillRect(x - u*.7, y - u*.7, u*1.4, u*1.4); });
+      c.fillStyle = "#4F9BFF"; c.strokeStyle = "rgba(10,14,30,.8)"; c.lineWidth = 1; foeUnits(s0 => { if (s0.dead) return; c.beginPath(); c.arc(s0.x*T*k, s0.y*T*k, u*(s0.k === "cavalry" || (s0.t && s0.t.unit === "cavalry") ? .75 : .55), 0, Math.PI*2); c.fill(); c.stroke(); });
+      for (const e of R.enemies){ if (e.dead || e.thief) continue; const E = ET[e.type] || {}, x = e.x*T*k, y = e.y*T*k;
+        if (E.chief || e.boss){ const bl = (performance.now()/300|0) % 2; c.fillStyle = "#B01E1E"; c.beginPath(); c.arc(x, y, u*1.35, 0, Math.PI*2); c.fill(); c.strokeStyle = bl ? "#FFD27A" : "#FF7A5A"; c.lineWidth = 1.6; c.stroke(); continue; }
+        c.fillStyle = e.under > 0 ? "#B07A50" : "#FF5A4A"; c.strokeStyle = "rgba(30,0,0,.7)"; c.lineWidth = 1;
+        if (e.fly){ c.beginPath(); c.moveTo(x, y - u*.9); c.lineTo(x + u*.8, y + u*.6); c.lineTo(x - u*.8, y + u*.6); c.closePath(); c.fill(); c.stroke(); }
+        else { c.beginPath(); c.arc(x, y, u*.6, 0, Math.PI*2); c.fill(); c.stroke(); } } }
     for (const e of R.enemies){ if (e.dead || !e.thief) continue; c.fillStyle = (performance.now()/250|0) % 2 ? "#FFD27A" : "#FF2A1A"; c.beginPath(); c.arc(e.x*T*k, e.y*T*k, 3.6, 0, Math.PI*2); c.fill(); } // 약탈꾼: 깜박이는 큰 점
-    const h = R.hero; if (h && !h.dead){ c.fillStyle = "#FFD27A"; c.beginPath(); c.arc(h.x*T*k, h.y*T*k, 3.5, 0, Math.PI*2); c.fill(); }
+    const h = R.hero; if (h && !h.dead){ const x = h.x*T*k, y = h.y*T*k, r1 = Math.max(4, T*k*.55); c.beginPath(); for (let i = 0; i < 10; i++){ const a = -Math.PI/2 + i*Math.PI/5, rr = i % 2 ? r1*.45 : r1; if (i) c.lineTo(x + Math.cos(a)*rr, y + Math.sin(a)*rr); else c.moveTo(x + Math.cos(a)*rr, y + Math.sin(a)*rr); } c.closePath(); c.fillStyle = "#FFD27A"; c.fill(); c.strokeStyle = "#3A2A10"; c.lineWidth = 1.2; c.stroke(); } // 장군: 금빛 별
     if (campAlive()){ const cx = R.camp.x*T*k, cy = R.camp.y*T*k; c.fillStyle = "#C0302A"; c.strokeStyle = "#FFD27A"; c.lineWidth = 1.5; c.beginPath(); c.moveTo(cx, cy - 7); c.lineTo(cx + 6, cy + 5); c.lineTo(cx - 6, cy + 5); c.closePath(); c.fill(); c.stroke(); } // 진
     c.strokeStyle = "#fff"; c.lineWidth = 2; if (VIEW.on){ const r = visRect(); c.beginPath(); [[r.x, r.y], [r.x + r.w, r.y], [r.x + r.w, r.y + r.h], [r.x, r.y + r.h]].forEach((q, i) => { const w = VIEW.inv(this.x + q[0]/this.z, this.y + q[1]/this.z); if (i) c.lineTo(w[0]*k, w[1]*k); else c.moveTo(w[0]*k, w[1]*k); }); c.closePath(); c.stroke(); } else { const r = visRect(); c.strokeRect((this.x + r.x/this.z)*k + 1, (this.y + r.y/this.z)*k + 1, r.w/this.z*k - 2, r.h/this.z*k - 2); } } // 미니맵 틀 = 실제 보이는 영역
 };

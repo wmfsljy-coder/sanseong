@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta name="app-version" content="20261126-ede6f7b13f">
+<meta name="app-version" content="20261126-503e464d0f">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>산성</title>
@@ -472,6 +472,9 @@ const ART_SRC = {
 };
 /*ART-END*/
 /* 그림 로더: ART_SRC(묶어 넣은 WebP)를 Image로 불러 ART.img 에 둔다. 없거나 실패하면 캔버스 코드 그림으로 대체 */
+/* 요청 51: 동작 그림(걷기·달리기·날갯짓·기기·떠다니기 4장면). art/anim/<그림>_<0~3>.webp 를 바깥 파일로 불러온다. tools/anim-register.cjs 가 이 줄을 고친다 */
+/*ANIM-LIST*/const ANIM_LIST = {};/*ANIM-END*/
+const ANIM_VER = "mwx8lqwn";
 const ART = (function(){
   const src = typeof ART_SRC === "object" ? ART_SRC : {}, img = {}, cache = new Map(), masks = {};
   let left = Object.keys(src).length, waiters = [];
@@ -481,8 +484,12 @@ const ART = (function(){
   Object.keys(src).forEach(k => { const im = new Image();
     im.onload = () => { img[k] = im; if (k === "k_title"){ document.documentElement.style.setProperty("--title-bg", 'url("' + src.k_title + '")'); try { fitScene(); } catch(e){} } late(); if (--left <= 0) finish(); };
     im.onerror = () => { if (--left <= 0) finish(); }; im.src = src[k]; });
+  const anim = {};
+  const loadAnim = (k, n) => { const keys = []; let got = 0; for (let i = 0; i < n; i++){ const kk = k + "#" + i, im = new Image(); keys.push(kk);
+      im.onload = () => { img[kk] = im; if (++got === n){ anim[k] = keys; late(); } }; im.onerror = () => {}; im.src = "art/anim/" + k + "_" + i + ".webp?v=" + ANIM_VER; } };
+  try { Object.keys(typeof ANIM_LIST === "object" ? ANIM_LIST : {}).forEach(k => loadAnim(k, ANIM_LIST[k])); } catch(e){}
   return Object.assign(api, {
-    img, src,
+    img, src, anim,
     ok(k){ return !!img[k]; }, // 실제로 불러와진 그림만 쓴다(실패한 그림은 깨진 자리 대신 대체 그림)
     url(k){ return img[k] ? src[k] : ""; },
     booted(){ booted = true; },
@@ -505,6 +512,13 @@ const ART = (function(){
     },
     // 바닥 가운데(bx,by) 기준으로 높이 h 만큼 그린다
     drawAt(c, k, bx, by, h, flip, white, dpr){
+      const D0 = this.def, AN = D0 && anim[k];
+      if (AN){ const n = AN.length, tt = D0.t || 0, cyc = x => ((x % 1) + 1) % 1; let fi = 0;
+        if (D0.m === "fly") fi = Math.floor(cyc(tt*(D0.fs || 11)/(Math.PI*2))*n);
+        else if (D0.m === "float") fi = Math.floor(cyc(tt*.8)*n);
+        else if (D0.a > .3) fi = Math.floor(cyc((D0.ph || 0)/(Math.PI*2))*n);
+        k = AN[fi]; const im2 = img[k]; if (!im2) return false;
+        const w2 = h*im2.naturalWidth/im2.naturalHeight, d2 = dpr || 1, cv2 = this.get(k, w2*d2, h*d2, flip, white); c.drawImage(cv2, bx - w2/2, by - h, w2, h); return true; } // 요청 51: 팔다리가 실제로 움직이는 장면 넘기기
       const im = img[k]; if (!im) return false;
       const w = h * im.naturalWidth / im.naturalHeight, d = dpr || 1, cv = this.get(k, w*d, h*d, flip, white);
       const D = this.def; if (D && this.gaitFn && (D.a > .03 || D.m === "fly" || D.m === "float")){ this.gaitFn(c, cv, bx - w/2, by - h, w, h, D, white); return true; } // 요청 50: 걷기·뛰기·기기·날기·떠다니기
@@ -2070,7 +2084,9 @@ function moDraw(c, e, T, fn){
   try { ART.withDef(gaitOfE(e, mv), fn); } finally { c.restore(); }
 }
 // 적이 한 번 때림: 동작 시작 + 맞는 자리 이펙트(같은 적은 0.2초 안에 겹치지 않게)
-function moHit(e, tx, ty){ if (!e || !R || !MO[e.type]) return; if (e.atkT0 != null && R.time - e.atkT0 < .22) return; e.atkT0 = R.time; e.atkX = tx; e.atkY = ty; const k = MO[e.type].fx; if (k) mfx(k, tx, ty, tx >= e.x ? 1 : -1, e.x, e.y); }
+const FX_SND = {thud:"f_club", bite:"f_bite", coin:"f_coin", shock:"f_bash", rock:"f_rock", claw:"f_claw", dirt:"f_dirt", poison:"f_poison", quake:"f_slam", voidq:"f_quake", dark:"f_dark", spark:"f_spark", crack:"f_crack", splash:"f_splash", chain:"f_chain", wail:"f_wail", foxfire:"f_fire"}; // 요청 52: 때리는 소리도 괴물마다
+const onScr = (x, y) => { if (!Cam.active) return true; const v = Cam.vis(1); return x >= v.x0 && x <= v.x1 && y >= v.y0 && y <= v.y1; }; // 화면 안에서 난 소리만
+function moHit(e, tx, ty){ if (!e || !R || !MO[e.type]) return; if (e.atkT0 != null && R.time - e.atkT0 < .22) return; e.atkT0 = R.time; e.atkX = tx; e.atkY = ty; const k = MO[e.type].fx; if (k) mfx(k, tx, ty, tx >= e.x ? 1 : -1, e.x, e.y); const sn = e.type === "gangcheol" ? "f_fire" : FX_SND[k]; if (sn && onScr(e.x, e.y)) Sound.play(sn); }
 function moSwing(e, tx, ty){ if (!e || !R) return; if (e._mT > R.time) return; e._mT = R.time + (foeA(e.type).rate || 1.2)*(.85 + Math.random()*.3); moHit(e, tx, ty); } // 맞붙어 계속 치는 동안(피해는 그대로 초당) 주기마다 한 번 휘두른다
 const MFX_DUR = {thud:.45, foxfire:.55, bite:.32, coin:.5, shock:.4, rock:.45, claw:.35, dirt:.55, poison:.6, quake:.7, voidq:.8, dark:.7, spark:.4, crack:.45, splash:.55, chain:.45, wail:.7, pierce:.25, xslash:.32, cleave:.4, bonk:.35, charge:.45, slash2:.3, muzzle:.35, javhit:.35, stonehit:.4, sealhit:.4};
 function mfx(k, x, y, dir, sx, sy){ if (!R) return; if (!R.mfx) R.mfx = []; if (R.mfx.length > 90) R.mfx.shift(); R.mfx.push({k, x, y, dir:dir || 1, sx:sx == null ? x : sx, sy:sy == null ? y : sy, t:R.time, dur:MFX_DUR[k] || .4, sd:Math.random()*6.28}); }
@@ -2137,7 +2153,7 @@ function bladeTarget(h, HB){ const ax = h.tx == null ? h.x : h.tx, ay = h.ty == 
   const ok = e => e && !e.dead && !(e.under > 0) && dist(h.x, h.y, e.x, e.y) <= (h.manual ? HB.reach*1.6 : (h.range || 2.5)) && dist(ax, ay, e.x, e.y) <= lim && (hin === null || sideOf(e) === hin || (hin && atGateNear(e))); // 손으로 옮긴 장군은 그 자리 곁만 벤다
   const f = h.forceTg; if (f && !f.dead && !(f.under > 0) && R.enemies.indexOf(f) >= 0) return f; // 집중 표적은 사거리와 상관없이 끝까지(지휘 명령) — 반대쪽이면 이동은 집중 이동(문 경로)이 맡는다
   let best = null, bd = 1e9; for (const e of R.enemies){ if (!ok(e)) continue; const d = dist(h.x, h.y, e.x, e.y) - (e.boss ? .3 : 0); if (d < bd){ bd = d; best = e; } } return best; }
-function heroShotFx(h, tg){ const m = heroMo(h.k), d = tg.x >= h.x ? 1 : -1; h.atkT0 = R.time; h.atkX = tg.x;
+function heroShotFx(h, tg){ const m = heroMo(h.k), d = tg.x >= h.x ? 1 : -1; h.atkT0 = R.time; h.atkX = tg.x; if (m.shot === "stone" || m.shot === "javelin") Sound.play("throw"); else if (m.shot === "charm") Sound.play("charm"); // 요청 52
   if (m.shot === "gun" || m.shot === "musket") mfx("muzzle", h.x, h.y - .1, d); return m.shot; }
 function heroHitFx(p){ if (!p || !p.hs || !p.tg) return; const x = p.tg.x, y = p.tg.y, d = x >= p.x ? 1 : -1;
   if (p.hs === "javelin" || p.hs === "bolt" || p.hs === "heavy") mfx("javhit", x, y, d); else if (p.hs === "stone") mfx("stonehit", x, y, d); else if (p.hs === "charm") mfx("sealhit", x, y, d); else if (p.hs === "gun" || p.hs === "musket") mfx("spark", x, y, d); }
@@ -3889,15 +3905,26 @@ function showImportPick(){
     + '<p class="foot">산 상품은 상점의 ‘구매 복원’으로도 되살릴 수 있어요.</p>', "save");
 }
 
+/* 요청 52: 녹음 효과음(CC0) art/sfx/<이름>_<번호>.m4a — tools/sfx-build.cjs 가 이 줄을 고친다. [개수, 크기, 빠르기 최소, 최대] */
+/*SFX-LIST*/const SFX_LIST = {"arrow":[2,0.35,1.25,1.6],"thrust":[2,0.55,0.95,1.15],"slash":[3,0.55,0.9,1.15],"cannon":[4,0.6,0.9,1.05],"gun":[3,0.5,0.9,1.1],"rocket":[2,0.45,0.95,1.1],"boom":[3,0.55,0.9,1.05],"caltrop":[2,0.4,1.1,1.3],"kill":[5,0.32,0.85,1.2],"gate":[3,0.6,0.8,0.95],"wave":[1,0.55,0.75,0.8],"button":[2,0.45,0.95,1.05],"build":[3,0.55,0.9,1.05],"coin":[3,0.45,0.95,1.1],"skill":[2,0.5,0.9,1.05],"roar":[4,0.6,0.75,0.95],"f_club":[3,0.4,0.85,1.05],"f_bite":[3,0.4,1,1.25],"f_jab":[2,0.4,1,1.2],"f_bash":[2,0.45,0.85,1],"f_claw":[2,0.4,1.05,1.3],"f_dirt":[3,0.45,0.85,1.05],"f_poison":[2,0.4,0.9,1.1],"f_slam":[2,0.55,0.7,0.85],"f_dark":[2,0.45,0.6,0.75],"f_spark":[2,0.45,0.85,1],"f_crack":[2,0.45,0.9,1.1],"f_splash":[2,0.5,0.85,1.05],"f_chain":[3,0.45,0.9,1.05],"f_wail":[3,0.35,1.05,1.25],"f_quake":[2,0.6,0.65,0.8],"f_fire":[3,0.45,0.9,1.1],"f_coin":[1,0.4,1.1,1.3],"f_rock":[2,0.45,0.9,1.1],"u_stab":[2,0.4,1,1.2],"u_slash":[3,0.4,1,1.2],"u_bonk":[2,0.4,0.95,1.15],"u_charge":[2,0.5,0.85,1],"throw":[2,0.4,0.9,1.1],"charm":[2,0.35,1.2,1.4],"step":[3,0.18,0.9,1.1]};/*SFX-END*/
 /* ---------- 소리: Web Audio로 코드 합성. 첫 터치 때 켜짐 ---------- */
 const Sound = (function(){
   let ac = null, sfxG = null, musG = null, noise = null, mus = null, nextT = 0, step = 0, mel = 5;
-  const last = {}, GAP = {heart:.9, thrust:.06, slash:.06, arrow:.07, cannon:.09, rocket:.12, kill:.05, gate:.15, caltrop:1.2, build:.1};
+  const last = {}, GAP = {heart:.9, thrust:.06, slash:.06, arrow:.07, cannon:.09, rocket:.12, kill:.06, gate:.15, caltrop:1.2, build:.1, gun:.08, boom:.14, roar:1.5, wave:1, step:.14, u_stab:.07, u_slash:.07, u_bonk:.07, u_charge:.15, throw:.08, charm:.08};
+  const SFXB = {}; let sfxLoading = false, voices = 0; // 요청 52: 녹음 소리 버퍼(이름 → [AudioBuffer]) — 받기 전·실패면 코드 합성 소리
+  function loadSfx(){ if (sfxLoading || !ac || typeof fetch !== "function") return; sfxLoading = true;
+    Object.keys(typeof SFX_LIST === "object" ? SFX_LIST : {}).forEach(k => { const n = SFX_LIST[k][0]; for (let i = 0; i < n; i++)
+      fetch("art/sfx/" + k + "_" + i + ".m4a").then(r => r.ok ? r.arrayBuffer() : Promise.reject(r.status)).then(b => new Promise((res, rej) => { try { const p = ac.decodeAudioData(b, res, rej); if (p && p.then) p.then(res, rej); } catch(e){ rej(e); } }))
+        .then(buf => { (SFXB[k] || (SFXB[k] = [])).push(buf); }).catch(() => {}); }); }
+  function playBuf(name, t){ const L = SFXB[name], S0 = SFX_LIST[name]; if (!L || !L.length || !S0 || voices > 16) return false;
+    const src = ac.createBufferSource(), g = ac.createGain(); src.buffer = L[Math.floor(Math.random()*L.length)]; src.playbackRate.value = S0[2] + Math.random()*(S0[3] - S0[2]);
+    g.gain.value = S0[1]*(.85 + Math.random()*.3); src.connect(g); g.connect(sfxG); voices++; src.onended = () => { voices = Math.max(0, voices - 1); try { g.disconnect(); } catch(e){} }; src.start(t); return true; }
   function init(){
     if (ac){ if (ac.state === "suspended" && !document.hidden) ac.resume(); return; }
     const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
     try { ac = new AC(); } catch(e){ return; }
     sfxG = ac.createGain(); sfxG.gain.value = .45; sfxG.connect(ac.destination);
+    setTimeout(loadSfx, 300); // 요청 52: 녹음 효과음 받기(첫 터치 뒤)
     buildMusGraph();
     noise = ac.createBuffer(1, Math.floor(ac.sampleRate*.6), ac.sampleRate); const d = noise.getChannelData(0); for (let i=0;i<d.length;i++) d[i] = Math.random()*2 - 1;
   }
@@ -3917,6 +3944,7 @@ const Sound = (function(){
     if (!ac || ac.state !== "running" || !M || !M.set.sfx) return;
     const now = ac.currentTime; if (last[name] !== undefined && now - last[name] < (GAP[name] || .04)) return; last[name] = now;
     const t = now + .01;
+    if (playBuf(name, t)) return; // 요청 52: 녹음 소리가 있으면 그것으로
     switch (name){
       case "arrow":  hiss(t, .08, .22, "highpass", 2500, 6000, .8); break;
       case "thrust": hiss(t, .07, .16, "bandpass", 900, 2600, 3); tone("square", 240, 150, t, .002, .04, .05); break; // 창 찌르기(v10 장병)
@@ -4674,7 +4702,7 @@ function ufxCorpse(u){ // 쓰러짐: 옆으로 넘어지며 흐려짐
 }
 function ufxArrow(u, e){ if (!R.uArw) R.uArw = []; if (R.uArw.length < 60) R.uArw.push({x0:u.x, y0:u.y - .3, x1:e.x, y1:e.y - .25, t:0, dur:Math.max(.08, dist(u.x, u.y, e.x, e.y)*.06)}); }
 function ufxStrike(u, foe, kind){
-  u.atk = 1; Sound.play(kind === "spear" || kind === "cavalry" ? "thrust" : "slash");
+  u.atk = 1; Sound.play(kind === "spear" ? "thrust" : kind === "cavalry" ? "u_charge" : kind === "militia" ? "u_bonk" : kind === "archer" ? "arrow" : "slash"); // 요청 52: 장병마다 다른 소리
   if (kind === "sword" || kind === "militia") burst(foe.x + (Math.random() - .5)*.2, foe.y - .2, 3, "#FFF6D8", 1, .18, .04);
   else burst(foe.x, foe.y - .15, 2, "#E8E0D0", .8, .15, .04);
 }
@@ -5418,7 +5446,7 @@ function moleSurface(e){ // 땅속 이동을 끝내고 지상으로(마름쇠 �
 function bossInit(e){
   e.boss = true; e.hardSpawn = !!R.hardNow; e.cdMul = R.hardNow ? .8 : (R.st.bossCd || 1); e.t1 = 3; e.grow = 1; e.tpDone = []; // bossCd: 장별 기술 주기 배율(1보다 크면 느리게). bossCd·bossHp·bossLives는 앞 장을 무난하게 하는 값이라 어려움 모드엔 안 쓴다
   const bh = R.hardNow ? 1 : (R.st.bossHp || 1); if (bh !== 1){ e.hp *= bh; e.maxHp *= bh; } // bossHp: 장별 대장 체력 배율(앞 장을 무난하게)
-  R.bossE = e; R.bfx = R.bfx || [];
+  R.bossE = e; R.bfx = R.bfx || []; Sound.play("roar"); /* 요청 52: 대장 등장 울음 */
   showBanner(ET[e.type].name + " 등장", BOSS_LINE[e.type] || "");
 }
 function eliteInit(e, x){ // 지난 장 요괴: 같은 특기를 쓰지만 약하고 느리게(기술 주기 ×1.5). 대장 체력 막대는 비어 있을 때만 차지
@@ -6079,7 +6107,7 @@ function hit(e, dmg, quiet, mul){
     if (!R.st.tutorial && R.wave >= R.total && !R.queue.length && !R.enemies.some(o => o !== e && !o.dead)) R.slowT = Math.max(R.slowT || 0, .7); // 마지막 일격: 잠깐 느리게
   }
 }
-function explode(x, y, rad, dmg, air, near){ // near = {x, y, r}: 대완구 최소 사거리 — 포대에서 r 안의 적·진은 폭발 피해를 받지 않는다(검수 v11 7)
+function explode(x, y, rad, dmg, air, near){ if (onScr(x, y)) Sound.play("boom"); // 요청 52: 떨어진 자리 폭발음 // near = {x, y, r}: 대완구 최소 사거리 — 포대에서 r 안의 적·진은 폭발 피해를 받지 않는다(검수 v11 7)
   const safe = (px, py) => !!(near && near.r && dist(px, py, near.x, near.y) < near.r);
   if (campAlive() && dist(x, y, R.camp.x, R.camp.y) < rad + .7 && !safe(R.camp.x, R.camp.y)) hit(R.camp, dmg*.7);
   R.enemies.forEach(e => { if (!e.dead && (!e.fly || air) && !safe(e.x, e.y)){ const d = dist(x,y,e.x,e.y); if (d < rad) hit(e, dmg*(1 - .4*d/rad)*splashMul(e)); } });
@@ -6111,7 +6139,7 @@ function fire(t, s, e){
     if (RR.hit) line.slice(0, N - 1).forEach((q, i) => { HIT_SRC = "bolt"; hit(q.o, s.dmg*(.85 - .1*i) + (q.o.armor || 0)*.5); HIT_SRC = ""; burst(q.o.x, q.o.y - .2, 4, "#CFE6FF", 1, .25, .05); });
     t.ang = Math.atan2(ay, ax); }
   else if (t.type === "crossbow"){ Sound.play("arrow"); R.projs.push(mp ? {k:"arrow", x:tx, y:ty-.3, tg:e, lx:mp.x, ly:mp.y, dmg:0, miss:true, src:"bolt"} : {k:"arrow", x:tx, y:ty-.3, tg:e, lx:e.x, ly:e.y, dmg:s.dmg*RR.mul, pierce:true, src:"bolt"}); }
-  else if (t.type === "musket"){ Sound.play("cannon"); R.projs.push(mp ? {k:"arrow", x:tx, y:ty-.3, tg:e, lx:mp.x, ly:mp.y, dmg:0, miss:true, src:"shot", fast:true} : {k:"arrow", x:tx, y:ty-.3, tg:e, lx:e.x, ly:e.y, dmg:s.dmg*RR.mul, src:"shot", fast:true}); burst(tx, ty-.3, 5, "#D8D2C4", 1, .4, .07, "smoke"); }
+  else if (t.type === "musket"){ Sound.play("gun"); R.projs.push(mp ? {k:"arrow", x:tx, y:ty-.3, tg:e, lx:mp.x, ly:mp.y, dmg:0, miss:true, src:"shot", fast:true} : {k:"arrow", x:tx, y:ty-.3, tg:e, lx:e.x, ly:e.y, dmg:s.dmg*RR.mul, src:"shot", fast:true}); burst(tx, ty-.3, 5, "#D8D2C4", 1, .4, .07, "smoke"); }
   else if (t.type === "catapult"){
     Sound.play("cannon");
     const d = dist(tx,ty,e.x,e.y), lead = d/5, p = e.inside || e.atGate >= 0 ? {x:e.x, y:e.y} : epos(e, e.d + e.spd*e.slowMul*lead);
@@ -6377,7 +6405,7 @@ function updateHero(dt){
   h.cd -= dt;
   if (HB && h.cd <= 0 && !(h.bind > 0)){ // 요청 47: 베기 — 닿은 적 + 곁의 적(cleave)
     const t = h.mtg && !h.mtg.dead && dist(h.x, h.y, h.mtg.x, h.mtg.y) <= HB.reach && (sideOf(h) === null || sideOf(h.mtg) === sideOf(h) || atGateNear(h.mtg) && R.gates && R.gates.some(g => dist(h.x, h.y, g.x + .5, g.y + .5) <= 1.1)) ? h.mtg : null, cpOk = !t && campAlive() && dist(h.x, h.y, R.camp.x, R.camp.y) <= 1.5;
-    if (t || cpOk){ const tg = t || R.camp, dm = h.dmg*HB.mul; heroShotFx(h, tg); h.face = tg.x >= h.x ? 1 : -1; Sound.play("kill"); mfx(HB.fx, tg.x, tg.y, h.face, h.x, h.y);
+    if (t || cpOk){ const tg = t || R.camp, dm = h.dmg*HB.mul; heroShotFx(h, tg); h.face = tg.x >= h.x ? 1 : -1; Sound.play("slash"); mfx(HB.fx, tg.x, tg.y, h.face, h.x, h.y);
       HIT_SRC = "melee"; hit(tg, dm); if (t){ const ts = sideOf(t); R.enemies.forEach(o => { if (o !== t && !o.dead && !(o.under > 0) && dist(o.x, o.y, t.x, t.y) <= HB.rad && (ts === null || sideOf(o) === ts)) hit(o, dm*HB.cleave); }); } HIT_SRC = "";
       h.cd = 1/h.rate; } }
   else if (h.cd <= 0 && !(h.bind > 0)){
@@ -6385,7 +6413,7 @@ function updateHero(dt){
     for (const e of R.enemies) if (!e.dead && !(e.under > 0) && dist(h.x, h.y, e.x, e.y) <= h.range && (!best || e.d > best.d)) best = e;
     const fT = h.forceTg && !h.forceTg.dead && !(h.forceTg.under > 0) ? h.forceTg : null; if (fT && dist(h.x, h.y, fT.x, fT.y) <= h.range) best = fT; // 집중 표적이 사거리 안이면 그 적, 밖이면 사거리 안 다른 적이라도 쏜다(검수 v17 대체)
     const atCampH = R.sortie && !h.manual && campAlive() && dist(h.x, h.y, R.camp.x, R.camp.y) <= 1.6 && !R.enemies.some(e => !e.dead && !e.fly && !(e.under > 0) && dist(h.x, h.y, e.x, e.y) < .9); // 출격해 진 곁에 닿으면 몸에 붙은 적이 없는 한 진부터 친다
-    if (best && (best === fT || !atCampH)){ Sound.play(heroMo(h.k).shot === "gun" || heroMo(h.k).shot === "musket" ? "cannon" : "arrow"); R.projs.push({k:"arrow", x:h.x, y:h.y - .35, tg:best, lx:best.x, ly:best.y, dmg:h.dmg, charm:h.k === "yeon", hs:heroShotFx(h, best)}); h.cd = 1/h.rate; h.face = best.x >= h.x ? 1 : -1; }
+    if (best && (best === fT || !atCampH)){ Sound.play(heroMo(h.k).shot === "gun" || heroMo(h.k).shot === "musket" ? "gun" : /stone|javelin|charm/.test(heroMo(h.k).shot) ? "none" : "arrow"); R.projs.push({k:"arrow", x:h.x, y:h.y - .35, tg:best, lx:best.x, ly:best.y, dmg:h.dmg, charm:h.k === "yeon", hs:heroShotFx(h, best)}); h.cd = 1/h.rate; h.face = best.x >= h.x ? 1 : -1; }
     else if (!fT && campAlive() && dist(h.x, h.y, R.camp.x, R.camp.y) <= Math.max(h.range, 1.5)){ const cp = R.camp; Sound.play("arrow"); R.projs.push({k:"arrow", x:h.x, y:h.y - .35, tg:cp, lx:cp.x, ly:cp.y, dmg:h.dmg, charm:h.k === "yeon", hs:heroShotFx(h, cp)}); h.cd = 1/h.rate; h.face = cp.x >= h.x ? 1 : -1; } // 적이 없으면 진을 친다
   }
 }

@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta name="app-version" content="20261127-bc6e2ba1d0">
+<meta name="app-version" content="20261127-440cdf2eca">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>산성</title>
@@ -7083,6 +7083,9 @@ const Cam = {
     miniCv.style.left = (cv.offsetLeft + VW - mw - 10) + "px"; miniCv.style.top = (cv.offsetTop + VT + 8) + "px"; },
   drawMini(){ if (!this.active || !this.small || !R) return; const c = miniCv.getContext("2d"), k = miniCv.width/WW;
     c.setTransform(1,0,0,1,0,0); c.drawImage(this.small, 0, 0);
+    if (VIEW.on){ c.save(); c.globalCompositeOperation = "multiply"; c.fillStyle = VIEW.paintNow ? "rgb(104,114,168)" : "rgb(150,158,205)"; c.fillRect(0, 0, miniCv.width, miniCv.height); // 요청 53: 작은 지도도 큰 지도와 같은 밤(손그림이면 손그림만큼 어둡게)
+      c.globalCompositeOperation = "lighter"; const lit = (x, y, r) => { const g = c.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, "rgba(255,170,80,.55)"); g.addColorStop(1, "rgba(255,170,80,0)"); c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, Math.PI*2); c.fill(); };
+      (R.m.gates || []).forEach(g => lit((g.x + .5)*T*k, (g.y + .5)*T*k, Math.max(3, T*k*1.2))); if (R.m.castle && R.gates){ const pp = palaceSpot(); lit(pp[0]*T*k, pp[1]*T*k, Math.max(4, T*k*1.6)); } c.restore(); } // 문·행궁 횃불
     if (R.bound){ const B = R.bound, x0 = B.x0*T*k, y0 = B.y0*T*k, x1 = (B.x1 + 1)*T*k, y1 = (B.y1 + 1)*T*k, mw = miniCv.width, mh = miniCv.height; c.fillStyle = "rgba(60,60,60,.14)"; c.fillRect(0, 0, mw, y0); c.fillRect(0, y1, mw, mh - y1); c.fillRect(0, y0, x0, y1 - y0); c.fillRect(x1, y0, mw - x1, y1 - y0); c.strokeStyle = "#FFE296"; c.lineWidth = 1.5; c.setLineDash([3, 2]); c.strokeRect(x0 + .75, y0 + .75, x1 - x0 - 1.5, y1 - y0 - 1.5); c.setLineDash([]); } // v10: 아직 안 열린 전장
     c.fillStyle = "#FF5A4A"; for (const e of R.enemies){ if (e.dead) continue; c.fillRect(e.x*T*k - 2, e.y*T*k - 2, 4, 4); }
     for (const e of R.enemies){ if (e.dead || !e.thief) continue; c.fillStyle = (performance.now()/250|0) % 2 ? "#FFD27A" : "#FF2A1A"; c.beginPath(); c.arc(e.x*T*k, e.y*T*k, 3.6, 0, Math.PI*2); c.fill(); } // 약탈꾼: 깜박이는 큰 점

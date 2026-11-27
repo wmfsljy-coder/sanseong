@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta name="app-version" content="20261127-56a54f10f9">
+<meta name="app-version" content="20261127-9c0fad6a65">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>산성</title>
@@ -424,14 +424,14 @@ const ART_SRC = {
   "e_mole": "art/img/e_mole.webp?v=50cfe3ca",
   "e_shield": "art/img/e_shield.webp?v=9e503dc2",
   "e_siege": "art/img/e_siege.webp?v=7da6ae68",
-  "h_ansi": "art/img/h_ansi.webp?v=d2b02016",
-  "h_jeongyakyong": "art/img/h_jeongyakyong.webp?v=4082f88d",
-  "h_kimsimin": "art/img/h_kimsimin.webp?v=aa06370a",
-  "h_kimyunhu": "art/img/h_kimyunhu.webp?v=d470e1ca",
+  "h_ansi": "art/img/h_ansi.webp?v=eea065fc",
+  "h_jeongyakyong": "art/img/h_jeongyakyong.webp?v=a1aa502f",
+  "h_kimsimin": "art/img/h_kimsimin.webp?v=ef8f88ed",
+  "h_kimyunhu": "art/img/h_kimyunhu.webp?v=f037005a",
   "h_kwon": "art/img/h_kwon.webp?v=f00c1318",
   "h_leejeongam": "art/img/h_leejeongam.webp?v=90dac760",
   "h_parkseo": "art/img/h_parkseo.webp?v=2390d4ab",
-  "h_yanghunsu": "art/img/h_yanghunsu.webp?v=12da5a4d",
+  "h_yanghunsu": "art/img/h_yanghunsu.webp?v=376e1a28",
   "h_yeon": "art/img/h_yeon.webp?v=156a5f67",
   "k_camp": "art/img/k_camp.webp?v=df778b15",
   "k_ctower": "art/img/k_ctower.webp?v=c9c48d60",
@@ -467,7 +467,7 @@ const ART_SRC = {
   "t_rocket": "art/img/t_rocket.webp?v=2ff47cbb",
   "u_archer": "art/img/u_archer.webp?v=eabdead6",
   "u_cavalry": "art/img/u_cavalry.webp?v=b68e5e0f",
-  "u_militia": "art/img/u_militia.webp?v=81ea3480",
+  "u_militia": "art/img/u_militia.webp?v=1274af97",
   "u_spear": "art/img/u_spear.webp?v=1589efdc",
   "u_sword": "art/img/u_sword.webp?v=a6d35eac"
 };
@@ -475,7 +475,7 @@ const ART_SRC = {
 /* 그림 로더: ART_SRC(묶어 넣은 WebP)를 Image로 불러 ART.img 에 둔다. 없거나 실패하면 캔버스 코드 그림으로 대체 */
 /* 요청 51: 동작 그림(걷기·달리기·날갯짓·기기·떠다니기 4장면). art/anim/<그림>_<0~3>.webp 를 바깥 파일로 불러온다. tools/anim-register.cjs 가 이 줄을 고친다 */
 /*ANIM-LIST*/const ANIM_LIST = {"boss_bulgasari":4,"boss_cheonyeo":4,"boss_egg":4,"boss_eoduk":4,"boss_gangcheol":4,"boss_gumiho":4,"boss_imugi":4,"boss_jeoseung":4,"boss_mul":4,"e_bat":4,"e_boss":4,"e_centipede":4,"e_fox":4,"e_grunt":4,"e_lord":4,"e_mole":4,"e_shield":4,"e_siege":4,"h_ansi":4,"h_jeongyakyong":4,"h_kimsimin":4,"h_kimyunhu":4,"h_kwon":4,"h_leejeongam":4,"h_parkseo":4,"h_yanghunsu":4,"h_yeon":4,"u_archer":4,"u_cavalry":4,"u_militia":4,"u_spear":4,"u_sword":4};/*ANIM-END*/
-const ANIM_VER = "mwyghevm";
+const ANIM_VER = "mwyhk4y7";
 const ART = (function(){
   const src = typeof ART_SRC === "object" ? ART_SRC : {}, img = {}, cache = new Map(), masks = {};
   let left = Object.keys(src).length, waiters = [];

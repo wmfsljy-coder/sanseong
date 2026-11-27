@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta name="app-version" content="20261127-51106c6370">
+<meta name="app-version" content="20261127-c803fa229a">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>산성</title>
@@ -70,7 +70,7 @@ body.scr-l .btn{min-height:54px;font-size:17px}body.scr-l .stat{font-size:18px}b
 body.scr-t #game{max-width:none;display:grid;grid-template-columns:minmax(0,1fr) min(380px,42%);grid-template-rows:auto auto auto auto minmax(0,1fr);grid-template-areas:"hud hud" "stage cmd" "stage tac" "stage panel" "stage .";column-gap:10px}
 body.scr-t #hud{grid-area:hud}body.scr-t #stagebox{grid-area:stage;min-height:0}body.scr-t #cmdbar{grid-area:cmd}body.scr-t #tacpanel{grid-area:tac}body.scr-t #panel{grid-area:panel;max-height:100%;overflow-y:auto}
 #cv{display:block;border-radius:12px;touch-action:manipulation;box-shadow:0 6px 24px var(--shade)}
-#banner{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);width:min(92%,420px);background:var(--glass);border:1px solid var(--gold);border-radius:12px;padding:10px 14px;display:grid;gap:2px;text-align:center;pointer-events:none}
+#banner{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);width:min(92%,420px);background:var(--glass);border:1px solid var(--gold);border-radius:12px;padding:10px 14px;display:grid;gap:2px;text-align:center;pointer-events:auto;cursor:pointer} /* 요청 68: 누르면 닫히거나 다음 알림 */
 #banner[hidden]{display:none}
 #prepchip{position:absolute;top:calc(var(--vt,52px) + 8px);left:50%;transform:translateX(-50%);z-index:6;background:rgba(20,16,12,.82);border:2px solid var(--gold);border-radius:14px;padding:4px 14px;font-weight:700;font-size:20px;color:#FFE6A0;pointer-events:none;white-space:nowrap}#prepchip[hidden]{display:none}#prepchip.warn{color:#FF8A7A;border-color:#FF6A55}#prepchip.blink{animation:pulse .6s ease-in-out infinite}body.scr-s #prepchip{font-size:16px;padding:3px 10px}
 #banner b{font-family:var(--f-title);font-size:20px;color:var(--gold);font-weight:400}
@@ -120,7 +120,7 @@ body.scr-t #hud{grid-area:hud}body.scr-t #stagebox{grid-area:stage;min-height:0}
 
 #overlay{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:var(--shade);padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px));padding-block:calc(14px + env(safe-area-inset-top,0px)) calc(14px + env(safe-area-inset-bottom,0px))}
 #overlay[hidden]{display:none}
-#toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:40;background:rgb(20 26 24 / .94);color:#FFF3D6;border:2px solid #D9A441;border-radius:14px;padding:12px 18px;font-size:18px;max-width:90vw;text-align:center;pointer-events:none}
+#toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:40;background:rgb(20 26 24 / .94);color:#FFF3D6;border:2px solid #D9A441;border-radius:14px;padding:12px 18px;font-size:18px;max-width:90vw;text-align:center;pointer-events:auto;cursor:pointer} /* 요청 68: 누르면 닫히거나 다음 알림 */
 #toast[hidden]{display:none}
 #lockscreen{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:rgb(10 14 12 / .92);padding:20px}
 #lockscreen .lockbox{max-width:360px;background:#F3E7CC;color:#2A1E10;border:3px solid #B5432F;outline:2px solid #2F6B5E;outline-offset:-8px;border-radius:18px;padding:26px 22px;text-align:center}
@@ -358,7 +358,7 @@ body.scr-t #banner,body.scr-t #coach{left:calc((100% - var(--pw,300px) - 16px)/2
     <button class="ibtn" id="b-speed" aria-label="빠르기">1×</button>
     <button class="ibtn" id="b-pause" aria-label="멈춤">Ⅱ</button>
   </header>
-  <div id="stagebox"><canvas id="cv" aria-label="전장"></canvas><div id="banner" hidden></div><div id="tip" hidden data-act="tipclose" role="status"></div><button id="skill" data-act="skill" hidden aria-label="장수 필살기"><canvas width="120" height="120"></canvas><span class="cdv" hidden></span><span class="lbl"></span></button><button id="sortie" hidden>출격!</button><button id="flagbtn" hidden>깃발</button><div id="coach" hidden><canvas width="136" height="136"></canvas><p><b>박 노장</b><span id="coach-text"></span></p><button id="tutnext" data-act="tutnext" hidden>다음</button><button id="tutskip" data-act="tutskip">건너뛰기</button></div></div>
+  <div id="stagebox"><canvas id="cv" aria-label="전장"></canvas><div id="banner" hidden data-act="bannerclose" role="status"></div><div id="tip" hidden data-act="tipclose" role="status"></div><button id="skill" data-act="skill" hidden aria-label="장수 필살기"><canvas width="120" height="120"></canvas><span class="cdv" hidden></span><span class="lbl"></span></button><button id="sortie" hidden>출격!</button><button id="flagbtn" hidden>깃발</button><div id="coach" hidden><canvas width="136" height="136"></canvas><p><b>박 노장</b><span id="coach-text"></span></p><button id="tutnext" data-act="tutnext" hidden>다음</button><button id="tutskip" data-act="tutskip">건너뛰기</button></div></div>
   <div id="cmdbar" hidden><span class="cbsp"></span><button id="herobtn" class="btn" data-act="herofollow" hidden>장군<br>보기</button></div>
   <section id="panel" aria-live="polite"></section>
 </div>
@@ -7466,7 +7466,7 @@ function positionSkill(){ // 성문 반대쪽 아래 구석에 둔다(v12: 명�
 }
 
 /* ---------- 대화 ---------- */
-function toast(msg){ let el = document.getElementById("toast"); if (!el){ el = document.createElement("div"); el.id = "toast"; el.setAttribute("role", "status"); document.body.appendChild(el); } el.textContent = msg; el.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => { el.hidden = true; }, 2600); }
+function toast(msg){ let el = document.getElementById("toast"); if (!el){ el = document.createElement("div"); el.id = "toast"; el.setAttribute("role", "status"); document.body.appendChild(el); } el.textContent = msg; el.hidden = false; el.style.pointerEvents = "auto"; el.style.cursor = "pointer"; el.onclick = () => { el.hidden = true; clearTimeout(toast.t); }; /* 요청 68: 누르면 닫힘 */ clearTimeout(toast.t); toast.t = setTimeout(() => { el.hidden = true; }, 2600); }
 function showDialog(lines, done){
   if (D && D.timer) clearInterval(D.timer); // 앞 대화의 글자 타이머가 남지 않게
   D = {lines, i:0, n:0, done, timer:null};
@@ -7934,7 +7934,7 @@ function endlessEnd(){
     + '<div class="row"><button class="btn" data-act="menu">처음 화면</button><button class="btn primary" data-act="retry">다시 하기</button></div>', "result");
   R.resultFn();
 }
-function showBanner(title, text){ if (R && (title === "박 노장" || /^쉬운 조작/.test(title))){ showTip(title, text); return; } banner.innerHTML = "<b>"+title+"</b><span>"+text+"</span>"; banner.hidden = false; R.bannerT = 2.5; topLayout(); } // v18: 큰 띠는 2.5초, 위쪽
+function showBanner(title, text){ if (R && (title === "박 노장" || /^쉬운 조작/.test(title))){ showTip(title, text); return; } banner.innerHTML = "<b>"+title+"</b><span>"+text+"</span><small style='opacity:.6;font-size:11px'>눌러서 넘기기 ▸</small>"; banner.hidden = false; R.bannerT = 2.5; topLayout(); } // v18: 큰 띠는 2.5초, 위쪽
 /* v18 요청 32: 박 노장 귀띔은 지도 위쪽 작은 띠(두 줄까지, 4초, 누르면 닫힘, 여러 개면 차례로) */
 const tipEl = () => document.getElementById("tip");
 function showTip(title, text){ if (!R) return; R.tipQ = R.tipQ || []; if (R.tipT > 0){ if (R.tipQ.length < 4) R.tipQ.push([title, text]); return; } tipShow(title, text); }
@@ -8064,6 +8064,7 @@ document.addEventListener("click", ev => {
   if (R && R.waveActive && !R.over && WAVE_LOCK.indexOf(act) >= 0){ waveLockMsg(); return; } /* v14: 물결 중엔 준비 동작 금지 */ if (PAYLEAVE_ACTS.indexOf(act) >= 0 && !payLeaveOk()) return; // 미지급 보상이 있는 결과 화면을 떠나기 전(검수 v11 2차)
   switch (act){
     case "tipclose": if (R) tipNext(); break; // v18
+    case "bannerclose": if (R){ R.bannerT = 0; if (R.bannerNext){ const bn = R.bannerNext; R.bannerNext = null; showBanner(bn[0], bn[1]); } else { banner.hidden = true; topLayout(); } } else banner.hidden = true; break; // 요청 68
     case "herofollow": { if (heroLook()){ Cam.userT = performance.now(); Sound.play("button"); } break; } // v18 장군 보기
     case "dnext": dialogNext(false); break;
     case "dskip": dialogNext(true); break;

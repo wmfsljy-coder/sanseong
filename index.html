@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta name="app-version" content="20261127-9c0fad6a65">
+<meta name="app-version" content="20261127-d1eec8da6a">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>산성</title>
@@ -2566,7 +2566,7 @@ function freshMeta(){
   const NS = STAGES.length; // 장 수가 늘어도(특별 장) 배열 길이를 맞춘다. 예전 저장(길이 5)은 normMeta 가 빈 칸을 0 으로 채운다
   return {v:4, order:3, stars:Array(NS).fill(0), ch:Array.from({length:NS}, () => [0,0]), perks:{}, ads:0, jade:0, heroes:{gwon:1, yeon:0}, awake:{}, unlocked:{}, noAds:false, starter:false,
           starterOwned:false, starterJadeGranted:false, purchases:{},
-          set:{sfx:true, music:true, vib:true, easy:true, easyTold:false /* v12 쉬운 조작 */, decide:true /* v16 결정 순간 */, follow:false /* v18 장군 따라가기 자동 */, font:0, notif:true, notifAsked:false, autocam:null /* 위급한 곳 자동 이동: null=난이도 따라(편하게면 켬), true/false=사용자가 고름 */}, daily:{login:"", idx:0, chest:"", done:""}, endless:{best:0, week:"", weekBest:0}, from:"new",
+          set:{sfx:true, music:true, vib:true, easy:true, easyTold:false /* v12 쉬운 조작 */, flagTold:false /* 요청 57 깃발 안내 */, decide:true /* v16 결정 순간 */, follow:false /* v18 장군 따라가기 자동 */, font:0, notif:true, notifAsked:false, autocam:null /* 위급한 곳 자동 이동: null=난이도 따라(편하게면 켬), true/false=사용자가 고름 */}, daily:{login:"", idx:0, chest:"", done:""}, endless:{best:0, week:"", weekBest:0}, from:"new",
           // v4: 난이도, 장마다 어려움 별, 내 성, 오늘의 임무, 접속 시각(알림용), 같은 장 연패, 하루 첫 클라우드 저장 날짜
           diff:1, diffChosen:false, hard:Array(NS).fill(0), hardPaid:Array(NS).fill(false), castle:{b:{}, last:0, acc:0, got:0}, /* last: 생산 정산 시각, got: 실제로 받은 시각 */
           mis:{day:"", ids:[], prog:{}, got:{}, all:false}, /* got: 임무 ID → 1 (배열 위치가 아니라 ID에 연결) */ play:[], lose:{s:-1, m:"", n:0}, cloudDay:"",
@@ -2620,6 +2620,8 @@ function normMeta(m){
   safe(() => { const cl = (x, val) => { const r = {}; if (isObj(x)) Object.keys(x).slice(-1).forEach(sid => { if (typeof sid === "string" && sid.length <= 40) r[sid] = val(x[sid]); }); return r; }; /* 판 저장 복원용 결제 기록(최근 판 하나만, 검수 v16) */
     o.paidQ = cl(m.paidQ, v => { const q = {}; if (isObj(v)) Object.keys(v).slice(0, 200).forEach(k => { if (v[k] === true) q[k] = true; }); return q; });
     o.revUsed = cl(m.revUsed, v => Math.max(0, Math.min(9, Math.floor(+v || 0)))); });
+  safe(() => { o.sidPay = {}; if (isObj(m.sidPay)) Object.keys(m.sidPay).slice(-8).forEach(k => { const v = m.sidPay[k]; if (typeof k === "string" && k.length <= 40 && isObj(v)) o.sidPay[k] = {j:int(v.j, 0, 1e7, 0), i:int(v.i, 0, 1e7, 0), r:int(v.r, 0, 99, 0)}; }); }); // 요청 61 점검
+  safe(() => { o.winSid = Array.isArray(m.winSid) ? m.winSid.filter(x => typeof x === "string" && x.length <= 40).slice(-60) : []; }); // 요청 61: 이긴 판(저장 칸으로 다시 불러와 상을 또 받지 않게)
   safe(() => { o.unlocked = {}; if (isObj(m.unlocked)) Object.keys(UNLOCK).forEach(k => { if (m.unlocked[k] === true) o.unlocked[k] = true; }); else { const cl = (o.stars || []).reduce((a, v, i) => (v > 0 && i >= 1) ? Math.max(a, i) : a, 0); Object.keys(UNLOCK).forEach(k => { if (UNLOCK[k].s <= cl) o.unlocked[k] = true; }); } }); /* v16 기능 공개: 옛 저장은 깬 장까지 공개 */
   safe(() => { const p = m.pendingJade; o.pendingJade = isObj(p) && int(p.n, 0, 1000, 0) > 0 ? {why:String(p.why || ""), n:int(p.n, 0, 1000, 0)} : null; }); // 아직 안 쓴 옥 결제(요청 23, 검수 v11 1차)
   safe(() => { o.blueprints = {}; if (isObj(m.blueprints)) Object.keys(BLUEPRINTS).forEach(k => { if (m.blueprints[k] === true) o.blueprints[k] = true; }); }); // 옛 저장은 빈 값
@@ -2627,7 +2629,7 @@ function normMeta(m){
   safe(() => { o.noAds = bool(m.noAds, false); o.starter = bool(m.starter, false); o.starterOwned = bool(m.starterOwned, o.starter); });
   safe(() => { o.starterJadeGranted = bool(m.starterJadeGranted, o.starter); }); // 옛 판에서 이미 산 경우 옥 500은 이미 받은 것으로 본다
   safe(() => { if (isObj(m.purchases)) Object.keys(m.purchases).forEach(k => { const v = m.purchases[k]; if (v === true) o.purchases[k] = true; else if (isObj(v)) o.purchases[k] = {at:int(v.at, 0, 9e15, 0), id:typeof v.id === "string" ? v.id : "", gave:typeof v.gave === "string" ? v.gave : ""}; }); });
-  if (isObj(m.set)){ ["sfx", "music", "vib", "notif", "easy", "decide"].forEach(k => safe(() => { o.set[k] = bool(m.set[k], true); })); safe(() => { o.set.easyTold = bool(m.set.easyTold, false); }); safe(() => { o.set.follow = bool(m.set.follow, false); }); safe(() => { o.set.font = int(m.set.font, 0, 2, 0); }); safe(() => { o.set.notifAsked = bool(m.set.notifAsked, false); }); safe(() => { o.set.autocam = m.set.autocam === true || m.set.autocam === false ? m.set.autocam : null; }); }
+  if (isObj(m.set)){ ["sfx", "music", "vib", "notif", "easy", "decide"].forEach(k => safe(() => { o.set[k] = bool(m.set[k], true); })); safe(() => { o.set.easyTold = bool(m.set.easyTold, false); }); safe(() => { o.set.flagTold = bool(m.set.flagTold, false); }); safe(() => { o.set.follow = bool(m.set.follow, false); }); safe(() => { o.set.font = int(m.set.font, 0, 2, 0); }); safe(() => { o.set.notifAsked = bool(m.set.notifAsked, false); }); safe(() => { o.set.autocam = m.set.autocam === true || m.set.autocam === false ? m.set.autocam : null; }); }
   if (isObj(m.daily)){ ["login", "chest", "done"].forEach(k => safe(() => { o.daily[k] = day(m.daily[k]); })); safe(() => { o.daily.idx = int(m.daily.idx, 0, 6, 0); }); }
   if (isObj(m.endless)){ safe(() => { o.endless.best = int(m.endless.best, 0, 1e5, 0); }); safe(() => { o.endless.week = day(m.endless.week); }); safe(() => { o.endless.weekBest = int(m.endless.weekBest, 0, 1e5, 0); }); }
   // v4 칸 (v3 저장에는 없으니 기본값)
@@ -3514,6 +3516,8 @@ const heroOpen = k => k === "gwon" || (M.heroes[k] || 0) > 0 || STAGES.some((s, 
     if (a === "raid-quit"){ Track.event("raid_end", {lv:G.lv, result:"quit", stars:0, time:Math.round(G.t), deck:G.cards.join(",")}); close(); showMenu(); return; }
     if (a === "raid-resume"){ hideOverlay(); return; }
     if (a === "raid-pause"){ pause(); return; }
+    if (a === "raid-set"){ wipeStep = 0; setFrom = "raid"; showSettings(); return; } // 요청 60
+    if (a === "raid-set-back"){ hideOverlay(); pause(); return; }
     if (G.over) return;
     if (a === "raid-speed"){ G.speed = G.speed === 1 ? 2 : 1; $("r-speed").textContent = G.speed + "×"; return; }
     if (a === "raid-fit"){ fit = !fit; $("r-fit").textContent = fit ? "크게 보기" : "전체 보기"; size(); return; }
@@ -3524,7 +3528,7 @@ const heroOpen = k => k === "gwon" || (M.heroes[k] || 0) > 0 || STAGES.some((s, 
       return; }
     if (a === "raid-skill"){ const h = G.hero; if (h.dead > 0 || h.scd > 0) return; G.aim = !G.aim; skillBtn(); return; }
   }
-  function pause(){ if (!G || G.over || overlayMode) return; showOverlay('<h2>잠깐 멈춤</h2><p class="center">'+G.lv+'단계 · 남은 시간 '+$("r-time").textContent+'</p><div class="row"><button class="btn" data-act="raid-quit">그만두기</button><button class="btn primary" data-act="raid-resume">계속하기</button></div>', "raid-pause"); }
+  function pause(){ if (!G || G.over || overlayMode) return; showOverlay('<h2>잠깐 멈춤</h2><p class="center">'+G.lv+'단계 · 남은 시간 '+$("r-time").textContent+'</p><button class="btn primary" '+PAUSE_BTN+' data-act="raid-resume">▶ 계속하기</button><button class="btn" '+PAUSE_BTN+' data-act="raid-set">⚙ 설정</button><button class="btn danger" '+PAUSE_BTN+' data-act="raid-quit">그만두고 처음 화면으로</button><p class="center" style="font-size:14px;opacity:.8">진지 치기는 그만두면 이번 판이 끝나요.</p>', "raid-pause"); } // 요청 60
   cv.addEventListener("pointerdown", ev => { if (!G) return; ptr = {id:ev.pointerId, x:ev.clientX, y:ev.clientY, cam:camY, drag:false}; try { cv.setPointerCapture(ev.pointerId); } catch(e){} });
   cv.addEventListener("pointermove", ev => { if (!G || !ptr || ev.pointerId !== ptr.id) return; const dy = ev.clientY - ptr.y;
     if (!ptr.drag && Math.hypot(ev.clientX - ptr.x, dy) > 8) ptr.drag = true;
@@ -4918,7 +4922,7 @@ function drawFortExtra(c, T, items){
 }
 function updateFlagBtn(){
   const b = document.getElementById("flagbtn"); if (!b || !R) return;
-  const show = !!(R.m && R.m.fort) && !R.over && !overlayMode && /* 요청 57: 깃발은 처음부터, 물결 중에도, 쉬운 조작에서도 */ (R.towers.some(t => t.type === "barracks" && !t.ruin) || !!(R.hero && !R.hero.dead) || !!(R.volB && R.volB.length));
+  const show = !!(R.m && R.m.fort) && !R.over && !overlayMode && /* 요청 57: 깃발은 처음부터, 물결 중에도, 쉬운 조작에서도 */ !(R.st.tutorial && R.tut >= 0 && R.tut < TUT.findIndex(q => q.act && q.act[0] === "flag")) /* 첫걸음은 깃발 단계부터 */ && (R.towers.some(t => t.type === "barracks" && !t.ruin) || !!(R.hero && !R.hero.dead) || !!(R.volB && R.volB.length));
   if (b.hidden === show) b.hidden = !show; if (!show){ R.flagMode = false; return; }
   const man = !!(R.flag && !R.flag.auto && !R.flag.chase), txt = R.flagMode ? (man ? "문 앞으로" : "취소") : man ? "깃발 옮기기" : "깃발"; if (b.textContent !== txt) b.textContent = txt;
   layoutRow(); // v10 다듬기: 자리는 아래 한 줄 배치가 정함
@@ -7493,6 +7497,44 @@ function runAskNew(){ // 저장된 판이 있는데 새 판을 열면 묻기
   if (!confirm("저장된 판(" + (sv.title || "") + " · " + (sv.wave + 1) + "물결 준비 시간)이 있어요.\n버리고 새로 할까요?")) return false;
   return true;
 }
+/* 요청 61: 저장 칸 3개. 판 자동 저장(RUN_KEY)과 같은 모양을 칸에 복사해 둔다. 물결 중이면 그 물결 준비 시간 상태(자동 저장본)로 저장 */
+const SLOT_N = 3, SLOT_KEY = i => "sanseong-slot-" + i;
+let slotArm = null, slotFrom = null;
+function slotGet(i){ try { const sv = JSON.parse(localStorage.getItem(SLOT_KEY(i)) || "null"); return sv && sv.v === RUN_V && sv.P && Array.isArray(sv.towers) ? sv : null; } catch(e){ return null; } }
+const slotWon = sv => !!(sv && sv.sid && M.winSid && M.winSid.indexOf(sv.sid) >= 0);
+const slotOld = sv => !!(sv && sv.mode === "daily" && sv.P && sv.P.dayKey && sv.P.dayKey !== kstDate());
+const slotAny = () => { for (let i = 1; i <= SLOT_N; i++) if (slotGet(i)) return true; return false; };
+function slotInfo(sv){ if (!sv) return "비어 있음"; const d = new Date(sv.savedAt || sv.at || 0), p2 = x => String(x).padStart(2, "0"); return (sv.title || "") + " · " + (sv.wave + 1) + "물결 준비 · " + (d.getMonth() + 1) + "/" + d.getDate() + " " + p2(d.getHours()) + ":" + p2(d.getMinutes()) + (slotWon(sv) ? " · 이긴 판" : "") + (slotOld(sv) ? " · 지난 일일 도전" : ""); }
+function slotWhyNot(){ if (!R || R.over) return "진행 중인 판이 없어요."; if (R.st && R.st.tutorial) return "첫걸음은 저장하지 않아요."; if (R.test) return "시험 판은 저장하지 않아요."; if (!runSaveOk()) return "첫 준비 시간이 열린 뒤에 저장할 수 있어요."; if (R.waveActive){ const sv = runLoad(); if (!sv || sv.sid !== R.sid) return "이 판은 아직 준비 시간 저장본이 없어요. 물결이 끝나면 저장할 수 있어요."; } return ""; }
+function slotSnapNow(){ if (slotWhyNot()) return null; if (!R.waveActive) runSaveNow(); const sv = runLoad(); return sv && sv.sid === R.sid ? sv : null; }
+function showSlots(mode){
+  const why = mode === "save" ? slotWhyNot() : "";
+  let h = '<h2>' + (mode === "save" ? "💾 저장하기" : "📂 불러오기") + '</h2>';
+  if (mode === "save" && !why && R.waveActive) h += '<p class="center">물결 중이라 이 물결의 준비 시간 상태로 저장해요.</p>';
+  if (why) h += '<p class="center" style="color:#FFB0A0">' + why + '</p>';
+  for (let i = 1; i <= SLOT_N; i++){ const sv = slotGet(i), arm = slotArm === mode + i;
+    const dis = mode === "save" ? !!why : (!sv || slotWon(sv) || slotOld(sv));
+    const label = mode === "save" ? (arm ? "덮어쓸까요? 한 번 더" : sv ? "덮어쓰기" : "저장") : (arm ? "지금 판은 사라져요 · 한 번 더" : slotWon(sv) ? "이긴 판" : "불러오기");
+    h += '<div class="set"><span><b>칸 ' + i + '</b><small>' + slotInfo(sv) + '</small></span><button class="btn' + (arm ? ' danger' : ' primary') + '" style="min-height:52px;min-width:110px;font-size:17px" data-act="slot-' + mode + '" data-k="' + i + '"' + (dis ? ' disabled' : '') + '>' + label + '</button></div>'; }
+  if (mode === "load") h += '<p class="center" style="font-size:14px;opacity:.8">불러오면 저장한 물결의 준비 시간부터 다시 해요. 이긴 판은 다시 불러올 수 없어요.</p>';
+  h += '<button class="btn" ' + PAUSE_BTN + ' data-act="slot-back">돌아가기</button>';
+  showOverlay(h, "slots");
+}
+function slotAct(act, k){
+  const i = +k; if (!(i >= 1 && i <= SLOT_N)) return;
+  if (act === "slot-save"){ if (slotGet(i) && slotArm !== "save" + i){ slotArm = "save" + i; showSlots("save"); return; }
+    const sv = slotSnapNow(); slotArm = null; if (!sv){ toast(slotWhyNot() || "지금은 저장할 수 없어요"); showSlots("save"); return; }
+    sv.savedAt = Date.now(); if (sv.P) delete sv.P.elitePaid; /* 요청 61 점검: 정예 옥 환급 되풀이 막기 */ try { localStorage.setItem(SLOT_KEY(i), JSON.stringify(sv)); toast("칸 " + i + "에 저장했어요 · " + (sv.wave + 1) + "물결 준비 시간"); } catch(e){ toast("저장 공간이 모자라 저장하지 못했어요"); }
+    showSlots("save"); return; }
+  if (act === "slot-load"){ const sv = slotGet(i); if (!sv) return; if (slotWon(sv)){ toast("이미 이긴 판이라 다시 불러올 수 없어요"); return; }
+    if (slotOld(sv)){ toast("날짜가 지난 일일 도전 판이라 불러올 수 없어요"); return; }
+    if (!(sv.s === "endless" || (typeof sv.s === "number" && STAGES[sv.s]))){ toast("이 칸의 판은 불러올 수 없어요"); return; }
+    if (runInProgress() && slotArm !== "load" + i){ slotArm = "load" + i; showSlots("load"); return; }
+    slotArm = null; const keep = (() => { try { return localStorage.getItem(RUN_KEY); } catch(e){ return null; } })();
+    try { const c = JSON.parse(JSON.stringify(sv)); delete c.savedAt; if (c.P) delete c.P.elitePaid; localStorage.setItem(RUN_KEY, JSON.stringify(c)); } catch(e){ toast("불러오지 못했어요"); return; }
+    RUN_LAST = ""; if (!runRestore()){ try { if (keep) localStorage.setItem(RUN_KEY, keep); } catch(e){} toast("불러오지 못했어요"); return; }
+    if (R){ if (R.mode !== "daily") R.dayKey = kstDate(); R.weekKey = weekKey(); R.flagMode = false; } return; } // 요청 61 점검: 무한 물결 주간 기록은 이번 주로
+}
 function runRestore(){
   const sv = runLoad(); if (!sv) return false;
   if (sv.mode === "daily" && sv.P.dayKey && sv.P.dayKey !== kstDate()){ runDel(); toast("날짜가 바뀌어 지난 일일 도전 판은 이어 할 수 없어요"); return false; }
@@ -7506,7 +7548,7 @@ function runRestore(){
     const fix = o => { o.cd = o.cd || 0; if (Array.isArray(o.units)) o.units.forEach(u => { u.t = o; u.tg = null; u.nx = null; }); if (!Array.isArray(o.q)) o.q = o.type === "barracks" ? [] : o.q; return o; };
     R.towers = sv.towers.map(fix); R.volB = (sv.volB || []).map(fix);
     if (sv.hero && HEROES[sv.hero.k]){ spawnHero(sv.hero.k); Object.assign(R.hero, sv.hero); R.hero.tg = null; } else R.hero = null;
-    R.sid = sv.sid; { const ru = M.revUsed && M.revUsed[sv.sid]; if (ru) R.revN = Math.max(R.revN || 0, ru); } R.waveActive = false; R.over = false; R.paused = false; R.enemies = []; R.projs = []; R.queue = []; R.evPending = null;
+    R.sid = sv.sid; { const ru = M.revUsed && M.revUsed[sv.sid]; if (ru) R.revN = Math.max(R.revN || 0, ru); } { const sp = M.sidPay && M.sidPay[sv.sid]; if (sp){ R.jadePaid = Math.max(R.jadePaid || 0, sp.j || 0); R.ironPaidN = Math.max(R.ironPaidN || 0, sp.i || 0); R.revN = Math.max(R.revN || 0, sp.r || 0); } } /* 요청 61 점검: 이미 받은 옥·쇠·쓴 되살리기는 그대로 */ R.waveActive = false; R.over = false; R.paused = false; R.enemies = []; R.projs = []; R.queue = []; R.evPending = null;
     R.prepT = sv.prepT != null && sv.prepT > 0 ? sv.prepT : null; R.prepSeen = true; R.restored = true; R.navDirty = true; R.fcache = {}; R.sel = null; R.heroSel = false; R.aim = false;
     RUN_LAST = ""; resize(); renderPanel(true);
     showBanner("지난 판을 이어 해요", (sv.title || "") + " · " + (sv.wave + 1) + "번째 물결 준비 시간" + (sv.midWave ? " (물결 도중에 나가서 그 물결 준비 시간부터 다시 해요)" : ""));
@@ -7520,7 +7562,8 @@ function showMenu(){
   ensureMissions();
   const today = kstDate();
   const svR = runInProgress() ? null : runLoad(); /* v16: 앱을 다시 열었을 때 저장된 판 */
-  const cont = runInProgress() ? '<button class="btn" data-act="resume">이어서 하기 · '+R.st.title+'</button>' : svR ? '<button class="btn primary" data-act="runrestore">지난 판 이어 하기 · '+(svR.title || '')+' · '+(svR.wave + 1)+'물결 준비 시간</button>' : '';
+  const cont = (runInProgress() ? '<button class="btn" data-act="resume">이어서 하기 · '+R.st.title+'</button>' : svR ? '<button class="btn primary" data-act="runrestore">지난 판 이어 하기 · '+(svR.title || '')+' · '+(svR.wave + 1)+'물결 준비 시간</button>' : '')
+    + (slotAny() ? '<button class="btn" data-act="slots" data-k="load">📂 저장한 판 불러오기</button>' : ''); // 요청 61
   const dc = dailyChallenge(), dot = M.stars[0] && (M.daily.login < today || M.daily.chest < today || (dc && M.daily.done < today) || misClaimable()) ? '<span class="dot"></span>' : '';
   const endlessOpen = M.stars[1] > 0;
   const endlessBtn = '<button class="btn" data-act="endless"'+(endlessOpen ? '' : ' disabled')+'>'+(endlessOpen ? '무한 물결 · 최고 '+M.endless.best+'물결' : '무한 물결 · 1장을 마치면 열려요')+'</button>';
@@ -7689,6 +7732,18 @@ const WebApp = {
   blockStart(){ if (this.applying){ toast("새 판을 여는 중이에요. 잠시만 기다려 주세요."); return true; } return false; }
 };
 let wipeStep = 0;
+let setFrom = null; // 요청 60: 설정을 어디서 열었는지(pause 전투 멈춤 · raid 진지 치기 멈춤 · null 처음 화면)
+const PAUSE_BTN = 'style="display:block;width:100%;min-height:60px;font-size:20px;margin:8px 0"';
+function showPause(){ // 요청 60: 전투 멈춤 창 — 계속하기 · 설정 · 처음 화면으로
+  if (!R || R.over) return; R.paused = true; setFrom = null;
+  const info = (R.st && R.st.title ? R.st.title : '') + (R.total ? ' · ' + (R.waveActive ? R.wave + '번째 물결 중' : (R.wave + 1 <= R.total ? (R.wave + 1) + '번째 물결 준비' : '마지막')) : '');
+  showOverlay('<h2>잠깐 멈춤</h2><p class="center">' + info + '</p>'
+    + '<button class="btn primary" ' + PAUSE_BTN + ' data-act="resume">▶ 계속하기</button>'
+    + (R.st && R.st.tutorial ? '' : '<div class="row"><button class="btn" style="min-height:60px;font-size:19px" data-act="slots" data-k="save">💾 저장하기</button><button class="btn" style="min-height:60px;font-size:19px" data-act="slots" data-k="load">📂 불러오기</button></div>') // 요청 61 (첫걸음엔 없음)
+    + '<button class="btn" ' + PAUSE_BTN + ' data-act="pause-set">⚙ 설정</button>'
+    + '<button class="btn" ' + PAUSE_BTN + ' data-act="menu">처음 화면으로</button>'
+    + '<p class="center" style="font-size:14px;opacity:.8;margin-top:6px">처음 화면으로 가도 이 판은 그대로 남아요. 처음 화면의 \'이어서 하기\'로 계속해요.</p>', "pause");
+}
 function showSettings(){
   const sw = (k, label) => '<div class="set"><span>'+label+'</span><button class="btn'+(M.set[k] ? ' primary' : '')+'" data-act="toggle" data-k="'+k+'">'+(M.set[k] ? '켜짐' : '꺼짐')+'</button></div>';
   const wipeTxt = ["저장 지우기", "정말 지울까요? 한 번 더 누르세요", "마지막 확인: 별·옥·장수가 모두 지워져요"][wipeStep];
@@ -7702,7 +7757,9 @@ function showSettings(){
     + '<button class="btn" data-act="savemove">저장 옮기기 · 폰 바꿀 때</button>'
     + '<button class="btn" data-act="log">기록 보기</button>'
     + '<button class="btn danger" data-act="wipe">'+wipeTxt+'</button>'
-    + '<button class="btn" data-act="menu">처음 화면</button>'
+    + (setFrom === "pause" && R && !R.over ? '<button class="btn primary" ' + PAUSE_BTN + ' data-act="pause-back">▶ 게임으로 돌아가기</button>' : '') // 요청 60
+    + (setFrom === "raid" && Raid.live ? '<button class="btn primary" ' + PAUSE_BTN + ' data-act="raid-set-back">▶ 진지 치기로 돌아가기</button>' : '')
+    + (setFrom === "raid" && Raid.live ? '<button class="btn danger" data-act="raid-quit">진지 치기 그만두고 처음 화면</button>' : '<button class="btn" data-act="menu">처음 화면</button>')
     + '<p class="foot" style="font-size:12px;line-height:1.5">자료 출처 · 위성 사진: Sentinel-2 cloudless - <a href="https://s2maps.eu" target="_blank" rel="noopener">s2maps.eu</a> by <a href="https://eox.at" target="_blank" rel="noopener">EOX IT Services GmbH</a> (Contains modified Copernicus Sentinel data 2016 &amp; 2017) · 높이: Terrain Tiles (Mapzen/Linux Foundation, AWS Open Data, SRTM 등 — <a href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md" target="_blank" rel="noopener">출처 목록</a>)</p>', "settings");
 }
 function showLog(){
@@ -7715,8 +7772,9 @@ function applyFont(){ document.body.classList.toggle("fs1", M.set.font === 1); d
 /* ---------- 결과 ---------- */
 const COIN_JADE = {k:.1, max:30}; // v11 요청 23: 이긴 판의 남은 엽전 → 옥
 const COIN_IRON = {k:.05, max:15}; // v11: 남은 엽전을 쇠로 바꾸기(5%, 최대 15). 이기면 옥으로 먼저 받아 두고(앱을 닫거나 그냥 넘어가도 손해 없음), 결과 화면에서 쇠를 고르면 그 옥을 쇠로 바꾼다
+function sidPayNote(){ if (!R || !R.sid || R.test || R.st.tutorial) return; const o = M.sidPay || (M.sidPay = {}), p = o[R.sid] || {}; o[R.sid] = {j:Math.max(p.j || 0, R.jadePaid || 0), i:Math.max(p.i || 0, R.ironPaidN || 0), r:Math.max(p.r || 0, R.revN || 0)}; const ks = Object.keys(o); if (ks.length > 8) ks.slice(0, ks.length - 8).forEach(k => delete o[k]); } // 요청 61 점검
 function finishIron(){ if (R.test || R.st.tutorial) return 0; const tot = Math.floor((R.ironRun || 0)*(R.endMul || 1)), pay = Math.max(0, tot - (R.ironPaidN || 0)); R.ironPaidN = tot; M.iron = (M.iron || 0) + pay; R.lastIron = (R.lastIron || 0) + pay; return pay; } // 쇠: 판 결과에서 받은 만큼만(이어서 하기로 다시 정산해도 차이만)
-function finishJade(bonus, flat, noSave){ finishIron(); const total = Math.floor((R.jadeRun + bonus)*(R.jmul || 1)*(R.endMul || 1)) + (flat || 0) /* jmul: 난이도·서당. endMul: 남은 성문 비율(v10). flat(일일 도전·어려움 첫 승리)은 그대로 */, pay = Math.max(0, total - R.jadePaid); R.jadePaid = total; M.jade += pay; R.lastJade = pay; if (!noSave) saveMeta(); return pay; }
+function finishJade(bonus, flat, noSave){ finishIron(); const total = Math.floor((R.jadeRun + bonus)*(R.jmul || 1)*(R.endMul || 1)) + (flat || 0) /* jmul: 난이도·서당. endMul: 남은 성문 비율(v10). flat(일일 도전·어려움 첫 승리)은 그대로 */, pay = Math.max(0, total - R.jadePaid); R.jadePaid = total; M.jade += pay; R.lastJade = pay; sidPayNote(); if (!noSave) saveMeta(); return pay; }
 function victoryPay(bonus, flat){ // 이긴 판 보상(옥·쇠·남은 엽전 옥)을 한 번의 저장으로 확정. 실패하면 메모리 지급과 지급 기록을 모두 되돌린다
   const st = R.st, sv = {j:M.jade, i:M.iron, jp:R.jadePaid, ip:R.ironPaidN, li:R.lastIron, lj:R.lastJade, cjp:R.coinJadePaid, cjl:R.coinJadeLast, cg:R.coinGold, cio:R.coinIronOffer, pj:M.pendingJade};
   if (R.dailyMark) M.daily.done = R.dailyMark.today; finishJade(bonus, flat, true);
@@ -7742,6 +7800,7 @@ function jadeRow(){
 function victory(){
   runDel(); // v16: 판이 끝나면 판 저장을 지움
   if (R.over) return;
+  if (R.sid && !R.test){ M.winSid = (M.winSid || []).filter(x => x !== R.sid).concat(R.sid).slice(-60); } // 요청 61
   R.over = true; R.resultSeq++; R.aim = false; R.heroSel = false; Sound.play("win");
   if (R.test){ testResult("시험 판을 막았어요"); return; } // 시험 지도: 별·옥·기록을 남기지 않는다
   const st = R.st, today = kstDate(), stars = Math.min(R.campWeak ? 1 : R.helped ? 2 : 3, st.tutorial ? 1 : R.gates ? gateStars() : R.lives >= R.maxLives*.9 ? 3 : R.lives >= R.maxLives*.5 ? 2 : 1); // 도움 받은 판(쉽게 다시 하기)은 별 최대 2
@@ -8014,7 +8073,12 @@ document.addEventListener("click", ev => {
     case "daily-open": showDaily(); break;
     case "heroes-open": showHeroes(); break;
     case "shop-open": Track.event("shop_open"); showShop(); break;
-    case "settings": wipeStep = 0; showSettings(); break;
+    case "settings": wipeStep = 0; if (overlayMode === "menu" || !overlayMode) setFrom = null; showSettings(); break; // 요청 61 점검: 기록 화면에서 돌아올 때는 어디서 열었는지 유지
+    case "pause-set": wipeStep = 0; setFrom = "pause"; showSettings(); break; // 요청 60
+    case "pause-back": showPause(); break;
+    case "slots": slotArm = null; slotFrom = overlayMode === "pause" ? "pause" : "menu"; showSlots(k === "save" ? "save" : "load"); break; // 요청 61
+    case "slot-back": slotArm = null; if (slotFrom === "pause" && R && !R.over) showPause(); else showMenu(); break;
+    case "slot-save": case "slot-load": slotAct(act, k); break;
     case "attend": { const today = kstDate(), i = M.daily.idx % 7; if (M.daily.login < today){ /* 날짜를 되돌려도 다시 못 받음 */ M.jade += ATTEND[i]; M.daily.idx = (i + 1) % 7; M.daily.login = today; saveMeta(); Track.event("daily_login", {day:i+1}); Sound.play("coin"); showDaily.msg = "옥 "+ATTEND[i]+"개를 받았어요!"; } showDaily(); break; }
     case "chest": { const d0 = kstDate(), g0 = saveGen; if (!(M.daily.chest < d0)){ showDaily(); return; } const sc = screenSeq;
       Ads.showRewarded("chest").then(ok => { const today = kstDate(); let msg = "";
@@ -8076,14 +8140,23 @@ document.addEventListener("click", ev => {
         else SaveUI.msg = r === "ok" ? "구글 플레이에 저장했어요" : "구글 플레이에 저장하지 못했어요"; if (overlayMode === "save") showSaveMove(); }); break; }
     case "cloudload": CloudSave.load().then(r => { if (!r) SaveUI.msg = "구글 플레이에서 불러오지 못했어요"; else if (r.none) SaveUI.msg = "구글 플레이에 저장된 게 없어요"; else if (r.err) SaveUI.msg = r.err;
       else { SaveUI.pick = {meta:r.meta, src:"구글 플레이", who:r.who, rh:r.rh}; SaveUI.step = 0; if (overlayMode === "save") showImportPick(); return; } if (overlayMode === "save") showSaveMove(); }); break;
-    case "menu": showMenu(); break;
+    case "menu": setFrom = null; showMenu(); break;
     case "resume": if (WebApp.blockStart()) break; R.paused = false; hideOverlay(); break;
     case "perk": { const p = PERKS.find(x => x.k === k); if (starsTotal() - starsSpent() >= p.cost){ M.perks[k] = true; saveMeta(); refreshMenu(); } break; }
     case "story-open": showStory(); break;
   }
 });
 document.getElementById("b-speed").addEventListener("click", () => { if (R) setSpeed(R.speed === 1 ? 2 : 1); });
-document.getElementById("b-pause").addEventListener("click", () => { if (!R || R.over || overlayMode === "dialog") return; showMenu(); });
+document.getElementById("b-pause").addEventListener("click", () => { if (!R || R.over || overlayMode) return; showPause(); }); // 요청 60: 바로 처음 화면 대신 멈춤 창
+document.addEventListener("keydown", ev => { if (ev.key !== "Escape" || ev.repeat) return; // 요청 60: Esc 로 멈춤/계속
+  if (overlayMode === "pause"){ ev.preventDefault(); if (WebApp.blockStart()) return; R.paused = false; hideOverlay(); return; }
+  if (overlayMode === "raid-pause"){ ev.preventDefault(); hideOverlay(); return; }
+  if (overlayMode === "settings" && setFrom === "pause" && R && !R.over){ ev.preventDefault(); showPause(); return; } // 요청 61 점검
+  if (overlayMode === "settings" && setFrom === "raid" && Raid.live){ ev.preventDefault(); hideOverlay(); Raid.pause(); return; }
+  if (overlayMode === "slots"){ ev.preventDefault(); slotArm = null; if (slotFrom === "pause" && R && !R.over) showPause(); else showMenu(); return; }
+  if (overlayMode) return;
+  if (Raid.running){ ev.preventDefault(); Raid.pause(); return; }
+  if (R && !R.over && !R.paused){ ev.preventDefault(); showPause(); } });
 document.addEventListener("visibilitychange", () => {
   needDraw = true;
   Sound.hide(document.hidden);

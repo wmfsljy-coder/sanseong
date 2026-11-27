@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta name="app-version" content="20261127-97d860adec">
+<meta name="app-version" content="20261127-51106c6370">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>산성</title>
@@ -948,6 +948,7 @@ Object.assign(SPEAK, {ansi:"양만춘", parkseo:"박서", kimyunhu:"김윤후", 
   const N = [
     Object.assign({}, O[0], {post:[["old","허허, 솜씨가 제법이오. 허나 오는 놈들이 졸개만은 아닐 게요."],
           ["old","판이 끝나면 엽전은 사라지오. 대신 쇠를 모아 내 성 대장간에서 무기를 영원히 강화하시오."],
+          ["old","옥은 내 성 건물을 짓고, 장수를 각성시키고, 정예 장병·기마병을 살 때 쓰오. 처음 화면의 옥·쇠를 누르면 쓰는 곳이 다 나오오."],
           ["old","대장간·마굿간·장군의 전술 같은 나머지는 1~3장에서 물결마다 하나씩 열려요. 그때그때 알려 드리리다."],
           ["old","그리고 1장부터는 마지막 물결에 적이 진을 세우오. 진을 부수는 법은 그때 알려 드리리다."],
           ["nar","그날 밤 소식이 왔다. 봉인에서 깨어난 두억시니가 옛 싸움터마다 오래 잠든 귀신을 대장으로 깨워 도깨비를 보낸다는 것이다."],
@@ -2567,7 +2568,7 @@ function freshMeta(){
   const NS = STAGES.length; // 장 수가 늘어도(특별 장) 배열 길이를 맞춘다. 예전 저장(길이 5)은 normMeta 가 빈 칸을 0 으로 채운다
   return {v:4, order:3, stars:Array(NS).fill(0), ch:Array.from({length:NS}, () => [0,0]), perks:{}, ads:0, jade:0, heroes:{gwon:1, yeon:0}, awake:{}, unlocked:{}, noAds:false, starter:false,
           starterOwned:false, starterJadeGranted:false, purchases:{},
-          set:{sfx:true, music:true, vib:true, easy:true, easyTold:false /* v12 쉬운 조작 */, flagTold:false /* 요청 57 깃발 안내 */, decide:true /* v16 결정 순간 */, follow:false /* v18 장군 따라가기 자동 */, font:0, notif:true, notifAsked:false, autocam:null /* 위급한 곳 자동 이동: null=난이도 따라(편하게면 켬), true/false=사용자가 고름 */}, daily:{login:"", idx:0, chest:"", done:""}, endless:{best:0, week:"", weekBest:0}, from:"new",
+          set:{sfx:true, music:true, vib:true, easy:true, easyTold:false /* v12 쉬운 조작 */, flagTold:false /* 요청 57 깃발 안내 */, jiTold:false /* 요청 67 옥·쇠 안내 */, decide:true /* v16 결정 순간 */, follow:false /* v18 장군 따라가기 자동 */, font:0, notif:true, notifAsked:false, autocam:null /* 위급한 곳 자동 이동: null=난이도 따라(편하게면 켬), true/false=사용자가 고름 */}, daily:{login:"", idx:0, chest:"", done:""}, endless:{best:0, week:"", weekBest:0}, from:"new",
           // v4: 난이도, 장마다 어려움 별, 내 성, 오늘의 임무, 접속 시각(알림용), 같은 장 연패, 하루 첫 클라우드 저장 날짜
           diff:1, diffChosen:false, hard:Array(NS).fill(0), hardPaid:Array(NS).fill(false), castle:{b:{}, last:0, acc:0, got:0}, /* last: 생산 정산 시각, got: 실제로 받은 시각 */
           mis:{day:"", ids:[], prog:{}, got:{}, all:false}, /* got: 임무 ID → 1 (배열 위치가 아니라 ID에 연결) */ play:[], lose:{s:-1, m:"", n:0}, cloudDay:"",
@@ -2630,7 +2631,7 @@ function normMeta(m){
   safe(() => { o.noAds = bool(m.noAds, false); o.starter = bool(m.starter, false); o.starterOwned = bool(m.starterOwned, o.starter); });
   safe(() => { o.starterJadeGranted = bool(m.starterJadeGranted, o.starter); }); // 옛 판에서 이미 산 경우 옥 500은 이미 받은 것으로 본다
   safe(() => { if (isObj(m.purchases)) Object.keys(m.purchases).forEach(k => { const v = m.purchases[k]; if (v === true) o.purchases[k] = true; else if (isObj(v)) o.purchases[k] = {at:int(v.at, 0, 9e15, 0), id:typeof v.id === "string" ? v.id : "", gave:typeof v.gave === "string" ? v.gave : ""}; }); });
-  if (isObj(m.set)){ ["sfx", "music", "vib", "notif", "easy", "decide"].forEach(k => safe(() => { o.set[k] = bool(m.set[k], true); })); safe(() => { o.set.easyTold = bool(m.set.easyTold, false); }); safe(() => { o.set.flagTold = bool(m.set.flagTold, false); }); safe(() => { o.set.follow = bool(m.set.follow, false); }); safe(() => { o.set.font = int(m.set.font, 0, 2, 0); }); safe(() => { o.set.notifAsked = bool(m.set.notifAsked, false); }); safe(() => { o.set.autocam = m.set.autocam === true || m.set.autocam === false ? m.set.autocam : null; }); }
+  if (isObj(m.set)){ ["sfx", "music", "vib", "notif", "easy", "decide"].forEach(k => safe(() => { o.set[k] = bool(m.set[k], true); })); safe(() => { o.set.easyTold = bool(m.set.easyTold, false); }); safe(() => { o.set.flagTold = bool(m.set.flagTold, false); }); safe(() => { o.set.jiTold = bool(m.set.jiTold, false); }); safe(() => { o.set.follow = bool(m.set.follow, false); }); safe(() => { o.set.font = int(m.set.font, 0, 2, 0); }); safe(() => { o.set.notifAsked = bool(m.set.notifAsked, false); }); safe(() => { o.set.autocam = m.set.autocam === true || m.set.autocam === false ? m.set.autocam : null; }); }
   if (isObj(m.daily)){ ["login", "chest", "done"].forEach(k => safe(() => { o.daily[k] = day(m.daily[k]); })); safe(() => { o.daily.idx = int(m.daily.idx, 0, 6, 0); }); }
   if (isObj(m.endless)){ safe(() => { o.endless.best = int(m.endless.best, 0, 1e5, 0); }); safe(() => { o.endless.week = day(m.endless.week); }); safe(() => { o.endless.weekBest = int(m.endless.weekBest, 0, 1e5, 0); }); }
   // v4 칸 (v3 저장에는 없으니 기본값)
@@ -2958,7 +2959,7 @@ function spendJade(n, why){ // 옥을 쓰고 저장이 성공해야 확정. 실�
   if (!(n > 0) || (M.jade || 0) < n) return false; M.jade -= n;
   if (!saveMeta()){ M.jade += n; toast("저장이 안 돼 옥을 쓰지 않았어요. 잠시 뒤 다시 해 보세요."); return false; }
   Track.event("jade_use", {why, n}); return true; }
-function showJadeInfo(){ showOverlay('<h2>옥 쓰는 곳</h2><div class="wallet"><span>'+jadeTag(M.jade)+' 옥</span></div><div class="note">'
+function showJadeInfo(first){ showOverlay((first ? '<h2>옥과 쇠를 받았어요!</h2><p class="center" style="font-size:17px">엽전은 판이 끝나면 사라지지만, 옥과 쇠는 계속 남아요. 아래처럼 쓰면 다음 장이 쉬워져요.</p><div class="row"><button class="btn primary" data-act="castle-open">내 성 가기 · 옥</button><button class="btn primary" data-act="forge">대장간 가기 · 쇠</button></div>' : '') + '<h2>옥 쓰는 곳</h2><div class="wallet"><span>'+jadeTag(M.jade)+' 옥</span></div><div class="note">'
   + ['<b>내 성 건물</b> 장터·서당·연못 정자 등 8가지', '<b>내 성 대장간</b> 쇠와 함께 무기 영구 강화', '<b>고급 장병</b> 기마병 옥 3·쇠 2, 정예 옥·쇠 +1, 최정예 옥·쇠 +2', '<b>장수 각성</b> 장수마다 한 번, 옥 '+JADE_USE.awake+' · 필살기 +30%', '<b>정예 데리고 시작</b> 장 시작 전 정예 창병 한 명에 옥 '+JADE_USE.elite+'(최대 '+JADE_USE.eliteMax+')', '<b>이어서 하기</b> 졌을 때 광고 대신 옥 '+JADE_USE.cont+'(일일 도전 '+JADE_USE.contDaily+')', '<b>장수 바로 일으키기</b> 쓰러진 장수 단추를 두 번 눌러 옥 '+REVIVE.jade+'(판당 '+REVIVE.max+'번)'].map(t => '<p>· '+t+'</p>').join('')
   + '</div><h2 style="margin-top:14px">쇠 쓰는 곳</h2><div class="wallet"><span>쇠 '+(M.iron || 0)+'</span></div><div class="note">'
   + ['<b>내 성 대장간 무기 계통</b> 활·창·칼·화약·갑옷·건물 영구 강화', '<b>성 단단하게</b> 문·행궁 내구도 영구 +5%씩', '<b>장수 무기</b> 장수 공격력 영구 +4%씩', '<b>설계도</b> 차대전(쇠 40)·대완구(쇠 80) 새 망루', '<b>고급 장병</b> 기마병 쇠 2, 정예 +1, 최정예 +2', '<b>남은 엽전 바꾸기</b> 이긴 판 결과 화면에서 남은 엽전을 옥(10%, 최대 30) 또는 쇠(5%, 최대 15)로'].map(t => '<p>· '+t+'</p>').join('')
@@ -4571,7 +4572,7 @@ function barracksBuy(t){
   const jline = jline0 + unitInfoHTML(t, list); /* 요청 34: 공격·방어·강한 상대 */
   if (t.ruin) return '<p style="font-size:16px;margin:6px 0 4px;color:#FF9A8A">병영이 무너졌어요 · 고치면 다시 훈련해요</p>' + jline + '<div style="display:grid;grid-template-columns:repeat('+list.length+',minmax(0,1fr));gap:'+(five ? 4 : 6)+'px">' + list.map(btn).join("") + '</div>';
   const rc = t.q.length && t.q[0].left > 0 && ul("extra") ? rushCost(t.q[0]) : 0, rush = rc ? '<button class="btn" style="min-height:44px;font-size:16px;margin:2px 0 6px;width:100%" data-act="rushu"'+(R.gold < rc || !tutOk("rushu") ? ' disabled' : '')+'>훈련 서두르기 · '+rc+'엽전 (맨 앞 '+UNITS[t.q[0].k].name+' 바로)</button>' : '';
-  const af = easyOn() ? '<button class="btn'+(t.autoFill === false ? '' : ' primary')+'" style="width:100%;min-height:42px;font-size:15px;margin:4px 0" data-act="autofill">'+(t.autoFill === false ? '자동 보충 꺼짐 · 누르면 켜요' : '자동 보충 켜짐 · 엽전 장병이 비면 알아서 사요')+'</button>' : ''; /* v12 쉬운 조작 */
+  const af = R.m && R.m.fort && !t.virtual && !(R.st.tutorial && R.tut >= 0 && R.tut < TUT.findIndex(q => q.act && q.act[0] === "flag")) ? '<button class="btn" style="width:100%;min-height:48px;font-size:17px;margin:4px 0" data-act="flagset">🚩 장병 모일 곳(깃발) '+(R.flag && !R.flag.auto ? '옮기기' : '정하기')+'</button>' : ''; /* 요청 67: 자동 보충 대신 모일 곳 정하기(장병은 눌러서만 사요) */
   return jline + af + '<p style="font-size:16px;margin:6px 0 4px">장병 <b>'+n+'/'+cap+'</b>'+(t.q.length ? ' · 훈련 '+t.q.length+'/'+BAR_QMAX+' · ' : ' · 사면 차례로 나와요')+q+'</p>' + rush
     + '<div style="display:grid;grid-template-columns:repeat('+list.length+',minmax(0,1fr));gap:'+(five ? 4 : 6)+'px">' + list.map(btn).join("") + '</div>';
 }
@@ -4910,9 +4911,9 @@ function easyDraw(c, T, items){ const L = easyRecs(); if (!L.length) return;
 function easyTick(dt){
   if (!easyOn()){ if (R && R.flag && R.flag.auto) R.flag = null; if (R) R.tacRec = null; return; }
   R.easyT = (R.easyT || 0) + dt; if (R.easyFlagCd > 0) R.easyFlagCd -= dt; if (R.easyT < EASY.tick) return; const step = R.easyT; R.easyT = 0;
-  if (!M.set.easyTold && R.started){ R.easyTell = (R.easyTell || 0) + step; if (R.easyTell >= EASY.tellAt){ M.set.easyTold = true; saveMeta(); easyBanner("쉬운 조작이 켜져 있어요", "수리·장병 보충·깃발·진 출격을 알아서 해요. 설정에서 끌 수 있어요"); } }
+  if (!M.set.easyTold && R.started){ R.easyTell = (R.easyTell || 0) + step; if (R.easyTell >= EASY.tellAt){ M.set.easyTold = true; saveMeta(); easyBanner("쉬운 조작이 켜져 있어요", "수리·깃발·진 출격을 알아서 해요(장병은 직접 사요). 설정에서 끌 수 있어요"); } }
   if (R.started && !R.waveActive) for (const t of R.towers){ // 병영 자동 보충(v14: 물결 전에만): 엽전만 드는 기본 장병, 엽전 30은 남김
-    if (t.type !== "barracks" || t.virtual || t.ruin || t.autoFill === false) continue; if (!t.units) initBarracks(t); if (!t.q) t.q = [];
+    if (t.type !== "barracks" || t.virtual || t.ruin || t.autoFill !== true) continue; /* 요청 67: 자동 보충 없앰(장병은 눌러서만) */ if (!t.units) initBarracks(t); if (!t.q) t.q = [];
     const k = t.unit || "spear", U = UNITS[k]; if (!U || U.horse || !U.cost) continue; const A = unitAfford(t, k); if (A.jd || A.ir) continue;
     if (t.units.length + t.q.length >= BAR_CAP(t.lvl) || t.q.length >= BAR_QMAX || R.gold - U.cost < EASY.keep) continue;
     if (buyUnit(t, k)){ R.easyBuys = (R.easyBuys || 0) + 1; addText(t.x + .5, t.y - .2, U.name + " 자동 보충", "#9FE0B0", 1.1); if (R.sel && R.sel.x === t.x && R.sel.y === t.y) renderPanel(true); } }
@@ -5163,7 +5164,7 @@ function drawWallPost(c, t, px, py, T, ruin){
     const cnt = [2, 3, 3][lvl] || 2, sp = T*.27;
     if (lvl >= 2 && !ruin){ c.strokeStyle = "#5A3A1A"; c.lineWidth = Math.max(1.5, T*.035); c.beginPath(); c.moveTo(px - f*T*.34, fy); c.lineTo(px - f*T*.34, fy - T*.78); c.stroke(); const wv = Math.sin(performance.now()/260 + px)*T*.03; c.fillStyle = "#C8452F"; c.beginPath(); c.moveTo(px - f*T*.34, fy - T*.78); c.lineTo(px - f*T*.34 + f*T*.26, fy - T*.7 + wv); c.lineTo(px - f*T*.34, fy - T*.6); c.closePath(); c.fill(); }
     const act = !ruin && t.shotT != null && R.time >= t.shotT && R.time - t.shotT < 2.2; /* 이어 하기로 판 시간이 0부터 다시 시작해도 꼬이지 않게 */ // 요청 66: 최근에 쐈으면 활 쏘는 장면
-    for (let i = 0; i < cnt; i++){ if (ruin && i > 0) break; const ox = (i - (cnt - 1)/2)*sp, ph = Math.max(0, pull - i*.15); wpFigure(c, px + ox, fy - (i % 2)*T*.03, fh, f, ph, ruin, undefined, shotFr(act, ph, rc - i*.15)); }
+    for (let i = 0; i < cnt; i++){ if (ruin && i > 0) break; const ox = (i - (cnt - 1)/2)*sp, ph = Math.max(0, pull - i*.15); wpFigure(c, px + ox, fy - (i % 2)*T*.03, fh, f, ph, ruin, undefined, act ? shotFr(true, ph, rc - i*.15) : 0); } /* 요청 67: 쉴 때도 제자리에서 겨눔 */
   } else {
     const crew = ruin ? 0 : 1; if (crew) wpFigure(c, px - f*T*.26, fy, fh*.92, f, 0, false, "#5A4A3A");
     // 낮은 돌대
@@ -6304,7 +6305,7 @@ function drawPalaceGuards(c, T){
   palGuardPts().forEach((g, i) => { const px = g.x*T, base = (g.y + .2)*T, h = T*.82*(typeof USCALE === "number" ? USCALE : 1), aim = R.pgAim && R.pgAim[i] > 0;
     c.fillStyle = "rgba(0,0,0,.28)"; ellipse(c, px, base, T*.22, T*.08); c.fill();
     const pact = R.pgT && R.time >= R.pgT[i] && R.time - R.pgT[i] < 2.2, pfr = shotFr(pact, 1 - Math.max(0, (R.pgCd ? R.pgCd[i] : 0))/PAL_GUARD.rate, aim ? 1 : 0); // 요청 66
-    if (shotDraw(c, pfr, px, base, h, i === 0)){ /* 활 쏘는 장면 */ }
+    if (shotDraw(c, pfr < 0 ? 0 : pfr, px, base, h, i === 0)){ /* 활 쏘는 장면 */ }
     else if (!(ART.img.u_archer && ART.drawAt(c, "u_archer", px, base - (aim ? T*.03 : 0), h, i === 0, false))){
       c.fillStyle = "#3C5A8A"; c.fillRect(px - T*.09, base - h*.62, T*.18, h*.42); c.fillStyle = "#E8C9A0"; circle(c, px, base - h*.72, T*.09); c.fill(); }
     if (R.palLow){ c.strokeStyle = "rgba(255,120,90," + (.5 + .4*Math.sin(performance.now()/120)) + ")"; c.lineWidth = Math.max(1, T*.04); circle(c, px, base - h*.4, T*.3); c.stroke(); } });
@@ -6761,8 +6762,8 @@ function draw(){
   const bw = (x, y, fn, lift) => { if (!VV){ fn(); return; } const p = VIEW.fwd(x*T, y*T); c.save(); c.translate(p[0] - x*T, p[1] - y*T - (lift ? (typeof lift === "number" ? lift : VIEW.wallH(T)) : 0)); try { fn(); } finally { c.restore(); } };
   ART.dim = false; const PB = VV ? VIEW.paintImg() : null; VIEW.paintNow = !!PB; // 요청 38: 손그림 바탕
   if (PB){ const tn = todN(), dyc = tn < .995 ? VIEW.paintDay(PB) : null; // 요청 64: 낮 그림 + 밤 그림(밤만큼 겹침)
-    if (dyc) c.drawImage(dyc, PB.x0*T, PB.y0*T, PB.w*T, PB.h*T);
-    if (!dyc || tn > .005){ if (dyc){ c.save(); c.globalAlpha = tn; } c.drawImage(PB.img, PB.x0*T, PB.y0*T, PB.w*T, PB.h*T); if (dyc) c.restore(); } }
+    if (dyc) c.drawImage(dyc, ...VIEW.pbRect(PB));
+    if (!dyc || tn > .005){ if (dyc){ c.save(); c.globalAlpha = tn; } c.drawImage(PB.img, ...VIEW.pbRect(PB)); if (dyc) c.restore(); } }
   if (VV){ c.save(); c.transform(VIEW.a, VIEW.b, VIEW.c, VIEW.d, VIEW.e, VIEW.f); }
   if (!PB) c.drawImage(staticCv, 0, 0, WW, WH);
   if (R.bound && !VIEW.cap) drawBound(c); // 요청 48: 촬영 모드(손그림 밑그림)는 경계·이름표·불빛 없이
@@ -6902,20 +6903,23 @@ const miniCv = (() => { const c = document.createElement("canvas"); c.id = "mini
 /* 요청 37(시험, 1장만): 보기 방식 — 바로 위 / 입체(비스듬히 내려다보기), 45도씩 돌리기.
    땅(지형 그림·범위·효과)은 행렬로 돌리고 눕히고, 망루·장병·괴물·장군·글자는 그 자리에 똑바로 세워 그린다(빌보드).
    입체에서는 성벽·문루·행궁을 높이 있는 덩어리로 세우고, 깊이 순서로 그려 벽 뒤의 적은 가려진다. 터치는 Cam.toWorld 에서 거꾸로 풀어 칸을 맞춘다. */
+const CR_SQ = .78; // 요청 67: 위쪽 입체(클래시 로얄식) 기울기 — 비스듬 입체는 .58
 const VIEW = {
   on:false, iso:true, rot:0, a:1, b:0, c:0, d:1, e:0, f:0, det:1, cx:0, cy:0,
   allowed(){ const k = R && R.st ? (R.st.oldIdx || R.s) : 0; return !!(R && R.m && R.m.fort && k >= 0 && k <= 9 && !R.test); }, // 요청 58: 첫걸음(0)도 입체 · 요청 48: 1~9장 모두(손그림은 PAINT 표에 있는 장·각도만)
-  reset(){ this.rot = 0; this.iso = true; },
+  reset(){ this.rot = 0; this.iso = true; this.cr = true; }, // 요청 67: 처음엔 위쪽 입체(클래시 로얄식)
+  cr:true, crOn(){ return !!(this.cr && !this.cap && this.rot === 0 && this.iso); },
+  pbRect(P){ const x = P.x0*T, w = P.w*T; if (!this.crOn()) return [x, P.y0*T, w, P.h*T]; const k = CR_SQ/.58; return [x, this.cy + k*(P.y0*T - this.cy), w, P.h*T*k]; }, // 손그림(비스듬 .58)을 위쪽 입체 기울기만큼 세로로 늘림
   refresh(){ this.on = this.allowed(); if (!this.on){ this.a = this.d = 1; this.b = this.c = this.e = this.f = 0; this.det = 1; return; }
     const k = R.m.castle; this.cx = k ? (k.x + k.w/2)*T : WW/2; this.cy = k ? (k.y + k.h/2)*T : WH/2;
-    const th = this.rot*Math.PI/4, co = Math.cos(th), si = Math.sin(th), sq = this.iso ? .58 : 1;
+    const th = this.rot*Math.PI/4, co = Math.cos(th), si = Math.sin(th), sq = this.iso ? (this.crOn() ? CR_SQ : .58) : 1;
     this.a = co; this.b = sq*si; this.c = -si; this.d = sq*co; this.det = this.a*this.d - this.b*this.c;
     this.e = this.cx - (this.a*this.cx + this.c*this.cy); this.f = this.cy - (this.b*this.cx + this.d*this.cy); },
   fwd(x, y){ return this.on ? [this.a*x + this.c*y + this.e, this.b*x + this.d*y + this.f] : [x, y]; },
   inv(x, y){ if (!this.on) return [x, y]; const X = x - this.e, Y = y - this.f; return [(this.d*X - this.c*Y)/this.det, (-this.b*X + this.a*Y)/this.det]; },
   vec(x, y){ return this.on ? [this.a*x + this.c*y, this.b*x + this.d*y] : [x, y]; },
   ang(a){ const v = this.vec(Math.cos(a), Math.sin(a)); return Math.atan2(v[1], v[0]); },
-  wallH(T){ return this.on && this.iso ? T*.62 : 0; },
+  wallH(T){ return this.on && this.iso ? T*.62*(this.crOn() ? CR_SQ/.58 : 1) : 0; },
   // 요청 38: 손그림 바탕(장:돌린 단계:입체 1/위 0). x0·y0·w·h = 보기 공간 칸 단위 자리. 파일은 art/paint/ (웹판은 web/art/paint/)
   PAINT:{"c6:0:1":{src:"art/paint/ch1_iso0.webp",x0:-2.32231,y0:3.42906,w:26.47705,h:14.77789},"c6:1:1":{src:"art/paint/ch1_iso1.webp",x0:-0.5,y0:2.80987,w:29.34626,h:16.37931},"c6:2:1":{src:"art/paint/ch1_iso2.webp",x0:-2.55779,y0:3.88438,w:25.88463,h:14.44724},"c6:3:1":{src:"art/paint/ch1_iso3.webp",x0:-6.29958,y0:1.68179,w:33.47287,h:18.68253},"c6:4:1":{src:"art/paint/ch1_iso4.webp",x0:-3.32231,y0:3.42906,w:26.47705,h:14.77789},"c6:5:1":{src:"art/paint/ch1_iso5.webp",x0:-6.29958,y0:1.27167,w:33.47287,h:18.68253},"c6:6:1":{src:"art/paint/ch1_iso6.webp",x0:-2.55779,y0:3.30438,w:25.88463,h:14.44724},"c6:7:1":{src:"art/paint/ch1_iso7.webp",x0:-5.59247,y0:1.27167,w:33.47287,h:18.68253},"c0:0:1":{src:"art/paint/c0_iso0.webp",x0:-1.54938,y0:3.10222,w:24.09877,h:13.55556},"c0:1:1":{src:"art/paint/c0_iso1.webp",x0:-6.07923,y0:0.55418,w:33.15847,h:18.65164},"c0:2:1":{src:"art/paint/c0_iso2.webp",x0:-1.54938,y0:3.10222,w:24.09877,h:13.55556},"c0:3:1":{src:"art/paint/c0_iso3.webp",x0:-6.07923,y0:0.55418,w:33.15847,h:18.65164},"c0:4:1":{src:"art/paint/c0_iso4.webp",x0:-1.54938,y0:3.10222,w:24.09877,h:13.55556},"c0:5:1":{src:"art/paint/c0_iso5.webp",x0:-6.07923,y0:0.55418,w:33.15847,h:18.65164},"c0:6:1":{src:"art/paint/c0_iso6.webp",x0:-1.54938,y0:3.10222,w:24.09877,h:13.55556},"c0:7:1":{src:"art/paint/c0_iso7.webp",x0:-6.07923,y0:0.55418,w:33.15847,h:18.65164},"c1:0:1":{src:"art/paint/c1_iso0.webp",x0:-1.50786,y0:2.26808,w:22.01571,h:12.38384},"c1:1:1":{src:"art/paint/c1_iso1.webp",x0:-6.02051,y0:-0.61729,w:30.21259,h:16.99458},"c1:2:1":{src:"art/paint/c1_iso2.webp",x0:-1.50786,y0:1.10808,w:22.01571,h:12.38384},"c1:3:1":{src:"art/paint/c1_iso3.webp",x0:-4.60629,y0:-1.43753,w:30.21259,h:16.99458},"c1:4:1":{src:"art/paint/c1_iso4.webp",x0:0.49214,y0:1.10808,w:22.01571,h:12.38384},"c1:5:1":{src:"art/paint/c1_iso5.webp",x0:-3.19208,y0:-0.61729,w:30.21259,h:16.99458},"c1:6:1":{src:"art/paint/c1_iso6.webp",x0:0.49214,y0:2.26808,w:22.01571,h:12.38384},"c1:7:1":{src:"art/paint/c1_iso7.webp",x0:-4.60629,y0:0.20295,w:30.21259,h:16.99458},"c2:0:1":{src:"art/paint/c2_iso0.webp",x0:-2.54938,y0:3.31222,w:24.09877,h:13.55556},"c2:1:1":{src:"art/paint/c2_iso1.webp",x0:-5.98921,y0:1.26338,w:31.68553,h:17.82311},"c2:2:1":{src:"art/paint/c2_iso2.webp",x0:-1.00786,y0:4.18808,w:22.01571,h:12.38384},"c2:3:1":{src:"art/paint/c2_iso3.webp",x0:-5.98921,y0:1.67351,w:31.68553,h:17.82311},"c2:4:1":{src:"art/paint/c2_iso4.webp",x0:-2.54938,y0:3.89222,w:24.09877,h:13.55556},"c2:5:1":{src:"art/paint/c2_iso5.webp",x0:-6.69632,y0:1.67351,w:31.68553,h:17.82311},"c2:6:1":{src:"art/paint/c2_iso6.webp",x0:-2.00786,y0:4.18808,w:22.01571,h:12.38384},"c2:7:1":{src:"art/paint/c2_iso7.webp",x0:-6.69632,y0:1.26338,w:31.68553,h:17.82311},"c3:0:1":{src:"art/paint/c3_iso0.webp",x0:-1.46633,y0:2.27394,w:19.93266,h:11.21212},"c3:1:1":{src:"art/paint/c3_iso1.webp",x0:-5.13335,y0:0.21124,w:27.2667,h:15.33752},"c3:2:1":{src:"art/paint/c3_iso2.webp",x0:-1.46633,y0:2.27394,w:19.93266,h:11.21212},"c3:3:1":{src:"art/paint/c3_iso3.webp",x0:-5.13335,y0:0.21124,w:27.2667,h:15.33752},"c3:4:1":{src:"art/paint/c3_iso4.webp",x0:-1.46633,y0:2.27394,w:19.93266,h:11.21212},"c3:5:1":{src:"art/paint/c3_iso5.webp",x0:-5.13335,y0:0.21124,w:27.2667,h:15.33752},"c3:6:1":{src:"art/paint/c3_iso6.webp",x0:-1.46633,y0:2.27394,w:19.93266,h:11.21212},"c3:7:1":{src:"art/paint/c3_iso7.webp",x0:-5.13335,y0:0.21124,w:27.2667,h:15.33752},"c4:0:1":{src:"art/paint/c4_iso0.webp",x0:-1.54938,y0:2.89222,w:24.09877,h:13.55556},"c4:1:1":{src:"art/paint/c4_iso1.webp",x0:-6.72568,y0:0.66936,w:33.15847,h:18.65164},"c4:2:1":{src:"art/paint/c4_iso2.webp",x0:-3.04938,y0:3.18222,w:24.09877,h:13.55556},"c4:3:1":{src:"art/paint/c4_iso3.webp",x0:-8.13989,y0:0.25924,w:33.15847,h:18.65164},"c4:4:1":{src:"art/paint/c4_iso4.webp",x0:-3.54938,y0:2.31222,w:24.09877,h:13.55556},"c4:5:1":{src:"art/paint/c4_iso5.webp",x0:-7.43279,y0:-0.561,w:33.15847,h:18.65164},"c4:6:1":{src:"art/paint/c4_iso6.webp",x0:-2.04938,y0:2.02222,w:24.09877,h:13.55556},"c4:7:1":{src:"art/paint/c4_iso7.webp",x0:-6.01857,y0:-0.15088,w:33.15847,h:18.65164},"c5:0:1":{src:"art/paint/c5_iso0.webp",x0:-2.54938,y0:3.94222,w:24.09877,h:13.55556},"c5:1:1":{src:"art/paint/c5_iso1.webp",x0:-4.92855,y0:2.1482,w:31.68553,h:17.82311},"c5:2:1":{src:"art/paint/c5_iso2.webp",x0:0.49214,y0:5.68808,w:22.01571,h:12.38384},"c5:3:1":{src:"art/paint/c5_iso3.webp",x0:-4.92855,y0:3.78869,w:31.68553,h:17.82311},"c5:4:1":{src:"art/paint/c5_iso4.webp",x0:-2.54938,y0:6.26222,w:24.09877,h:13.55556},"c5:5:1":{src:"art/paint/c5_iso5.webp",x0:-7.75698,y0:3.78869,w:31.68553,h:17.82311},"c5:6:1":{src:"art/paint/c5_iso6.webp",x0:-3.50786,y0:5.68808,w:22.01571,h:12.38384},"c5:7:1":{src:"art/paint/c5_iso7.webp",x0:-7.75698,y0:2.1482,w:31.68553,h:17.82311},"c7:0:1":{src:"art/paint/c7_iso0.webp",x0:-1.54938,y0:3.31222,w:24.09877,h:13.55556},"c7:1:1":{src:"art/paint/c7_iso1.webp",x0:-6.01857,y0:1.25924,w:33.15847,h:18.65164},"c7:2:1":{src:"art/paint/c7_iso2.webp",x0:-2.04938,y0:4.18222,w:24.09877,h:13.55556},"c7:3:1":{src:"art/paint/c7_iso3.webp",x0:-7.43279,y0:1.66936,w:33.15847,h:18.65164},"c7:4:1":{src:"art/paint/c7_iso4.webp",x0:-3.54938,y0:3.89222,w:24.09877,h:13.55556},"c7:5:1":{src:"art/paint/c7_iso5.webp",x0:-8.13989,y0:0.84912,w:33.15847,h:18.65164},"c7:6:1":{src:"art/paint/c7_iso6.webp",x0:-3.04938,y0:3.02222,w:24.09877,h:13.55556},"c7:7:1":{src:"art/paint/c7_iso7.webp",x0:-6.72568,y0:0.439,w:33.15847,h:18.65164},"c8:0:1":{src:"art/paint/c8_iso0.webp",x0:-1.54938,y0:3.10222,w:24.09877,h:13.55556},"c8:1:1":{src:"art/paint/c8_iso1.webp",x0:-6.22568,y0:0.75924,w:33.15847,h:18.65164},"c8:2:1":{src:"art/paint/c8_iso2.webp",x0:-2.04938,y0:3.39222,w:24.09877,h:13.55556},"c8:3:1":{src:"art/paint/c8_iso3.webp",x0:-6.93279,y0:0.75924,w:33.15847,h:18.65164},"c8:4:1":{src:"art/paint/c8_iso4.webp",x0:-2.54938,y0:3.10222,w:24.09877,h:13.55556},"c8:5:1":{src:"art/paint/c8_iso5.webp",x0:-6.93279,y0:0.34912,w:33.15847,h:18.65164},"c8:6:1":{src:"art/paint/c8_iso6.webp",x0:-2.04938,y0:2.81222,w:24.09877,h:13.55556},"c8:7:1":{src:"art/paint/c8_iso7.webp",x0:-6.22568,y0:0.34912,w:33.15847,h:18.65164},"c9:0:1":{src:"art/paint/c9_iso0.webp",x0:-2.54938,y0:2.89222,w:24.09877,h:13.55556},"c9:1:1":{src:"art/paint/c9_iso1.webp",x0:-6.84276,y0:0.87857,w:31.68553,h:17.82311},"c9:2:1":{src:"art/paint/c9_iso2.webp",x0:-2.50786,y0:3.47808,w:22.01571,h:12.38384},"c9:3:1":{src:"art/paint/c9_iso3.webp",x0:-7.54987,y0:0.46845,w:31.68553,h:17.82311},"c9:4:1":{src:"art/paint/c9_iso4.webp",x0:-3.54938,y0:2.31222,w:24.09877,h:13.55556},"c9:5:1":{src:"art/paint/c9_iso5.webp",x0:-6.84276,y0:0.05832,w:31.68553,h:17.82311},"c9:6:1":{src:"art/paint/c9_iso6.webp",x0:-1.50786,y0:2.89808,w:22.01571,h:12.38384},"c9:7:1":{src:"art/paint/c9_iso7.webp",x0:-6.13566,y0:0.46845,w:31.68553,h:17.82311}},
   paintNow:false, cap:false, // cap: 손그림 밑그림 촬영 모드(시험용)
@@ -6933,7 +6937,7 @@ const VIEW = {
   gridBox(sx0, sy0, sx1, sy1){ let X0 = 1e9, Y0 = 1e9, X1 = -1e9, Y1 = -1e9; // 화면 사각형 → 칸 단위 둘레 상자
     [[sx0, sy0], [sx1, sy0], [sx1, sy1], [sx0, sy1]].forEach(q => { const w = this.inv(Cam.x + q[0]/Cam.z, Cam.y + q[1]/Cam.z); X0 = Math.min(X0, w[0]); Y0 = Math.min(Y0, w[1]); X1 = Math.max(X1, w[0]); Y1 = Math.max(Y1, w[1]); });
     return {x0:X0/T, y0:Y0/T, x1:X1/T, y1:Y1/T}; },
-  turn(dr, iso){ if (!this.allowed() || !Cam.active) return; const w = Cam.toWorld(VW/2, VT + VH/2); if (dr) this.rot = (this.rot + dr + 8) % 8; if (iso != null) this.iso = iso;
+  turn(dr, iso, cr){ if (!this.allowed() || !Cam.active) return; const w = Cam.toWorld(VW/2, VT + VH/2); if (dr){ if (this.crOn()) this.cr = false; else this.rot = (this.rot + dr + 8) % 8; } if (iso != null) this.iso = iso; if (cr != null){ this.cr = cr; if (cr){ this.rot = 0; this.iso = true; } } /* 요청 67: 위쪽 입체에서 돌리면 먼저 비스듬 입체로 */
     this.refresh(); Cam.vx = Cam.vy = 0; Cam.tx = Cam.ty = null; Cam.center(w[0], w[1]); viewBtns(); needDraw = true; },
   grade(c){ // 밤 색감 + 횃불·망루 불빛 + 가장자리 어둡게(화면 좌표)
     if (!R || !Cam.active) return; c.save();
@@ -6964,7 +6968,7 @@ function stonePattern(c){ if (stonePat) return stonePat; const p = document.crea
   stonePat = c.createPattern(p, "repeat"); return stonePat; }
 let wallCache = null;
 function wallBlocks(c, T, items){ // 입체 보기: 성벽·문루·행궁 덩어리(보기·칸 크기·전장이 바뀔 때만 다시 만듦, 화면 밖은 건너뜀)
-  if (!R.base) return; const B1 = R.bound || {}, key = [R.runId, VIEW.rot, VIEW.iso, T, B1.x0, B1.y0, B1.x1, B1.y1].join(",");
+  if (!R.base) return; const B1 = R.bound || {}, key = [R.runId, VIEW.rot, VIEW.iso, VIEW.crOn(), T, B1.x0, B1.y0, B1.x1, B1.y1].join(",");
   if (!wallCache || wallCache.key !== key){ const list = []; wallBlocksBuild(c, T, list); wallCache = {key, list}; }
   const z = Cam.z, mg = T*z*2.5;
   for (const it of wallCache.list){ const sx = (it.sx - Cam.x)*z, sy = (it.sy - Cam.y)*z; if (sx < -mg || sx > W + mg || sy < -mg || sy > H + mg*1.6) continue; items.push(it); } }
@@ -7006,12 +7010,12 @@ function wallBlocksBuild(c, T, items){
 const viewUI = (() => { const d = document.createElement("div"); d.id = "viewui"; d.hidden = true; d.style.cssText = "position:absolute;z-index:6;display:none;flex-direction:column;gap:6px";
   d.innerHTML = '<button type="button" data-v="l" aria-label="왼쪽으로 45도 돌리기">↺</button><button type="button" data-v="r" aria-label="오른쪽으로 45도 돌리기">↻</button><button type="button" data-v="m" aria-label="보기 바꾸기">위</button>';
   d.querySelectorAll("button").forEach(b => { b.style.cssText = "width:60px;height:52px;border-radius:12px;border:2px solid #D9A441;background:rgba(20,16,12,.82);color:#FFE7A8;font:800 20px 'Gowun Dodum',sans-serif;cursor:pointer"; });
-  d.addEventListener("click", ev => { const b = ev.target.closest("button"); if (!b) return; ev.stopPropagation(); if (b.dataset.v === "l") VIEW.turn(-1); else if (b.dataset.v === "r") VIEW.turn(1); else VIEW.turn(0, !VIEW.iso); });
+  d.addEventListener("click", ev => { const b = ev.target.closest("button"); if (!b) return; ev.stopPropagation(); if (b.dataset.v === "l") VIEW.turn(-1); else if (b.dataset.v === "r") VIEW.turn(1); else VIEW.turn(0, true, !VIEW.crOn()); });
   d.addEventListener("pointerdown", ev => ev.stopPropagation());
   stagebox.appendChild(d); return d; })();
 function viewBtns(){ const show = VIEW.allowed() && Cam.active; if (viewUI.hidden === show) viewUI.hidden = !show; viewUI.style.display = show ? "flex" : "none"; /* 인라인 display가 hidden을 이기므로 직접 끔 */ if (!show) return;
   const ch = camUI.getBoundingClientRect().height || 130; viewUI.style.left = (cv.offsetLeft + 8) + "px"; viewUI.style.top = (cv.offsetTop + VT + 16 + ch) + "px";
-  const m = viewUI.querySelector('[data-v="m"]'), t = VIEW.iso ? "위" : "입체"; if (m.textContent !== t) m.textContent = t; m.setAttribute("aria-label", VIEW.iso ? "바로 위에서 보기" : "입체로 보기"); }
+  const m = viewUI.querySelector('[data-v="m"]'), t = VIEW.crOn() ? "비스듬" : "위"; if (m.textContent !== t) m.textContent = t; m.setAttribute("aria-label", VIEW.crOn() ? "비스듬히 입체로 보기" : "위쪽에서 입체로 보기"); } // 요청 67
 const CAM_ZMAX = 1; // 요청 48: 손그림이 흐려지지 않게 1배까지(선생님 "확대가 안 되어도 좋아")
 const Cam = {
   active:false, x:0, y:0, z:1, fit:1, tx:null, ty:null, tz:null, vx:0, vy:0, userT:-1e9, runId:null, arrows:[], small:null, ms:1, lastTap:null, holding:false,
@@ -7177,7 +7181,7 @@ function lvLine(t){ // 요청 36: 내 레벨과 괴물 레벨 비교
   return '<br><b style="color:'+lvCol(a, b)+'">'+(t.type === "barracks" ? "장병" : "내")+' 레벨 '+a+'</b> · 괴물 레벨 '+b+' · 피해 '+g+'%'+ac+(a < b ? ' · 강화하거나 대장간(쇠)에서 벼리면 세져요' : (a > b ? ' · 급소 ' + Math.round((a - b)*ACC.crit*100) + '%' : '')); }
 function coinTag(n){ return '<span class="cost"><span class="coin"></span>'+n+'</span>'; }
 /* ---------- v14 요청 26: 물결 중에는 장군 지휘 판만(짓기·강화·장병·수리·깃발은 물결 전에만) ---------- */
-const WAVE_LOCK = ["build", "easybuild", "sell", "upgrade", "repair", "rushu", "buyu", "trepair", "rforge", "autofill"];
+const WAVE_LOCK = ["build", "easybuild", "sell", "upgrade", "repair", "trepair", "rforge", "autofill"]; // 요청 67: 장병 사기·훈련 서두르기는 물결 중에도
 function waveLockMsg(){ const now = performance.now(); if ((R.lockToldT || 0) > now) return; R.lockToldT = now + 2500; toast("물결 중에는 장군만 움직일 수 있어요. 짓기·강화는 물결이 끝난 뒤에 해요."); }
 const cmdTacOk = () => !!(R && R.m && R.m.fort && !R.st.tutorial && !R.test && ul("tactic"));
 function cmdSig(){ const h = R.hero; return [h ? Math.ceil(h.sk || 0) : "-", h ? h.dead : "-", h && h.dead ? Math.ceil(h.rt || 0) : "", h && h.dead && reviveOk() ? (R.reviveAsk > performance.now() ? 2 : 1) + ":" + ((M.jade || 0) >= REVIVE.jade ? 1 : 0) : "", R.sortie, campAlive(), R.aim, cmdTacOk() ? TAC_ORDER.map(k => tacBlock(k) + (k === R.tacRec ? "*" : "")).join(",") : "", h && h.forceTg && !h.forceTg.dead ? h.forceTg.type : ""].join("/"); } /* 집중 공격 표적이 바뀌면 지휘 판 갱신(요청 30) */
@@ -7198,6 +7202,7 @@ function cmdPanelHTML(){ // 장군 지휘 판: 필살기 · 진을 쳐라 · 장
 function waveTap(x, y, fx, fy, pick){ // 물결 중 지도 누르기: 망루는 내구도만, 적은 정보, 나머지는 장군 이동. pick: 보기(요청 37)에서 그림 자리로 고른 망루·적
   const h = R.hero; R.sel = null; R.heroSel = false;
   const tw = pick ? pick.tw : (x >= 0 && x < COLS && y >= 0 && y < ROWS) ? towerAt(x, y) : null; if (pick && tw){ x = tw.x; y = tw.y; }
+  if (tw && tw.type === "barracks" && !tw.virtual){ R.sel = {x:tw.x, y:tw.y}; needDraw = true; renderPanel(true); return true; } // 요청 67: 물결 중에도 병영을 눌러 장병·모일 곳
   if (tw){ if (!tw.maxHp) tw.maxHp = towerMaxHp(tw.type, tw.lvl); addText(x + .5, y - .4, TT[tw.type].name + (tw.ruin ? " · 폐허" : " · 내구도 " + Math.round(tw.hp) + "/" + tw.maxHp), "#FFE3A6", 1.6); needDraw = true; renderPanel(true); return true; }
   const fe = pick ? pick.fe : R.enemies.reduce((a, e) => { if (e.dead || e.under > 0 || e.camp) return a; const d = dist(fx, fy, e.x, e.y - .2); return d < (a ? a.d : .6) ? {e, d} : a; }, null);
   if (fe && h && !h.dead){ heroFocus(fe.e); needDraw = true; renderPanel(true); return true; } // 요청 30: 장군이 살아 있으면 누른 적을 집중 공격
@@ -7220,7 +7225,7 @@ function renderPanel(force){
   { const cur = {s:!!R.sel, h:!!R.heroSel, a:!!R.aim, t:!!R.tacOpen}, p = R._pp || {}, nw = Object.keys(cur).find(k => cur[k] && !p[k]); // v12: 아래 판은 한 번에 하나만. 새로 연 것을 남기고 나머지는 닫는다
     if (nw){ if (nw !== "s") R.sel = null; if (nw !== "h") R.heroSel = false; if (nw !== "a") R.aim = false; if (nw !== "t" && R.tacOpen){ R.tacOpen = false; try { updateTacBtn(true); } catch(e){} } force = true; }
     R._pp = {s:!!R.sel, h:!!R.heroSel, a:!!R.aim, t:!!R.tacOpen}; }
-  if (R.waveActive && !R.over){ R.sel = null; R.heroSel = false; } /* v14 */
+  if (R.waveActive && !R.over){ const st0 = R.sel && towerAt(R.sel.x, R.sel.y); if (!(st0 && st0.type === "barracks" && !st0.virtual)) R.sel = null; R.heroSel = false; } /* v14 · 요청 67: 병영은 물결 중에도 열어 둠 */
   if (R.tacOpen === false && panel.hidden) panel.hidden = false;
   const sig = panelSig(); if (!force && sig === R.sig) return; R.sig = sig;
   const ts = tutStep(), pulse = act => ts && ts.btn === act ? " pulse" : "";
@@ -7248,6 +7253,8 @@ function renderPanel(force){
       if (!open) return '<button class="card locked" disabled><img src="'+ICONS[k]+'" alt=""><b>'+TT[k].name+'</b><small>'+(R.ch === "archers" ? "도전" : "잠김")+'</small></button>';
       return '<button class="card'+hl+(rec && rec.k === k ? ' pulse' : '')+'" data-act="build" data-k="'+k+'"'+(R.gold < TT[k].cost || tno ? " disabled" : "")+(tno ? ' style="opacity:.45"' : '')+'><img src="'+ICONS[k]+'" alt=""><b>'+TT[k].name+'</b>'+(TSHORT[k] ? '<small class="cr">'+TSHORT[k]+'</small>' : '')+(rec && rec.k === k ? '<small style="color:#FFE08A">★추천</small>' : '')+coinTag(TT[k].cost)+'</button>'; }).join("") + '</div>'
       + '<p class="role" id="role">'+(ts && ts.build ? TT[ts.build].role : zn ? ZONE_HINT[zn] : tr ? tr.hint : "망루를 골라 세우세요")+'</p>';
+  } else if (t && R.waveActive && t.type === "barracks" && !t.ruin){ // 요청 67: 물결 중 병영 — 장병 사기·모일 곳만
+    h = '<div class="info"><img src="'+ICONS.barracks+'" alt=""><div><h3>'+TT.barracks.name+' '+(t.lvl+1)+'단계</h3><p>물결 중에도 장병을 사고, 모일 곳(깃발)을 정할 수 있어요.</p></div></div>' + barracksBuy(t) + '<div class="row one"><button class="btn" data-act="seloff">닫기 · 장군 지휘로</button></div>';
   } else if (t && (t.ruin || (t.maxHp && t.hp < t.maxHp && !R.waveActive))){ // 망루 체력: 폐허이거나 다쳤으면 물결 사이에 고치기
     const D0 = TT[t.type], rc = towerRepairCost(t), refund = Math.round(t.spent*(R.sellRate || .7));
     h = '<div class="info"><img src="'+ICONS[t.type]+'" alt=""><div><h3>'+D0.name+(t.ruin ? ' · 폐허' : ' · 내구도 '+Math.round(t.hp)+'/'+t.maxHp)+'</h3><p>'+(t.ruin && RUIN_LINE[t.type] ? RUIN_LINE[t.type]+' ' : '')+(R.waveActive ? '물결 사이에 고칠 수 있어요.' : '엽전으로 고치면 다시 '+(t.type === "barracks" || t.type === "stable" || t.type === "smithy" ? '돌아가요.' : '싸워요.'))+'</p></div></div>'
@@ -7609,6 +7616,7 @@ function runRestore(){
 function runInProgress(){ return !!(typeof R !== "undefined" && R && !R.over && (R.started || R.built || R.prepSeen || R.elitePaid)); } // 첫 준비 시간이 열린 순간부터(정예 옥을 낸 판 포함, 검수 v12)
 function showMenu(){
   if (R) R.paused = true;
+  if (M && M.set && !M.set.jiTold && starsTotal() > 0 && !runInProgress()){ M.set.jiTold = true; saveMeta(); showJadeInfo(true); return; } // 요청 67: 첫 승리 뒤 한 번, 옥·쇠 쓰는 곳
   ensureMissions();
   const today = kstDate();
   const svR = runInProgress() ? null : runLoad(); /* v16: 앱을 다시 열었을 때 저장된 판 */
@@ -7623,7 +7631,7 @@ function showMenu(){
   showOverlay('<h1>산성</h1>'
     + '<p class="sub">봉인이 풀린 요괴와 괴물들이 옛 싸움터로 몰려와요.<br>수성장이 되어 우리 성을 지키세요.</p>'
     + (ART.ok("k_title") ? '<div class="gap">'+(M.stars[0] ? '<span class="ctag">내 성 '+castleDone()+'/'+BUILD.length+'</span>' : '')+'</div>' : '')
-    + '<div class="wallet"><span role="button" tabindex="0" data-act="jadeinfo" style="cursor:pointer;text-decoration:underline dotted">'+jadeTag(M.jade)+' 옥 ⓘ</span><span><span class="stars">★</span> 별 '+starsTotal()+'</span></div>'
+    + '<div class="wallet"><span role="button" tabindex="0" data-act="jadeinfo" style="cursor:pointer;text-decoration:underline dotted">'+jadeTag(M.jade)+' 옥 ⓘ</span><span role="button" tabindex="0" data-act="jadeinfo" style="cursor:pointer;text-decoration:underline dotted">쇠 '+(M.iron || 0)+' ⓘ</span><span><span class="stars">★</span> 별 '+starsTotal()+'</span></div>'
     + '<div class="menu-row"><button class="mbtn" data-act="daily-open">'+dot+'<i>◷</i>매일</button><button class="mbtn" data-act="heroes-open"><i>⚔</i>장수</button><button class="mbtn" data-act="shop-open"><i>◈</i>상점</button><button class="mbtn" data-act="settings"><i>⚙</i>설정</button></div>'
     + cont + '<button class="btn primary" data-act="story-open">이야기 시작</button>' + castleBtn + endlessBtn + raidBtn
     + '<p class="foot">'+(M.noAds ? '시작 꾸러미: 광고 없이 보상을 받아요.' : '시제품이라 광고는 3초 기다리기로 대신해요.')+' (광고 자리 사용 '+M.ads+'번)'+(M.from === "v2" || M.from === "v3" ? ' · 예전 저장을 옮겨 왔어요.' : '')+'</p>', "menu");
@@ -7797,7 +7805,7 @@ function showPause(){ // 요청 60: 전투 멈춤 창 — 계속하기 · 설정
 function showSettings(){
   const sw = (k, label) => '<div class="set"><span>'+label+'</span><button class="btn'+(M.set[k] ? ' primary' : '')+'" data-act="toggle" data-k="'+k+'">'+(M.set[k] ? '켜짐' : '꺼짐')+'</button></div>';
   const wipeTxt = ["저장 지우기", "정말 지울까요? 한 번 더 누르세요", "마지막 확인: 별·옥·장수가 모두 지워져요"][wipeStep];
-  showOverlay('<h2>설정</h2>' + sw("easy", "쉬운 조작(추천)<small>수리·장병 보충·깃발·진 출격을 알아서 해요 · 끄면 직접 다 해요</small>") + sw("follow", "장군 따라가기 자동<small>물결 중 장군이 화면 밖으로 나가면 화면이 따라가요</small>") + sw("decide", "결정 순간 멈춤<small>대장·약탈꾼이 나오거나 문이 위험하면 잠깐 멈추고 고르게 해요</small>") + sw("sfx", "효과음") + sw("music", "배경음") + sw("vib", "진동 (성문이 맞을 때)")
+  showOverlay('<h2>설정</h2>' + sw("easy", "쉬운 조작(추천)<small>수리·깃발·진 출격을 알아서 해요(장병은 직접 사요) · 끄면 직접 다 해요</small>") + sw("follow", "장군 따라가기 자동<small>물결 중 장군이 화면 밖으로 나가면 화면이 따라가요</small>") + sw("decide", "결정 순간 멈춤<small>대장·약탈꾼이 나오거나 문이 위험하면 잠깐 멈추고 고르게 해요</small>") + sw("sfx", "효과음") + sw("music", "배경음") + sw("vib", "진동 (성문이 맞을 때)")
     + '<div class="set"><span>글자 크기</span><button class="btn primary" data-act="font">'+["보통","크게","아주 크게"][M.set.font]+'</button></div>'
     
     + '<div class="set"><span>위급한 곳 자동 이동<small>넓은 지도에서 성문이 뚫리면 화면이 그리로 가요</small></span><button class="btn'+(autoCamOn() ? ' primary' : '')+'" data-act="autocam">'+(M.set.autocam == null ? (autoCamOn() ? '자동 · 켜짐' : '자동 · 꺼짐') : M.set.autocam ? '켜짐' : '꺼짐')+'</button></div>'
@@ -8126,6 +8134,8 @@ document.addEventListener("click", ev => {
     case "settings": wipeStep = 0; if (overlayMode === "menu" || !overlayMode) setFrom = null; showSettings(); break; // 요청 61 점검: 기록 화면에서 돌아올 때는 어디서 열었는지 유지
     case "pause-set": wipeStep = 0; setFrom = "pause"; showSettings(); break; // 요청 60
     case "pause-back": showPause(); break;
+    case "flagset": if (!R || (R.st.tutorial && R.tut >= 0 && R.tut < TUT.findIndex(q => q.act && q.act[0] === "flag"))) break; flagBtnTap(); R.sel = null; renderPanel(true); break; // 요청 67 (고르는 중이면 취소)
+    case "seloff": if (R) R.sel = null; renderPanel(true); break;
     case "slots": slotArm = null; slotFrom = overlayMode === "pause" ? "pause" : "menu"; showSlots(k === "save" ? "save" : "load"); break; // 요청 61
     case "slot-back": slotArm = null; if (slotFrom === "pause" && R && !R.over) showPause(); else showMenu(); break;
     case "slot-save": case "slot-load": slotAct(act, k); break;

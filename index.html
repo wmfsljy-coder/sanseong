@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta name="app-version" content="20261127-89acc3b23d">
+<meta name="app-version" content="20261127-97d860adec">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>산성</title>
@@ -353,6 +353,7 @@ body.scr-t #banner,body.scr-t #coach{left:calc((100% - var(--pw,300px) - 16px)/2
     <div class="stat" title="성문 체력"><span class="gate"></span><span id="h-lives">20</span></div>
     <div class="stat" title="엽전"><span class="coin"></span><span id="h-gold">0</span></div>
     <div class="stat" title="물결"><span class="wave"></span><small>물결</small><span id="h-wave">0/10</span></div>
+    <div class="stat" id="h-todw" title="전장 시간"><span id="h-tod"></span></div>
     <div class="spacer"></div>
     <button class="ibtn" id="b-speed" aria-label="빠르기">1×</button>
     <button class="ibtn" id="b-pause" aria-label="멈춤">Ⅱ</button>
@@ -474,8 +475,8 @@ const ART_SRC = {
 /*ART-END*/
 /* 그림 로더: ART_SRC(묶어 넣은 WebP)를 Image로 불러 ART.img 에 둔다. 없거나 실패하면 캔버스 코드 그림으로 대체 */
 /* 요청 51: 동작 그림(걷기·달리기·날갯짓·기기·떠다니기 4장면). art/anim/<그림>_<0~3>.webp 를 바깥 파일로 불러온다. tools/anim-register.cjs 가 이 줄을 고친다 */
-/*ANIM-LIST*/const ANIM_LIST = {"boss_bulgasari":4,"boss_cheonyeo":4,"boss_egg":4,"boss_eoduk":4,"boss_gangcheol":4,"boss_gumiho":4,"boss_imugi":4,"boss_jeoseung":4,"boss_mul":4,"e_bat":4,"e_boss":4,"e_centipede":4,"e_fox":4,"e_grunt":4,"e_lord":4,"e_mole":4,"e_shield":4,"e_siege":4,"h_ansi":4,"h_jeongyakyong":4,"h_kimsimin":4,"h_kimyunhu":4,"h_kwon":4,"h_leejeongam":4,"h_parkseo":4,"h_yanghunsu":4,"h_yeon":4,"u_archer":4,"u_cavalry":4,"u_militia":4,"u_spear":4,"u_sword":4};/*ANIM-END*/
-const ANIM_VER = "mwyhk4y7";
+/*ANIM-LIST*/const ANIM_LIST = {"boss_bulgasari":4,"boss_cheonyeo":4,"boss_egg":4,"boss_eoduk":4,"boss_gangcheol":4,"boss_gumiho":4,"boss_imugi":4,"boss_jeoseung":4,"boss_mul":4,"e_bat":4,"e_boss":4,"e_centipede":4,"e_fox":4,"e_grunt":4,"e_lord":4,"e_mole":4,"e_shield":4,"e_siege":4,"h_ansi":4,"h_jeongyakyong":4,"h_kimsimin":4,"h_kimyunhu":4,"h_kwon":4,"h_leejeongam":4,"h_parkseo":4,"h_yanghunsu":4,"h_yeon":4,"u_archer":4,"u_archer_shot":4,"u_cavalry":4,"u_militia":4,"u_spear":4,"u_sword":4};/*ANIM-END*/
+const ANIM_VER = "mwysysdl";
 const ART = (function(){
   const src = typeof ART_SRC === "object" ? ART_SRC : {}, img = {}, cache = new Map(), masks = {};
   let left = Object.keys(src).length, waiters = [];
@@ -4351,9 +4352,33 @@ function stat(t){
   const mr = bv === 5 && R && R.mound && R.mound.ours ? 1.13 : 1; // 빼앗은 토산(언덕 칸): 사거리 더
   const hm = R && R.m && R.m.hgt && t.x != null ? towerHigh(t) : 1; if (hm !== 1) mul *= t.hd || 1;
   if (TLINE[t.type] && R && R.m) mul *= gapMul(towerLv(t), curFoeLv()); // 요청 36: 레벨 맞대기
-  return {dmg:D0.dmg[l]*mul, rate:(D0.rate ? D0.rate[l] : 0)*((R && R.hasteT > 0) || t.hasteT > 0 ? 1.4 : 1), range:D0.range[l]*(t.rmul || 1)*mr*hm*(t.dark > 0 ? .7 : 1), splash:D0.splash ? D0.splash[l] : 0, count:D0.count ? D0.count[l] : 1,
+  return {dmg:D0.dmg[l]*mul, rate:(D0.rate ? D0.rate[l] : 0)*((R && R.hasteT > 0) || t.hasteT > 0 ? 1.4 : 1), range:D0.range[l]*(t.rmul || 1)*mr*hm*(t.dark > 0 ? .7 : 1)*todRange() /* 요청 64 */, splash:D0.splash ? D0.splash[l] : 0, count:D0.count ? D0.count[l] : 1,
           slow:D0.slow ? D0.slow[l] + (M.perks.spike ? .1 : 0) : 0, air:D0.air, minR:D0.minR || 0};
 }
+/* 요청 64: 전장 시간. 물결이 지나며 낮 → 해질녘 → 밤 → (마지막 물결) 새벽 안개. 9장처럼 밤 지도는 해질녘부터. 무한 물결은 8물결마다 하루 */
+const TOD_P = {
+  day:  {name:"낮",       say:"날이 밝았어요", ico:"☀", n:0,   range:1.05, acc:.05,  spd:1,   ghost:1,    tip:"밝아서 망루 사거리 +5% · 원거리 명중 +5%"},
+  dusk: {name:"해질녘",   say:"해가 지고 있어요", ico:"🌇", n:.55, range:1,   acc:0,    spd:1.03, ghost:1,   tip:"어두워지기 전에 적이 서둘러요 · 적 이동 +3%"},
+  night:{name:"밤",       say:"밤이 되었어요", ico:"🌙", n:1,   range:1,   acc:0,    spd:1,   ghost:1.08, tip:"어둠 속에서 귀신 졸개·박쥐가 빨라져요(+8%) · 망루 불빛이 밝혀 줘요"},
+  dawn: {name:"새벽 안개", say:"새벽 안개가 끼었어요", ico:"🌫", n:.5,  range:.92, acc:-.03, spd:.92, ghost:1,    tip:"안개로 사거리 −8% · 명중 −3% · 적도 더듬어 느려져요(−8%)"}
+};
+const GHOST_T = new Set(["eoduk","cheonyeo","egg","jeoseung","mul","bat","gumiho"]); // 밤에 빨라지는 귀신·요괴
+const todOn = () => !!(R && R.m && R.m.fort && !R.test);
+function todFor(w){ if (!todOn()) return null; w = Math.max(1, w | 0);
+  if (R.st.endless){ const k = (w - 1) % 8; return k < 3 ? "day" : k < 4 ? "dusk" : k < 7 ? "night" : "dawn"; }
+  if (R.st.tutorial) return ["day", "dusk", "night"][Math.min(2, w - 1)];
+  const T0 = isFinite(R.total) && R.total > 1 ? R.total : 10; if (w >= T0) return "dawn";
+  const f = (w - 1)/Math.max(1, T0 - 1); let k = f < .34 ? "day" : f < .5 ? "dusk" : "night"; if (R.m.night && k === "day") k = "dusk"; return k; }
+function todSet(w, tell){ const k = todFor(w); if (!k){ R.todK = null; return; } const ch = R.todK !== k; R.todK = k; if (R.todN == null) R.todN = TOD_P[k].n;
+  if (ch && tell && !R.test){ const P = TOD_P[k]; showBanner(P.ico + " " + P.say, P.tip); } }
+function todTick(dt){ if (R.todK === undefined && todOn()) todSet(R.wave + (R.waveActive ? 0 : 1), false); if (!R.todK) return;
+  const k = Math.min(1, dt*.5), P = TOD_P[R.todK]; R.todN += (P.n - R.todN)*k; R.todDusk = (R.todDusk || 0) + ((R.todK === "dusk" ? 1 : 0) - (R.todDusk || 0))*k; R.todFog = (R.todFog || 0) + ((R.todK === "dawn" ? 1 : 0) - (R.todFog || 0))*k; }
+const todN = () => R && R.todK ? (R.todN == null ? 1 : R.todN) : 1; // 1 = 예전처럼 밤
+const todRange = () => R && R.todK ? TOD_P[R.todK].range : 1;
+const todAcc = () => R && R.todK ? TOD_P[R.todK].acc : 0;
+const todSpd = e => { if (!R || !R.todK) return 1; const P = TOD_P[R.todK]; return P.spd*(e && GHOST_T.has(e.type) && !e.boss && !(ET[e.type] && ET[e.type].chief) ? P.ghost : 1); }; /* 요청 65: 장 대장은 밤에도 그대로(봇 승률이 너무 떨어짐) */
+const todLabel = k => { const P = TOD_P[k || (R && R.todK)]; return P ? P.ico + " " + P.name : ""; };
+const todMul = (r, g, b) => { const t = todN(); return "rgb(" + Math.round(255 + (r - 255)*t) + "," + Math.round(255 + (g - 255)*t) + "," + Math.round(255 + (b - 255)*t) + ")"; }; // 흰색(낮)~밤 색 사이
 const TERRAIN = { // 짓는 칸의 지형 규칙
   5:{name:"언덕", rmul:1.15, hint:"언덕이에요. 여기 세우면 사거리 +15%"},
   6:{name:"벼랑", rmul:1.25, hint:"벼랑이에요. 여기 세우면 사거리 +25%"},
@@ -4413,7 +4438,7 @@ const lvCol = (ours, foe) => ours >= foe ? "#8BE07A" : ours === foe - 1 ? "#F2D2
    명중 = 80%(같은 레벨) + 레벨 차×5%(55~99%), 하늘 적 −3%. 빗나가면 적 곁 땅에 꽂히고 피해 없음. 급소: 내 레벨이 높을 때 차 1마다 6% 확률로 1.5배 */
 const ACC = {base:{archer:.8, crossbow:.8, bigbow:.8, musket:.8, unit:.8, guard:.8}, step:.05, min:.55, max:.99, fly:.03, crit:.06, critMul:1.5}; /* 요청 42: 레벨이 같으면 명중 80%, 괴물보다 높으면 1마다 +5%, 낮으면 −5% */
 const foeLvOf = e => (e && e.lv) || curFoeLv();
-const accOf = (kind, ours, e) => Math.max(ACC.min, Math.min(ACC.max, (ACC.base[kind] || .9) + (ours - foeLvOf(e))*ACC.step - (e && e.fly ? ACC.fly : 0)));
+const accOf = (kind, ours, e) => Math.max(ACC.min, Math.min(ACC.max, (ACC.base[kind] || .9) + (ours - foeLvOf(e))*ACC.step - (e && e.fly ? ACC.fly : 0) + todAcc() /* 요청 64 */));
 function rangedRoll(kind, ours, e){ // → {hit, mul} : 빗나감 / 급소 배율
   if (!e || e.dead || e === R.camp) return {hit:true, mul:1};
   const txOk = !(e.txT > R.time), tx = () => { e.txT = R.time + .6; }; // 글자를 실제로 낼 때만 간격을 잡는다(검수 2차)
@@ -5109,8 +5134,11 @@ function drawSoldiers(c, t, T){ // v10 요청 19: 종류마다 걸음, 숨쉬기
 const WALL_POST = {archer:1, crossbow:1, cannon:1, musket:1, bigbow:1};
 function wpFace(t, ang){ const ca = Math.cos(ang); if (!t.face) t.face = ca < 0 ? -1 : 1; else if (t.face > 0 && ca < -.35) t.face = -1; else if (t.face < 0 && ca > .35) t.face = 1; return t.face; } // 요청 57: 적이 위아래로 지나갈 때 좌우로 자꾸 뒤집히지 않게
 function wallPostOk(t){ if (!R || !R.m || !R.m.fort || !WALL_POST[t.type]) return false; const G = R.base || R.grid, v = G && G[t.y] && G[t.y][t.x]; return v === 8 || v === 5 || v === 6 || v === 10; }
-function wpFigure(c, x, y, h, f, pull, ruin, col){ // 궁수 한 명(그림 있으면 그림, 없으면 코드)
+const shotFr = (act, pull, rel) => !act ? -1 : rel > .35 ? 3 : pull < .35 ? 0 : pull < .75 ? 1 : 2; // 요청 66: 쏘는 중이면 장면 번호(쉬면 −1 = 서 있는 그림)
+function shotDraw(c, fr, x, y, h, flip, dp){ const kk = "u_archer_shot#" + fr; if (fr < 0 || !ART.img[kk]) return false; ART.drawAt(c, kk, x, y, h*1.04, flip, false, dp); return true; }
+function wpFigure(c, x, y, h, f, pull, ruin, col, fr){ // 궁수 한 명(그림 있으면 그림, 없으면 코드)
   const k = ART.img.u_archer ? "u_archer" : null;
+  if (!ruin && fr != null && shotDraw(c, fr, x, y, h, f < 0, dpr)) return; // 요청 66: 제자리에서 활 쏘기
   if (ruin){ c.save(); c.translate(x, y); c.globalAlpha = .5; if (k) ART.drawAt(c, k, 0, 0, h*.75, f < 0, false, dpr); /* 요청 57: 눕힌(돌린) 모양 대신 작고 흐리게 */ else { c.fillStyle = col || "#3A4A6A"; circle(c, 0, -h*.35, h*.2); c.fill(); } c.restore(); return; }
   if (k){ ART.drawAt(c, k, x - f*h*.035*pull, y, h, f < 0, false, dpr); return; } // 요청 57: 몸을 돌리지 않고 당길 때 살짝 뒤로만(빙글 도는 것처럼 보이던 문제) // 그림 속 활을 그대로 쓰고, 당길 때 몸을 살짝 뒤로
   c.fillStyle = col || "#3A4A6A"; circle(c, x, y - h*.4, h*.22); c.fill(); c.fillStyle = "#E8C9A0"; circle(c, x, y - h*.72, h*.12); c.fill();
@@ -5134,7 +5162,8 @@ function drawWallPost(c, t, px, py, T, ruin){
   if (t.type === "archer"){
     const cnt = [2, 3, 3][lvl] || 2, sp = T*.27;
     if (lvl >= 2 && !ruin){ c.strokeStyle = "#5A3A1A"; c.lineWidth = Math.max(1.5, T*.035); c.beginPath(); c.moveTo(px - f*T*.34, fy); c.lineTo(px - f*T*.34, fy - T*.78); c.stroke(); const wv = Math.sin(performance.now()/260 + px)*T*.03; c.fillStyle = "#C8452F"; c.beginPath(); c.moveTo(px - f*T*.34, fy - T*.78); c.lineTo(px - f*T*.34 + f*T*.26, fy - T*.7 + wv); c.lineTo(px - f*T*.34, fy - T*.6); c.closePath(); c.fill(); }
-    for (let i = 0; i < cnt; i++){ if (ruin && i > 0) break; const ox = (i - (cnt - 1)/2)*sp, ph = Math.max(0, pull - i*.15); wpFigure(c, px + ox, fy - (i % 2)*T*.03, fh, f, ph, ruin); }
+    const act = !ruin && t.shotT != null && R.time >= t.shotT && R.time - t.shotT < 2.2; /* 이어 하기로 판 시간이 0부터 다시 시작해도 꼬이지 않게 */ // 요청 66: 최근에 쐈으면 활 쏘는 장면
+    for (let i = 0; i < cnt; i++){ if (ruin && i > 0) break; const ox = (i - (cnt - 1)/2)*sp, ph = Math.max(0, pull - i*.15); wpFigure(c, px + ox, fy - (i % 2)*T*.03, fh, f, ph, ruin, undefined, shotFr(act, ph, rc - i*.15)); }
   } else {
     const crew = ruin ? 0 : 1; if (crew) wpFigure(c, px - f*T*.26, fy, fh*.92, f, 0, false, "#5A4A3A");
     // 낮은 돌대
@@ -5417,7 +5446,7 @@ function eliteAdd(q, w){
 // 적 한 마리 움직이기: 대장 고함, 땅굴, 여우불 지름길, 그 밖은 길 따라 옆 자리
 function moveEnemy(e, dt, slow){
   e.phase += dt*8*slow; e.flash -= dt; e.zz = (e.zz || 0) + dt;
-  let spd = e.spd*slow*(e.haste > 0 ? 1.25 : 1); if (e.haste > 0) e.haste -= dt;
+  let spd = e.spd*slow*(e.haste > 0 ? 1.25 : 1)*todSpd(e) /* 요청 64 */; if (e.haste > 0) e.haste -= dt;
   if (e.boss){ spd *= bossAI(e, dt); if (e.free){ bossFree(e, dt, slow); return; } }
   if (e.type === "boss"){ // 도깨비 대장: 가끔 멈춰 고함 → 주변 적 2초 빨라짐
     if (e.roar > 0){ e.roar -= dt; spd = 0; }
@@ -5986,6 +6015,7 @@ function startWave(){
 function waveCleared(){
   if (R.hero && !R.st.tutorial && (R.hero.slv || 0) < 5){ const h = R.hero; h.slv = (h.slv || 0) + 1; h.dmg *= 1.06; const m0 = h.maxHp; h.maxHp *= 1.06; h.hp = Math.min(h.maxHp, h.hp + (h.maxHp - m0)); addText(h.x, h.y - .6, "장수 성장 " + h.slv + "/5", "#9FE0A0", 1.4); } // 장 안 성장: 물결을 막을 때마다(최대 5), 공격·체력 +6%
   R.waveActive = false;
+  if (R.wave < R.total) todSet(R.wave + 1, true); // 요청 64: 다음 물결의 시간
   // 의병은 이제 물결마다가 아니라 불리할 때 간헐적으로 온다(volTick, v10 요청)
   const bonus = 20 + R.wave*5; R.gold += bonus;
   if (R.st.endless) R.jadeRun += 1;
@@ -6137,6 +6167,7 @@ function findTarget(t, s){
   return best;
 }
 function fire(t, s, e){
+  t.shotT = R.time; // 요청 66: 성벽 궁수 활 쏘는 장면
   const tx = t.x+.5, ty = t.y+.5;
   if (t.amb) t.amb = 0;
   t.shot1 = true;
@@ -6263,7 +6294,7 @@ function palaceGuardTick(dt){
   palGuardPts().forEach((g, i) => { R.pgCd[i] -= dt*(low ? PAL_GUARD.fast : 1); if (R.pgCd[i] > 0) return;
     let best = null, bd = Infinity; for (const e of R.enemies){ if (e.dead || e.under > 0) continue; const qx = e.x - pp[0], qy = e.y - pp[1], d2 = qx*qx + qy*qy; if (d2 > r2) continue; const d = dist(g.x, g.y, e.x, e.y); if (d < bd){ bd = d; best = e; } }
     if (!best){ R.pgCd[i] = .15; return; }
-    R.pgCd[i] = PAL_GUARD.rate; R.pgAim = R.pgAim || [0, 0]; R.pgAim[i] = .25;
+    R.pgCd[i] = PAL_GUARD.rate; R.pgAim = R.pgAim || [0, 0]; R.pgAim[i] = .25; R.pgT = R.pgT || [-99, -99]; R.pgT[i] = R.time; // 요청 66
     { const RR = rangedRoll("guard", 1 + forgeLv("bow"), best); if (RR.hit) hit(best, PAL_GUARD.dmg*forgeMul("bow")*RR.mul); ufxArrow(g, RR.hit ? best : missPt(best)); } Sound.play("arrow"); /* 요청 40 */
     if (low && !R.palLowTold){ R.palLowTold = true; addText(pp[0], pp[1] - 1.4, "최후의 수비!", "#FFB0A0", 1.6); } });
   if (R.pgAim) R.pgAim = R.pgAim.map(v => Math.max(0, v - dt));
@@ -6272,7 +6303,9 @@ function drawPalaceGuards(c, T){
   if (!R || !R.m || !R.m.fort || !R.gates || !R.gates.length || !R.m.castle) return;
   palGuardPts().forEach((g, i) => { const px = g.x*T, base = (g.y + .2)*T, h = T*.82*(typeof USCALE === "number" ? USCALE : 1), aim = R.pgAim && R.pgAim[i] > 0;
     c.fillStyle = "rgba(0,0,0,.28)"; ellipse(c, px, base, T*.22, T*.08); c.fill();
-    if (!(ART.img.u_archer && ART.drawAt(c, "u_archer", px, base - (aim ? T*.03 : 0), h, i === 0, false))){
+    const pact = R.pgT && R.time >= R.pgT[i] && R.time - R.pgT[i] < 2.2, pfr = shotFr(pact, 1 - Math.max(0, (R.pgCd ? R.pgCd[i] : 0))/PAL_GUARD.rate, aim ? 1 : 0); // 요청 66
+    if (shotDraw(c, pfr, px, base, h, i === 0)){ /* 활 쏘는 장면 */ }
+    else if (!(ART.img.u_archer && ART.drawAt(c, "u_archer", px, base - (aim ? T*.03 : 0), h, i === 0, false))){
       c.fillStyle = "#3C5A8A"; c.fillRect(px - T*.09, base - h*.62, T*.18, h*.42); c.fillStyle = "#E8C9A0"; circle(c, px, base - h*.72, T*.09); c.fill(); }
     if (R.palLow){ c.strokeStyle = "rgba(255,120,90," + (.5 + .4*Math.sin(performance.now()/120)) + ")"; c.lineWidth = Math.max(1, T*.04); circle(c, px, base - h*.4, T*.3); c.stroke(); } });
 }
@@ -6606,7 +6639,7 @@ function updateCoach(){
 
 /* ---------- 갱신 ---------- */
 function update(dt){
-  R.time += dt;
+  R.time += dt; todTick(dt); // 요청 64
   if (R.tut >= 0) tutTick(dt);
   const tutHold = R.tut >= 0 && !TUT[R.tut].wait;
   if (R.waveActive){
@@ -6727,7 +6760,9 @@ function draw(){
   const gw = fn => { if (!VV){ fn(); return; } c.save(); c.transform(VIEW.a, VIEW.b, VIEW.c, VIEW.d, VIEW.e, VIEW.f); try { fn(); } finally { c.restore(); } };
   const bw = (x, y, fn, lift) => { if (!VV){ fn(); return; } const p = VIEW.fwd(x*T, y*T); c.save(); c.translate(p[0] - x*T, p[1] - y*T - (lift ? (typeof lift === "number" ? lift : VIEW.wallH(T)) : 0)); try { fn(); } finally { c.restore(); } };
   ART.dim = false; const PB = VV ? VIEW.paintImg() : null; VIEW.paintNow = !!PB; // 요청 38: 손그림 바탕
-  if (PB) c.drawImage(PB.img, PB.x0*T, PB.y0*T, PB.w*T, PB.h*T);
+  if (PB){ const tn = todN(), dyc = tn < .995 ? VIEW.paintDay(PB) : null; // 요청 64: 낮 그림 + 밤 그림(밤만큼 겹침)
+    if (dyc) c.drawImage(dyc, PB.x0*T, PB.y0*T, PB.w*T, PB.h*T);
+    if (!dyc || tn > .005){ if (dyc){ c.save(); c.globalAlpha = tn; } c.drawImage(PB.img, PB.x0*T, PB.y0*T, PB.w*T, PB.h*T); if (dyc) c.restore(); } }
   if (VV){ c.save(); c.transform(VIEW.a, VIEW.b, VIEW.c, VIEW.d, VIEW.e, VIEW.f); }
   if (!PB) c.drawImage(staticCv, 0, 0, WW, WH);
   if (R.bound && !VIEW.cap) drawBound(c); // 요청 48: 촬영 모드(손그림 밑그림)는 경계·이름표·불빛 없이
@@ -6756,7 +6791,7 @@ function draw(){
   if (R.hero && !R.hero.dead) items.push({x:R.hero.x, y:R.hero.y, draw:() => drawHero(c, R.hero, T)});
   if (R.camp && (!R.camp.dead || R.camp.fade > 0)) items.push({x:R.camp.x, y:R.camp.y + .3, ay:R.camp.y, draw:() => drawCamp(c, T)});
   if (VI && !PB) wallBlocks(c, T, items);
-  const dimSprites = !!PB; ART.dim = dimSprites; /* 예전: c.filter(그릴 때마다 무거움) */
+  const dimSprites = !!PB && todN() > .6; ART.dim = dimSprites; /* 요청 64: 낮에는 캐릭터를 어둡게 하지 않음 */ /* 예전: c.filter(그릴 때마다 무거움) */
   items.forEach(it => { it.k = it.dk != null ? it.dk : VV && it.x != null ? VIEW.fwd(it.x*T, it.y*T)[1]/T + (it.lift ? .05 : 0) : it.y; });
   items.sort((a,b) => a.k - b.k).forEach(it => { if (!VV || it.raw) it.draw(); else if (it.x != null) bw(it.x, it.ay != null ? it.ay : it.y, it.draw, it.lift); else gw(it.draw); });
   if (!VI) gw(() => drawGate(c, T, R.lives/R.maxLives, R.m));
@@ -6884,8 +6919,17 @@ const VIEW = {
   // 요청 38: 손그림 바탕(장:돌린 단계:입체 1/위 0). x0·y0·w·h = 보기 공간 칸 단위 자리. 파일은 art/paint/ (웹판은 web/art/paint/)
   PAINT:{"c6:0:1":{src:"art/paint/ch1_iso0.webp",x0:-2.32231,y0:3.42906,w:26.47705,h:14.77789},"c6:1:1":{src:"art/paint/ch1_iso1.webp",x0:-0.5,y0:2.80987,w:29.34626,h:16.37931},"c6:2:1":{src:"art/paint/ch1_iso2.webp",x0:-2.55779,y0:3.88438,w:25.88463,h:14.44724},"c6:3:1":{src:"art/paint/ch1_iso3.webp",x0:-6.29958,y0:1.68179,w:33.47287,h:18.68253},"c6:4:1":{src:"art/paint/ch1_iso4.webp",x0:-3.32231,y0:3.42906,w:26.47705,h:14.77789},"c6:5:1":{src:"art/paint/ch1_iso5.webp",x0:-6.29958,y0:1.27167,w:33.47287,h:18.68253},"c6:6:1":{src:"art/paint/ch1_iso6.webp",x0:-2.55779,y0:3.30438,w:25.88463,h:14.44724},"c6:7:1":{src:"art/paint/ch1_iso7.webp",x0:-5.59247,y0:1.27167,w:33.47287,h:18.68253},"c0:0:1":{src:"art/paint/c0_iso0.webp",x0:-1.54938,y0:3.10222,w:24.09877,h:13.55556},"c0:1:1":{src:"art/paint/c0_iso1.webp",x0:-6.07923,y0:0.55418,w:33.15847,h:18.65164},"c0:2:1":{src:"art/paint/c0_iso2.webp",x0:-1.54938,y0:3.10222,w:24.09877,h:13.55556},"c0:3:1":{src:"art/paint/c0_iso3.webp",x0:-6.07923,y0:0.55418,w:33.15847,h:18.65164},"c0:4:1":{src:"art/paint/c0_iso4.webp",x0:-1.54938,y0:3.10222,w:24.09877,h:13.55556},"c0:5:1":{src:"art/paint/c0_iso5.webp",x0:-6.07923,y0:0.55418,w:33.15847,h:18.65164},"c0:6:1":{src:"art/paint/c0_iso6.webp",x0:-1.54938,y0:3.10222,w:24.09877,h:13.55556},"c0:7:1":{src:"art/paint/c0_iso7.webp",x0:-6.07923,y0:0.55418,w:33.15847,h:18.65164},"c1:0:1":{src:"art/paint/c1_iso0.webp",x0:-1.50786,y0:2.26808,w:22.01571,h:12.38384},"c1:1:1":{src:"art/paint/c1_iso1.webp",x0:-6.02051,y0:-0.61729,w:30.21259,h:16.99458},"c1:2:1":{src:"art/paint/c1_iso2.webp",x0:-1.50786,y0:1.10808,w:22.01571,h:12.38384},"c1:3:1":{src:"art/paint/c1_iso3.webp",x0:-4.60629,y0:-1.43753,w:30.21259,h:16.99458},"c1:4:1":{src:"art/paint/c1_iso4.webp",x0:0.49214,y0:1.10808,w:22.01571,h:12.38384},"c1:5:1":{src:"art/paint/c1_iso5.webp",x0:-3.19208,y0:-0.61729,w:30.21259,h:16.99458},"c1:6:1":{src:"art/paint/c1_iso6.webp",x0:0.49214,y0:2.26808,w:22.01571,h:12.38384},"c1:7:1":{src:"art/paint/c1_iso7.webp",x0:-4.60629,y0:0.20295,w:30.21259,h:16.99458},"c2:0:1":{src:"art/paint/c2_iso0.webp",x0:-2.54938,y0:3.31222,w:24.09877,h:13.55556},"c2:1:1":{src:"art/paint/c2_iso1.webp",x0:-5.98921,y0:1.26338,w:31.68553,h:17.82311},"c2:2:1":{src:"art/paint/c2_iso2.webp",x0:-1.00786,y0:4.18808,w:22.01571,h:12.38384},"c2:3:1":{src:"art/paint/c2_iso3.webp",x0:-5.98921,y0:1.67351,w:31.68553,h:17.82311},"c2:4:1":{src:"art/paint/c2_iso4.webp",x0:-2.54938,y0:3.89222,w:24.09877,h:13.55556},"c2:5:1":{src:"art/paint/c2_iso5.webp",x0:-6.69632,y0:1.67351,w:31.68553,h:17.82311},"c2:6:1":{src:"art/paint/c2_iso6.webp",x0:-2.00786,y0:4.18808,w:22.01571,h:12.38384},"c2:7:1":{src:"art/paint/c2_iso7.webp",x0:-6.69632,y0:1.26338,w:31.68553,h:17.82311},"c3:0:1":{src:"art/paint/c3_iso0.webp",x0:-1.46633,y0:2.27394,w:19.93266,h:11.21212},"c3:1:1":{src:"art/paint/c3_iso1.webp",x0:-5.13335,y0:0.21124,w:27.2667,h:15.33752},"c3:2:1":{src:"art/paint/c3_iso2.webp",x0:-1.46633,y0:2.27394,w:19.93266,h:11.21212},"c3:3:1":{src:"art/paint/c3_iso3.webp",x0:-5.13335,y0:0.21124,w:27.2667,h:15.33752},"c3:4:1":{src:"art/paint/c3_iso4.webp",x0:-1.46633,y0:2.27394,w:19.93266,h:11.21212},"c3:5:1":{src:"art/paint/c3_iso5.webp",x0:-5.13335,y0:0.21124,w:27.2667,h:15.33752},"c3:6:1":{src:"art/paint/c3_iso6.webp",x0:-1.46633,y0:2.27394,w:19.93266,h:11.21212},"c3:7:1":{src:"art/paint/c3_iso7.webp",x0:-5.13335,y0:0.21124,w:27.2667,h:15.33752},"c4:0:1":{src:"art/paint/c4_iso0.webp",x0:-1.54938,y0:2.89222,w:24.09877,h:13.55556},"c4:1:1":{src:"art/paint/c4_iso1.webp",x0:-6.72568,y0:0.66936,w:33.15847,h:18.65164},"c4:2:1":{src:"art/paint/c4_iso2.webp",x0:-3.04938,y0:3.18222,w:24.09877,h:13.55556},"c4:3:1":{src:"art/paint/c4_iso3.webp",x0:-8.13989,y0:0.25924,w:33.15847,h:18.65164},"c4:4:1":{src:"art/paint/c4_iso4.webp",x0:-3.54938,y0:2.31222,w:24.09877,h:13.55556},"c4:5:1":{src:"art/paint/c4_iso5.webp",x0:-7.43279,y0:-0.561,w:33.15847,h:18.65164},"c4:6:1":{src:"art/paint/c4_iso6.webp",x0:-2.04938,y0:2.02222,w:24.09877,h:13.55556},"c4:7:1":{src:"art/paint/c4_iso7.webp",x0:-6.01857,y0:-0.15088,w:33.15847,h:18.65164},"c5:0:1":{src:"art/paint/c5_iso0.webp",x0:-2.54938,y0:3.94222,w:24.09877,h:13.55556},"c5:1:1":{src:"art/paint/c5_iso1.webp",x0:-4.92855,y0:2.1482,w:31.68553,h:17.82311},"c5:2:1":{src:"art/paint/c5_iso2.webp",x0:0.49214,y0:5.68808,w:22.01571,h:12.38384},"c5:3:1":{src:"art/paint/c5_iso3.webp",x0:-4.92855,y0:3.78869,w:31.68553,h:17.82311},"c5:4:1":{src:"art/paint/c5_iso4.webp",x0:-2.54938,y0:6.26222,w:24.09877,h:13.55556},"c5:5:1":{src:"art/paint/c5_iso5.webp",x0:-7.75698,y0:3.78869,w:31.68553,h:17.82311},"c5:6:1":{src:"art/paint/c5_iso6.webp",x0:-3.50786,y0:5.68808,w:22.01571,h:12.38384},"c5:7:1":{src:"art/paint/c5_iso7.webp",x0:-7.75698,y0:2.1482,w:31.68553,h:17.82311},"c7:0:1":{src:"art/paint/c7_iso0.webp",x0:-1.54938,y0:3.31222,w:24.09877,h:13.55556},"c7:1:1":{src:"art/paint/c7_iso1.webp",x0:-6.01857,y0:1.25924,w:33.15847,h:18.65164},"c7:2:1":{src:"art/paint/c7_iso2.webp",x0:-2.04938,y0:4.18222,w:24.09877,h:13.55556},"c7:3:1":{src:"art/paint/c7_iso3.webp",x0:-7.43279,y0:1.66936,w:33.15847,h:18.65164},"c7:4:1":{src:"art/paint/c7_iso4.webp",x0:-3.54938,y0:3.89222,w:24.09877,h:13.55556},"c7:5:1":{src:"art/paint/c7_iso5.webp",x0:-8.13989,y0:0.84912,w:33.15847,h:18.65164},"c7:6:1":{src:"art/paint/c7_iso6.webp",x0:-3.04938,y0:3.02222,w:24.09877,h:13.55556},"c7:7:1":{src:"art/paint/c7_iso7.webp",x0:-6.72568,y0:0.439,w:33.15847,h:18.65164},"c8:0:1":{src:"art/paint/c8_iso0.webp",x0:-1.54938,y0:3.10222,w:24.09877,h:13.55556},"c8:1:1":{src:"art/paint/c8_iso1.webp",x0:-6.22568,y0:0.75924,w:33.15847,h:18.65164},"c8:2:1":{src:"art/paint/c8_iso2.webp",x0:-2.04938,y0:3.39222,w:24.09877,h:13.55556},"c8:3:1":{src:"art/paint/c8_iso3.webp",x0:-6.93279,y0:0.75924,w:33.15847,h:18.65164},"c8:4:1":{src:"art/paint/c8_iso4.webp",x0:-2.54938,y0:3.10222,w:24.09877,h:13.55556},"c8:5:1":{src:"art/paint/c8_iso5.webp",x0:-6.93279,y0:0.34912,w:33.15847,h:18.65164},"c8:6:1":{src:"art/paint/c8_iso6.webp",x0:-2.04938,y0:2.81222,w:24.09877,h:13.55556},"c8:7:1":{src:"art/paint/c8_iso7.webp",x0:-6.22568,y0:0.34912,w:33.15847,h:18.65164},"c9:0:1":{src:"art/paint/c9_iso0.webp",x0:-2.54938,y0:2.89222,w:24.09877,h:13.55556},"c9:1:1":{src:"art/paint/c9_iso1.webp",x0:-6.84276,y0:0.87857,w:31.68553,h:17.82311},"c9:2:1":{src:"art/paint/c9_iso2.webp",x0:-2.50786,y0:3.47808,w:22.01571,h:12.38384},"c9:3:1":{src:"art/paint/c9_iso3.webp",x0:-7.54987,y0:0.46845,w:31.68553,h:17.82311},"c9:4:1":{src:"art/paint/c9_iso4.webp",x0:-3.54938,y0:2.31222,w:24.09877,h:13.55556},"c9:5:1":{src:"art/paint/c9_iso5.webp",x0:-6.84276,y0:0.05832,w:31.68553,h:17.82311},"c9:6:1":{src:"art/paint/c9_iso6.webp",x0:-1.50786,y0:2.89808,w:22.01571,h:12.38384},"c9:7:1":{src:"art/paint/c9_iso7.webp",x0:-6.13566,y0:0.46845,w:31.68553,h:17.82311}},
   paintNow:false, cap:false, // cap: 손그림 밑그림 촬영 모드(시험용)
+  paintDay(P){ // 요청 64: 밤 손그림을 밝고 따뜻하게 보정한 낮 그림(그림마다 한 번 만들어 둠)
+    if (P.day) return P.day; if (P.dayBad || !P.img || !P.img.naturalWidth) return null;
+    try { Object.values(this.PAINT).forEach(Q => { if (Q !== P && Q.day) Q.day = null; }); /* 요청 65: 낮 보정본은 지금 방향 하나만(휴대폰 메모리) */ const sc = Math.min(1, 1600/P.img.naturalWidth), c = document.createElement("canvas"); c.width = Math.round(P.img.naturalWidth*sc); c.height = Math.round(P.img.naturalHeight*sc); const g = c.getContext("2d");
+      let bk = P.bk || 2; if (!P.bk) try { const s0 = document.createElement("canvas"); s0.width = 48; s0.height = 27; const s1 = s0.getContext("2d"); s1.drawImage(P.img, 0, 0, 48, 27); const d = s1.getImageData(0, 0, 48, 27).data; let L = 0; for (let i = 0; i < d.length; i += 4) L += .3*d[i] + .59*d[i+1] + .11*d[i+2]; L /= d.length/4; bk = P.bk = Math.max(1.3, Math.min(2.1, 112/Math.max(30, L))); } catch(e){} // 요청 66: 그림마다 밝기를 재서 낮 보정 세기를 맞춤(너무 하얗게 뜨지 않게)
+      if ("filter" in g){ g.filter = "brightness(" + bk.toFixed(2) + ") saturate(1.28) sepia(.2) contrast(.94)"; g.drawImage(P.img, 0, 0, c.width, c.height); g.filter = "none"; }
+      else { g.drawImage(P.img, 0, 0, c.width, c.height); g.globalCompositeOperation = "screen"; g.fillStyle = "rgba(150,138,110,.6)"; g.fillRect(0, 0, c.width, c.height); g.globalCompositeOperation = "source-over"; }
+      g.fillStyle = "rgba(255,226,170,.06)"; g.fillRect(0, 0, c.width, c.height); P.day = c; return c; } catch(e){ P.dayBad = true; return null; } },
   paintImg(){ if (!this.on || !R) return null; const P = this.PAINT["c" + (R.st.oldIdx || R.s) + ":" + this.rot + ":" + (this.iso ? 1 : 0)]; /* 성(원래 번호) 기준 */ if (!P) return null;
-    if (!P.img){ P.img = new Image(); P.img.onload = () => { P.ok = true; needDraw = true; }; P.img.onerror = () => { P.bad = true; }; P.img.src = P.src; } return P.ok && !P.bad ? P : null; },
+    if (!P.img){ P.img = new Image(); P.img.onload = () => { P.ok = true; needDraw = true; }; P.img.onerror = () => { P.bad = true; }; P.img.src = P.src; }
+    if (P.ok){ const ch = R.st.oldIdx || R.s; if (this.preCh !== ch){ this.preCh = ch; let dl = 0; for (let r = 0; r < 8; r++){ const Q = this.PAINT["c" + ch + ":" + r + ":1"]; if (Q && !Q.img && !Q.pre){ Q.pre = true; dl += 1500; setTimeout(() => { try { fetch(Q.src).catch(() => { Q.pre = false; }); } catch(e){} }, dl); } } } } /* 하나씩 1.5초 간격(첫 화면 받기와 다투지 않게) */ // 요청 65: 이 장의 다른 방향 그림을 미리 받아 둠(돌릴 때 예전 그림이 잠깐 보이지 않게)
+    return P.ok && !P.bad ? P : null; },
   gridBox(sx0, sy0, sx1, sy1){ let X0 = 1e9, Y0 = 1e9, X1 = -1e9, Y1 = -1e9; // 화면 사각형 → 칸 단위 둘레 상자
     [[sx0, sy0], [sx1, sy0], [sx1, sy1], [sx0, sy1]].forEach(q => { const w = this.inv(Cam.x + q[0]/Cam.z, Cam.y + q[1]/Cam.z); X0 = Math.min(X0, w[0]); Y0 = Math.min(Y0, w[1]); X1 = Math.max(X1, w[0]); Y1 = Math.max(Y1, w[1]); });
     return {x0:X0/T, y0:Y0/T, x1:X1/T, y1:Y1/T}; },
@@ -6893,15 +6937,20 @@ const VIEW = {
     this.refresh(); Cam.vx = Cam.vy = 0; Cam.tx = Cam.ty = null; Cam.center(w[0], w[1]); viewBtns(); needDraw = true; },
   grade(c){ // 밤 색감 + 횃불·망루 불빛 + 가장자리 어둡게(화면 좌표)
     if (!R || !Cam.active) return; c.save();
-    if (!this.paintNow){ c.globalCompositeOperation = "multiply"; c.fillStyle = "rgb(150,158,205)"; c.fillRect(0, 0, W, H); }
-    c.globalCompositeOperation = "lighter"; const z = Cam.z, hw = this.wallH(T)*z, lights = [];
+    const tn = todN(); // 요청 64
+    if (!this.paintNow && tn > .01){ c.globalCompositeOperation = "multiply"; c.fillStyle = todMul(150, 158, 205); c.fillRect(0, 0, W, H); }
+    c.globalCompositeOperation = "lighter"; c.globalAlpha = Math.min(1, tn*1.3); const z = Cam.z, hw = this.wallH(T)*z, lights = [];
     (R.m.gates || []).forEach(g => { lights.push([g.x + .5, g.y + .5, hw*1.3, 2.2]); });
     R.towers.forEach(t => { if (!t.ruin && TT[t.type] && !TT[t.type].noFire) lights.push([t.x + .5, t.y + .5, isWallCell(t.x, t.y) ? hw : 0, 1.3]); });
     if (R.m.castle && R.gates){ const pp = palaceSpot(); lights.push([pp[0], pp[1], hw*1.2, 2.4]); }
     if (!this.glow){ const gc = document.createElement("canvas"); gc.width = gc.height = 128; const gg = gc.getContext("2d"), g = gg.createRadialGradient(64, 64, 0, 64, 64, 64);
       g.addColorStop(0, "rgba(255,170,80,.34)"); g.addColorStop(.45, "rgba(255,120,40,.12)"); g.addColorStop(1, "rgba(255,100,30,0)"); gg.fillStyle = g; gg.fillRect(0, 0, 128, 128); this.glow = gc; }
     for (const L of lights){ const p = Cam.toScreen(L[0]*T, L[1]*T), r = T*z*L[3], x = p[0], y = p[1] - L[2]; if (!isFinite(x) || !isFinite(y) || !(r > 0) || x < -r || x > W + r || y < -r || y > H + r) continue; c.drawImage(this.glow, x - r, y - r, r*2, r*2); }
-    c.globalCompositeOperation = "source-over";
+    c.globalCompositeOperation = "source-over"; c.globalAlpha = 1;
+    const du = R.todDusk || 0, fg = R.todFog || 0; // 요청 64: 해질녘 노을빛, 새벽 안개
+    if (du > .01){ const gd = c.createLinearGradient(0, VT, 0, VT + VH); gd.addColorStop(0, "rgba(255,140,60," + (.2*du) + ")"); gd.addColorStop(1, "rgba(110,50,120," + (.12*du) + ")"); c.fillStyle = gd; c.fillRect(0, 0, W, H); }
+    if (fg > .01){ const gf = c.createLinearGradient(0, VT, 0, VT + VH); gf.addColorStop(0, "rgba(214,224,238," + (.16*fg) + ")"); gf.addColorStop(1, "rgba(226,232,242," + (.34*fg) + ")"); c.fillStyle = gf; c.fillRect(0, 0, W, H); }
+    c.globalAlpha = .25 + .75*tn;
     if (!this.vig || this.vig.w !== W || this.vig.h !== H || this.vig.vt !== VT || this.vig.vh !== VH){ const vc = document.createElement("canvas"); vc.width = Math.max(1, Math.round(W)); vc.height = Math.max(1, Math.round(H)); const vx = vc.getContext("2d"), vg = vx.createRadialGradient(W/2, VT + VH/2, Math.min(W, H)*.35, W/2, VT + VH/2, Math.max(W, H)*.75);
       vg.addColorStop(0, "rgba(5,8,25,0)"); vg.addColorStop(1, "rgba(5,8,25,.5)"); vx.fillStyle = vg; vx.fillRect(0, 0, W, H); this.vig = {cv:vc, w:W, h:H, vt:VT, vh:VH}; }
     c.drawImage(this.vig.cv, 0, 0, W, H); c.restore(); }
@@ -7097,7 +7146,7 @@ const Cam = {
     miniCv.style.left = (cv.offsetLeft + VW - mw - 10) + "px"; miniCv.style.top = (cv.offsetTop + VT + 8) + "px"; },
   drawMini(){ if (!this.active || !this.small || !R) return; const c = miniCv.getContext("2d"), k = miniCv.width/WW;
     c.setTransform(1,0,0,1,0,0); c.drawImage(this.small, 0, 0);
-    if (VIEW.on){ c.save(); c.globalCompositeOperation = "multiply"; c.fillStyle = VIEW.paintNow ? "rgb(104,114,168)" : "rgb(150,158,205)"; c.fillRect(0, 0, miniCv.width, miniCv.height); // 요청 53: 작은 지도도 큰 지도와 같은 밤(손그림이면 손그림만큼 어둡게)
+    if (VIEW.on){ c.save(); c.globalCompositeOperation = "multiply"; c.fillStyle = VIEW.paintNow ? todMul(104, 114, 168) : todMul(150, 158, 205); c.fillRect(0, 0, miniCv.width, miniCv.height); /* 요청 64: 시간만큼 */ // 요청 53: 작은 지도도 큰 지도와 같은 밤(손그림이면 손그림만큼 어둡게)
       c.globalCompositeOperation = "lighter"; const lit = (x, y, r) => { const g = c.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, "rgba(255,170,80,.55)"); g.addColorStop(1, "rgba(255,170,80,0)"); c.fillStyle = g; c.beginPath(); c.arc(x, y, r, 0, Math.PI*2); c.fill(); };
       (R.m.gates || []).forEach(g => lit((g.x + .5)*T*k, (g.y + .5)*T*k, Math.max(3, T*k*1.2))); if (R.m.castle && R.gates){ const pp = palaceSpot(); lit(pp[0]*T*k, pp[1]*T*k, Math.max(4, T*k*1.6)); } c.restore(); } // 문·행궁 횃불
     if (R.bound){ const B = R.bound, x0 = B.x0*T*k, y0 = B.y0*T*k, x1 = (B.x1 + 1)*T*k, y1 = (B.y1 + 1)*T*k, mw = miniCv.width, mh = miniCv.height; c.fillStyle = "rgba(60,60,60,.14)"; c.fillRect(0, 0, mw, y0); c.fillRect(0, y1, mw, mh - y1); c.fillRect(0, y0, x0, y1 - y0); c.fillRect(x1, y0, mw - x1, y1 - y0); c.strokeStyle = "#FFE296"; c.lineWidth = 1.5; c.setLineDash([3, 2]); c.strokeRect(x0 + .75, y0 + .75, x1 - x0 - 1.5, y1 - y0 - 1.5); c.setLineDash([]); } // v10: 아직 안 열린 전장
@@ -7251,7 +7300,7 @@ function updateHud(){
   if (!R) return;
   const set = (id, v) => { const el = document.getElementById(id); if (el && el.textContent !== v) el.textContent = v; };
   set("h-lives", R.gates ? "행궁 " + Math.ceil(R.lives) : String(R.lives)); /* 최대치는 행궁 위 이름표에(상태 줄 칸이 좁아 잘림) */
-  set("h-gold", String(R.gold)); set("h-wave", R.st.endless ? String(R.wave) : R.wave + "/" + R.total);
+  set("h-gold", String(R.gold)); set("h-wave", R.st.endless ? String(R.wave) : R.wave + "/" + R.total); { const tl = todLabel(); set("h-tod", tl); const tw = document.getElementById("h-todw"); if (tw) tw.style.display = tl ? "" : "none"; } // 요청 64
   set("cd", String(Math.max(0, Math.ceil(R.countdown))));
   { let pc = document.getElementById("prepchip"); if (!pc){ pc = document.createElement("div"); pc.id = "prepchip"; pc.hidden = true; stagebox.appendChild(pc); } const on = prepOn() && R.prepT != null && !overlayMode; if (pc.hidden === on) pc.hidden = !on; if (on){ const tx = "준비 " + prepFmt(R.prepT); if (pc.textContent !== tx) pc.textContent = tx; const w = R.prepT <= 30, bl = R.prepT <= 10; if (pc.classList.contains("warn") !== w) pc.classList.toggle("warn", w); if (pc.classList.contains("blink") !== bl) pc.classList.toggle("blink", bl); } } // v15 준비 시간
   updateSkillBtn(); updateSortieBtn(); updateTacBtn(); layoutOverlays();

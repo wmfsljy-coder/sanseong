@@ -1,9 +1,10 @@
 // 산성 서비스 워커. tools/build-web.mjs 가 __VERSION__ 을 바꿔 넣는다.
 // 규칙: 게임 파일(index.html)은 이 판 저장본(설치 때 받음), 아이콘·manifest·글꼴은 '저장본 먼저'.
 // 새 판은 바로 바꾸지 않고 기다리다가(waiting), 게임 안 '새 판으로 열기'를 누르면 skipWaiting 한다(판 중간에 바뀌지 않게).
-const VERSION = "20261127-881b787c5d";
+const VERSION = "20261127-29167c3908";
 const CACHE = "sanseong-" + VERSION;
 const FONT_CACHE = "sanseong-fonts-v1";
+const ART_CACHE = "sanseong-art-v1"; // 요청 56: 캐릭터 그림(art/img·art/anim, 주소에 ?v= 판 표시가 있어 바뀌면 새로 받음)
 const CORE = ["./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png", "./apple-touch-icon.png"];
 
 // 설치: 받은 index.html 에 이 워커와 같은 판 표시(meta app-version)가 있어야 한다. 배포 도중이라 옛 index.html 이 오면
@@ -18,13 +19,15 @@ self.addEventListener("install", e => {
       const c = await caches.open(CACHE);
       await c.addAll(CORE.filter(u => u !== "./index.html").map(u => new Request(u, {cache: "reload"})));
       await c.put("./index.html", res);
+      // 요청 56: 게임 파일이 쓰는 캐릭터 그림(art/img)을 미리 받아 둔다(오프라인에서도 보이게). 실패해도 설치는 계속(쓸 때 받음)
+      try { const ac = await caches.open(ART_CACHE), urls = [...new Set((txt.match(/art\/img\/[\w-]+\.webp\?v=\w+/g) || []))]; await Promise.all(urls.map(async u => { if (!(await ac.match(u))) { const r = await fetch(u); if (r.ok) await ac.put(u, r); } })); } catch (err) {}
     } catch (err) { await caches.delete(CACHE); throw err; }
   })());
 });
 self.addEventListener("activate", e => {
   e.waitUntil((async () => {
     const keys = await caches.keys();
-    await Promise.all(keys.filter(k => k.startsWith("sanseong-") && k !== CACHE && k !== FONT_CACHE).map(k => caches.delete(k)));
+    await Promise.all(keys.filter(k => k.startsWith("sanseong-") && k !== CACHE && k !== FONT_CACHE && k !== ART_CACHE).map(k => caches.delete(k)));
     await self.clients.claim();
   })());
 });
@@ -47,6 +50,16 @@ self.addEventListener("fetch", e => {
     return;
   }
   if (url.origin !== self.location.origin) return;
+  // 요청 56: 그림 파일은 저장본 먼저(한 번 받으면 다음부터 바로, 오프라인에서도 보임). ?v= 가 다르면 다른 주소라 새로 받는다
+  if (/\/art\/(img|anim)\/[^/]+\.webp$/.test(url.pathname) && url.searchParams.has("v")) {
+    e.respondWith(caches.open(ART_CACHE).then(async c => {
+      const hit = await c.match(req); if (hit) return hit;
+      const res = await fetch(req);
+      if (res && res.ok) c.put(req, res.clone()).then(async () => { for (const k of await c.keys()) { const u = new URL(k.url); if (u.pathname === url.pathname && u.search !== url.search) c.delete(k); } }).catch(() => {}); // 같은 그림의 옛 판은 지움
+      return res;
+    }));
+    return;
+  }
   const isPage = req.mode === "navigate" || url.pathname.endsWith("/") || url.pathname.endsWith("/index.html");
   if (isPage) {
     // 게임 파일: 이 서비스 워커 판에 맞는 저장본만 낸다(설치 때 받아 둠). 새 판은 새 서비스 워커가 설치되며 따로 받고,

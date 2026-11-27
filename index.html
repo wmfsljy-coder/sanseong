@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta name="app-version" content="20261127-d1eec8da6a">
+<meta name="app-version" content="20261127-4315369f1e">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>산성</title>
@@ -2948,7 +2948,8 @@ function resLock(run, k){ run.resLock = k; document.querySelectorAll('[data-act=
 function resUnlock(run){ run.resLock = null; document.querySelectorAll('[data-lk="1"]').forEach(b => { b.disabled = false; delete b.dataset.lk; }); }
 const REVIVE = {jade:5, max:3}; // v11: 쓰러진 장수를 옥으로 바로 일으키기(판당 3번)
 const reviveOk = () => !!(R && R.hero && R.hero.dead && !R.over && !R.st.tutorial && !R.test && (R.revN || 0) < REVIVE.max && ul("extra"));
-function heroForce(h){ const e = h.forceTg; if (!e) return null; if (e.dead || e.under > 0 || R.enemies.indexOf(e) < 0){ heroUnfocus(h); renderPanel(true); return null; } return e; }
+function heroNextFoe(h, old){ /* 요청 62: 집중 표적이 쓰러지면 곁의 다음 적(장군·옛 표적 둘 다 가까운 쪽, 7칸 안). 칼 장군은 하늘 적 빼고 */ const blade = !!heroBlade(h), ox = old ? old.x : h.x, oy = old ? old.y : h.y; let best = null, bd = 7; for (const o of R.enemies){ if (o === old || o.dead || o.under > 0 || o.camp || (blade && o.fly)) continue; const d = dist(h.x, h.y, o.x, o.y)*.6 + dist(ox, oy, o.x, o.y)*.4; if (d < bd){ bd = d; best = o; } } return best; }
+function heroForce(h){ const e = h.forceTg; if (!e) return null; if (e.dead || e.under > 0 || R.enemies.indexOf(e) < 0){ const nx = heroNextFoe(h, e); if (nx){ h.forceTg = nx; h.fgi = null; h.fStuck = 0; h.pd = null; renderPanel(true); return nx; } /* 요청 62: 다른 지시(땅 누르기·깃발·집중 풀기) 전까지 계속 공격 */ heroUnfocus(h); renderPanel(true); return null; } return e; }
 function heroFocus(e){ const h = R && R.hero; if (!h || h.dead || !e || e.dead || e.camp) return false; if (!h.forceTg) h.manual0 = !!h.manual; h.fgi = null; h.fStuck = 0; h.forceTg = e; h.manual = true; h.pd = null; addText(e.x, e.y - 1, "집중 공격!", "#FF8A6A", 1.3); Sound.play("button"); renderPanel(true); return true; }
 function heroUnfocus(h){ if (!h || !h.forceTg) return; h.forceTg = null; h.fgi = null; h.fStuck = 0; h.manual = !!h.manual0; h.tx = h.x; h.ty = h.y; }
 function heroUp(h){ const hh = heroHome(); h.dead = false; h.forceTg = null; h.rt = 0; h.hp = h.maxHp; h.x = hh.x; h.y = hh.y; h.tx = hh.tx; h.ty = hh.ty; addText(hh.x, hh.y - .7, "장수가 다시 일어났어요", "#9FE0B0", 1.6); renderPanel(true); }
@@ -4930,7 +4931,7 @@ function updateFlagBtn(){
 function flagBtnTap(){
   if (!R || R.over || !R.m.fort) return; // 요청 57: 깃발은 언제든(물결 중에도) 옮길 수 있다. 한 번 누르면 꽂을 곳 고르기, 다시 누르면 취소(꽂아 둔 깃발이 있으면 문 앞으로 되돌림)
   const man = !!(R.flag && !R.flag.auto && !R.flag.chase);
-  if (R.flagMode){ R.flagMode = false; if (man){ R.flag = null; if (R.hero) R.hero.manual = false; const F = fortFlagPos(0); addText(F.x, F.y - .6, "깃발을 문 앞으로", "#FFE08A", 1.2); } }
+  if (R.flagMode){ R.flagMode = false; if (man){ R.flag = null; if (R.hero){ if (R.hero.forceTg) heroUnfocus(R.hero); R.hero.manual = false; } const F = fortFlagPos(0); addText(F.x, F.y - .6, "깃발을 문 앞으로", "#FFE08A", 1.2); } }
   else { R.flagMode = true; toast((R.sortie && campAlive() ? "지금은 출격 중이라 장병이 진으로 가요. 꽂아 두면 '돌아와!' 뒤에 그곳에 모여요. " : "깃발을 꽂을 곳을 누르세요. 장병이 그 둘레에 모여 싸워요. ") + "단추를 다시 누르면 " + (man ? "문 앞으로 되돌려요." : "취소해요.")); }
   updateFlagBtn(); needDraw = true;
 }
@@ -7900,7 +7901,7 @@ function setSpeed(v){ if (R) R.speed = v; const b = document.getElementById("b-s
 function tapAt(clientX, clientY){
   if (!R || R.over || overlayMode) return;
   const rect = cv.getBoundingClientRect(), wp = Cam.toWorldTap(clientX - rect.left, clientY - rect.top), fx = wp[0]/T, fy = wp[1]/T, x = Math.floor(fx), y = Math.floor(fy);
-  if (R.flagMode && R.m.fort){ R.flagMode = false; if (fortIn(x, y) && fortWalk(x, y)){ R.flag = {x:x + .5, y:y + .5}; R.decFlagT = 0; R.decFlag0 = undefined; R.flagN = (R.flagN || 0) + 1; addText(x + .5, y - .3, "깃발!", "#FFE08A", 1.2); if (R.hero) R.hero.manual = false; } else addText(fx, fy, "여기엔 못 꽂아요", "#FF9A8A", 1.1); updateFlagBtn(); needDraw = true; return; } // v10 S4 깃발
+  if (R.flagMode && R.m.fort){ R.flagMode = false; if (fortIn(x, y) && fortWalk(x, y)){ R.flag = {x:x + .5, y:y + .5}; R.decFlagT = 0; R.decFlag0 = undefined; R.flagN = (R.flagN || 0) + 1; addText(x + .5, y - .3, "깃발!", "#FFE08A", 1.2); if (R.hero){ if (R.hero.forceTg) heroUnfocus(R.hero); R.hero.manual = false; } } else addText(fx, fy, "여기엔 못 꽂아요", "#FF9A8A", 1.1); updateFlagBtn(); needDraw = true; return; } // v10 S4 깃발
   const ts = tutStep();
   if (ts && ts.tile){ // (옛 틀) 정해진 칸만. v10 서장 단계는 자유롭게 눌러 해 보고, 해냈는지는 tutTick이 본다
     if (x === ts.tile[0] && y === ts.tile[1]){ R.sel = {x,y}; tutNext(); }

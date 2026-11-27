@@ -1,7 +1,7 @@
 // 산성 서비스 워커. tools/build-web.mjs 가 __VERSION__ 을 바꿔 넣는다.
 // 규칙: 게임 파일(index.html)은 이 판 저장본(설치 때 받음), 아이콘·manifest·글꼴은 '저장본 먼저'.
 // 새 판은 바로 바꾸지 않고 기다리다가(waiting), 게임 안 '새 판으로 열기'를 누르면 skipWaiting 한다(판 중간에 바뀌지 않게).
-const VERSION = "20261127-4315369f1e";
+const VERSION = "20261127-89acc3b23d";
 const CACHE = "sanseong-" + VERSION;
 const FONT_CACHE = "sanseong-fonts-v1";
 const ART_CACHE = "sanseong-art-v1"; // 요청 56: 캐릭터 그림(art/img·art/anim, 주소에 ?v= 판 표시가 있어 바뀌면 새로 받음)
